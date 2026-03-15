@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" 
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title layout:title-pattern="$CONTENT_TITLE - $LAYOUT_TITLE">Mỹ phẩm OneShop</title>
+
+    <link rel="preconnect" href="https://fonts.gstatic.com">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Slab:wght@100;200;300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://pro.fontawesome.com/releases/v5.10.0/css/all.css" integrity="sha384-AYmEC3Yw5cVb3ZcuHtOA93w35dYTsvhLPVnYs9eStHfGJvOvKxVfELGroGkvsg+p" crossorigin="anonymous" />
+    <link rel="stylesheet" th:href="@{/webjars/bootstrap/5.3.2/css/bootstrap.min.css}" />
+    <link rel="stylesheet" th:href="@{/assets/css/library.css}">
+    <link th:href="@{/assets/owlCarousel/assets/owl.carousel.min.css}" rel="stylesheet" />
+   
+ 
+    
+   
+    
+    <th:block layout:fragment="css"></th:block>
+
+</head>
+
+<body>
+    
+    <div th:replace="~{fragments/guest/header :: header}"></div>
+    
+    <main class="main-content">
+        <div layout:fragment="content">
+            </div>
+    </main>
+    
+    <div th:replace="~{fragments/footer :: footer}"></div>
+    
+	<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script th:src="@{/assets/owlCarousel/owl.carousel.min.js}"></script>
+    <script th:src="@{/webjars/bootstrap/5.3.2/js/bootstrap.bundle.min.js}"></script>
+    <th:block layout:fragment="js"></th:block>
+</body>
+</html>

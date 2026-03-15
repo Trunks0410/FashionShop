@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+	xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+	layout:decorate="~{layouts/guest}">
+<head>
+<meta charset="UTF-8">
+<title>Giỏ hàng</title>
+
+<th:block layout:fragment="css">
+	<link rel="stylesheet" type="text/css" th:href="@{/assets/css/cart.css}">
+	<link rel="stylesheet" th:href="@{/assets/css/common.css}">
+	<style>
+/* === Biến màu & Font (Lấy từ common) === */
+:root {
+	--primary-color: #E85A70;
+	--secondary-color: #f07b8d;
+	--text-dark: #333;
+	--text-muted: #666;
+	--bg-light: #f8f9fa;
+	--base-radius: 8px;
+	--shadow-medium: 0 4px 15px rgba(0, 0, 0, 0.1);
+	--border-color: #ddd;
+}
+
+.main {
+	padding-top: 30px;
+	padding-bottom: 50px;
+	background-color: var(--bg-light);
+}
+
+.main__cart .shop_table {
+	width: 100%;
+	border-collapse: separate; 
+	border-spacing: 0;
+	margin-bottom: 20px;
+	background-color: white;
+	border-radius: var(--base-radius);
+	box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+	overflow: hidden;
+}
+
+.shop_table thead th {
+	background-color: var(--primary-color); 
+	color: white;
+	font-size: 1.5rem;
+	font-weight: 600;
+	padding: 15px 10px;
+	text-align: center;
+	border: none; 
+}
+
+.shop_table tbody td {
+	padding: 15px 10px;
+	vertical-align: middle;
+	font-size: 1.4rem;
+	border-bottom: 1px solid #eee;
+	color: var(--text-dark);
+}
+
+.shop_table tbody tr:hover {
+	background-color: #fffafb;
+	box-shadow: inset 3px 0 0 0 var(--secondary-color);
+	transition: background-color 0.2s;
+}
+
+.product-thumbnail img {
+	width: 70px;
+	height: 70px;
+	object-fit: cover;
+	border-radius: 4px;
+}
+
+.product-name a {
+	color: var(--text-dark);
+	font-weight: 500;
+	transition: color 0.2s;
+}
+
+.product-name a:hover {
+	color: var(--primary-color);
+}
+
+.product-price, .product-subtotal {
+	text-align: center;
+	font-weight: 600;
+	color: #222;
+}
+
+.product-subtotal .main__cart-price {
+	color: var(--primary-color); 
+	font-weight: 700;
+}
+
+.product-remove a {
+	color: #999;
+	font-size: 1.8rem;
+    cursor: pointer;
+}
+
+.product-remove a:hover {
+	color: #dc3545;
+}
+
+.buttons_added input {
+	padding: 5px 8px;
+	height: 35px;
+	border: 1px solid var(--border-color);
+	border-radius: 4px;
+    font-size: 1.4rem;
+}
+
+.main__pay {
+	background-color: white;
+	border-radius: var(--base-radius);
+	box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+	padding: 25px;
+}
+
+.main__pay .main__pay-title {
+	font-size: 1.8rem;
+	font-weight: 700;
+	color: var(--text-dark);
+	border-bottom: 2px solid #eee;
+	padding-bottom: 10px;
+	margin-bottom: 15px;
+}
+
+.main__pay .pay-info {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	font-size: 1.5rem;
+	padding: 8px 0;
+}
+
+.main__pay .main__pay-text {
+	color: var(--text-muted);
+}
+
+.main__pay .main__pay-price {
+	font-weight: 600;
+	color: #222;
+}
+
+.main__pay .total-summary .main__pay-text {
+	font-weight: 800;
+	color: var(--text-dark);
+	font-size: 1.6rem;
+}
+
+.main__pay .final-price {
+	font-weight: 800;
+	color: var(--primary-color);
+	font-size: 2.2rem;
+}
+
+#checkoutBtn {
+	background-color: #E85A70;
+	border: 1px solid #E85A70;
+	color: white;
+	font-size: 1.6rem;
+	padding: 12px 10px;
+	width: 100%;
+	border-radius: 4px;
+	font-weight: 700;
+	transition: background-color 0.2s, transform 0.2s;
+	margin-top: 15px;
+}
+
+#checkoutBtn:hover {
+	background-color: #d6485e;
+	transform: translateY(-1px);
+}
+
+.voucher-info {
+	margin-top: 10px;
+	font-size: 1.4rem;
+}
+
+.applied-voucher {
+	color: #28a745;
+	font-weight: bold;
+}
+
+#removeVoucherBtn {
+	padding: 6px 12px;
+	font-size: 1.4rem;
+	font-weight: 600;
+	border-radius: 4px;
+}
+
+#voucherCodeSelect {
+    font-size: 1.4rem;
+    padding: 10px 12px;
+    border-color: var(--border-color);
+}
+
+#applyVoucherBtn {
+     font-size: 1.4rem;
+     padding: 8px 15px;
+     background-color: var(--secondary-color);
+     border-color: var(--secondary-color);
+     color: white;
+     font-weight: 600;
+     border-radius: 4px;
+     transition: background-color 0.2s;
+}
+
+#applyVoucherBtn:hover {
+    background-color: #c23e51;
+}
+
+</style>
+</th:block>
+</head>
+
+<body>
+
+	<div class="main" layout:fragment="content">
+		<div class="grid wide">
+			<h3 class="main__notify" style="display: none;">
+				<div class="main__notify-icon">
+					<i class="fas fa-check"></i>
+				</div>
+				<div class="main__notify-text">Giỏ hàng đã được cập nhật.</div>
+			</h3>
+			<h3 class="main__notify voucher__notify"
+				style="display: none; background-color: #d1ecf1; color: #0c5460;">
+				<div class="main__notify-icon">
+					<i class="fas fa-tags"></i>
+				</div>
+				<div class="main__notify-text">Voucher message.</div>
+			</h3>
+			<h3 class="main__notify voucher__error_notify"
+				style="display: none; background-color: #f8d7da; color: #721c24;">
+				<div class="main__notify-icon">
+					<i class="fas fa-exclamation-triangle"></i>
+				</div>
+				<div class="main__notify-text">Lỗi voucher.</div>
+			</h3>
+
+			<div class="row">
+				<div class="col l-8 m-12 s-12">
+					<div class="main__cart">
+						<table class="shop_table">
+							<thead>
+								<tr>
+									<th class="product-select"><input type="checkbox" id="checkAll" checked></th>
+									<th class="product-name" colspan="2">Sản phẩm</th>
+									<th class="product-price">Giá</th>
+									<th class="product-quantity">Số lượng</th>
+									<th class="product-subtotal">Tổng</th>
+									<th class="product-remove">Xóa</th>
+								</tr>
+							</thead>
+							<tbody>
+								<tr th:if="${cart == null or cart.items == null or cart.items.isEmpty()}">
+									<td colspan="7" style="text-align: center; padding: 20px;">
+										Giỏ hàng của bạn đang trống.
+									</td>
+								</tr>
+								<tr class="cart_item"
+									th:each="itemEntry : ${cart != null ? cart.items : T(java.util.Collections).emptyMap()}"
+									th:with="item = ${itemEntry.value}"
+									th:data-product-id="${item.productId}"
+									th:data-price="${item.price}">
+
+									<td class="product-select" data-label="Chọn">
+                                        <input type="checkbox" name="selectedItems" class="item-checkbox" th:value="${item.productId}" checked>
+                                    </td>
+									<td class="product-thumbnail" data-label="Ảnh">
+                                        <img th:src="@{${item.imageUrl ?: '/assets/img/product/no-image.jpg'}}" alt="Product Image">
+                                    </td>
+									<td class="product-name" data-label="Sản phẩm">
+                                        <a th:href="@{'/product/' + ${item.productId}}" th:text="${item.name}" class="name"></a>
+                                    </td>
+									<td class="product-price" data-label="Giá">
+										<div class="main__cart-price" th:text="${#numbers.formatDecimal(item.price, 0, 'COMMA', 0, 'POINT')} + ' đ'"></div>
+									</td>
+									<td class="product-quantity" data-label="Số lượng">
+										<div class="buttons_added">
+											<input class="minus is-form" type="button" value="-">
+											<input aria-label="quantity" class="input-qty" max="99" min="0" type="number" th:value="${item.quantity}"> 
+                                            <input class="plus is-form" type="button" value="+">
+										</div>
+									</td>
+									<td class="product-subtotal" data-label="Tổng">
+										<div class="main__cart-price" th:text="${#numbers.formatDecimal(item.subtotal, 0, 'COMMA', 0, 'POINT')} + ' đ'"></div>
+									</td>
+									<td class="product-remove" data-label="Xóa">
+                                        <a th:href="@{/cart/remove/{id}(id=${item.productId})}" onclick="return confirm('Bạn có chắc chắn muốn xóa sản phẩm này khỏi giỏ hàng?')" class="main__cart-icon remove-item-link" title="Xóa sản phẩm">
+											<i class="far fa-times-circle"></i>
+									    </a>
+                                    </td>
+								</tr>
+							</tbody>
+						</table>
+					</div>
+				</div>
+
+				<div class="col l-4 m-12 s-12">
+					<div class="main__pay">
+						<div class="main__pay-title">Tổng số lượng</div>
+						<div class="pay-info">
+							<div class="main__pay-text">Tổng phụ</div>
+							<div class="main__pay-price" id="cart-subtotal">0 đ</div>
+						</div>
+
+						<div class="pay-info">
+							<div class="main__pay-text">Phí vận chuyển</div>
+							<div class="main__pay-price" id="cart-shipping-fee">
+                                (Tùy khu vực & ĐVVC) </div>
+						</div>
+                        <div class="pay-info discount-row" id="discount-row" th:style="${cart == null or cart.discountAmount == null or cart.discountAmount.compareTo(T(java.math.BigDecimal).ZERO) <= 0} ? 'display: none;'">
+							<div class="main__pay-text">Giảm giá voucher</div>
+							<div class="main__pay-price" id="cart-discount">-0 đ</div>
+						</div>
+
+						<div class="pay-info total-summary">
+                            <div class="main__pay-text" id="cart-grandtotal-label">Tổng thành tiền (Chưa gồm VC)</div>
+							<div class="main__pay-price final-price" id="cart-grandtotal">0 đ</div>
+                        </div>
+						<button type="button" id="checkoutBtn" class="btn btn--default orange w-100" disabled>TIẾN HÀNH THANH TOÁN</button>
+
+						<div class="main__pay-title" style="margin-top: 20px;">Phiếu ưu đãi</div>
+						<div id="applied-voucher-info" class="voucher-info" th:style="${cart == null or cart.appliedVoucherCode == null} ? 'display: none;'">
+							<span class="applied-voucher">Đã áp dụng: <span id="applied-voucher-code" th:text="${cart?.appliedVoucherCode}"></span></span>
+							<button id="removeVoucherBtn" class="btn btn-outline-danger btn-sm ms-2">Bỏ chọn</button> 
+                        </div>
+						<div id="voucher-selection-area" th:style="${cart != null and cart.appliedVoucherCode != null} ? 'display: none;'">
+							<select class="form-control" style="margin-top: 15px;" id="voucherCodeSelect">
+								<option value="">-- Chọn phiếu ưu đãi --</option>
+								<option th:each="voucher : ${applicableVouchers}" th:value="${voucher.discountCode}" th:text="${voucher.campaignName}">Mô tả voucher</option>
+							</select>
+							<button id="applyVoucherBtn" class="btn btn--default mt-2">Áp dụng</button>
+							<div id="voucher-error-msg" class="voucher-error voucher-info" style="display: none;"></div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<th:block layout:fragment="js">
+		<script th:inline="javascript">
+            /*<![CDATA[*/
+            $(document).ready(function() {
+            	let currentCartData = /*[[${cart}]]*/ null;
+
+                if (!currentCartData) {
+                    currentCartData = {
+                        items: {},
+                        subtotal: 0,
+                        discountAmount: 0,
+                        appliedVoucherCode: null,
+                        appliedVoucherTypeCode: null,
+                        appliedVoucherValue: 0
+                    };
+                }
+
+                function formatCurrency(number) {
+                    if (number === null || typeof number === 'undefined') return '0 ₫';
+                    const numericValue = parseFloat(number);
+                    if (isNaN(numericValue)) return '0 ₫';
+                    return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(numericValue).replace('₫', 'đ');
+                }
+
+                function updateCartSummary() {
+                    const cartData = currentCartData || { items: {}, appliedVoucherTypeCode: null, appliedVoucherValue: 0 };
+
+                    let calculatedSubtotal = 0;
+                    let selectedCount = 0;
+                    let effectiveDiscount = 0;
+                    let isFreeShippingVoucher = false; 
+
+                    $('.item-checkbox:checked').each(function() {
+                        selectedCount++;
+                        const variantId = $(this).val();
+                        const item = cartData.items ? cartData.items[variantId] : null;
+                        if (item) {
+                            calculatedSubtotal += parseFloat(item.subtotal || 0);
+                        }
+                    });
+
+                    if (selectedCount > 0) {
+                        const voucherType = cartData.appliedVoucherTypeCode;
+                        const voucherValue = parseFloat(cartData.appliedVoucherValue || 0);
+
+                        effectiveDiscount = 0;
+
+                        if (voucherType) {
+                            if (voucherType === 'PERCENTAGE') {
+                                effectiveDiscount = calculatedSubtotal * (voucherValue / 100);
+                            } else if (voucherType === 'FIXED_AMOUNT') {
+                                effectiveDiscount = voucherValue;
+                            } else if (voucherType === 'FREE_SHIPPING') {
+                                isFreeShippingVoucher = true; 
+                                effectiveDiscount = 0; 
+                            }
+                        }
+                        effectiveDiscount = Math.min(effectiveDiscount, calculatedSubtotal);
+
+                    } else {
+                        effectiveDiscount = 0;
+                    }
+
+                    let grandTotal = calculatedSubtotal - effectiveDiscount;
+                    grandTotal = Math.max(0, grandTotal);
+
+                    $('#cart-subtotal').text(formatCurrency(calculatedSubtotal));
+
+                    const $shippingFeeElement = $('#cart-shipping-fee');
+                    if (isFreeShippingVoucher && selectedCount > 0) {
+                        $shippingFeeElement.text("Được miễn phí").css({'font-style': 'normal', 'color': '#28a745', 'font-weight': 'bold'}); 
+                    } else {
+                         $shippingFeeElement.text("(Tùy khu vực & ĐVVC)").css({'font-style': 'italic', 'color': '#6c757d', 'font-weight': 'normal'});
+                    }
+
+                    if (effectiveDiscount > 0) {
+                        $('#cart-discount').text('-' + formatCurrency(effectiveDiscount));
+                        $('#discount-row').show();
+                    } else {
+                        $('#discount-row').hide();
+                    }
+
+                    $('#cart-grandtotal').text(formatCurrency(Math.round(grandTotal)));
+                    $('#cart-grandtotal-label').text(selectedCount > 0 ? "Tổng thành tiền (Chưa gồm VC)" : "Tổng thành tiền"); 
+
+                    $('#checkoutBtn').prop('disabled', selectedCount === 0);
+                    updateVoucherUI(cartData.appliedVoucherCode);
+                }
+                
+                function updateVoucherUI(appliedCode) {
+                    const hasItemsInCart = currentCartData && Object.keys(currentCartData.items).length > 0;
+                    const hasSelectedItems = $('.item-checkbox:checked').length > 0;
+
+                    if (appliedCode && hasSelectedItems) {
+                        $('#applied-voucher-code').text(appliedCode);
+                        $('#applied-voucher-info').show();
+                        $('#voucher-selection-area').hide();
+                        $('#voucher-error-msg').hide().text('');
+                    } else if (hasItemsInCart && hasSelectedItems) {
+                        $('#applied-voucher-info').hide();
+                        $('#voucher-selection-area').show();
+                        $('#voucherCodeSelect').val('');
+                    } else {
+                         $('#applied-voucher-info, #voucher-selection-area').hide();
+                         $('#voucher-error-msg').hide().text('');
+                    }
+                }
+
+                function showNotify(selector, message, duration = 2000) {
+                    $('.main__notify').stop().fadeOut('fast');
+                    const $notify = $(selector);
+                    $notify.find('.main__notify-text').text(message);
+                    $notify.fadeIn();
+                    clearTimeout($notify.data('timeoutId'));
+                    const timeoutId = setTimeout(function() { $notify.fadeOut(); }, duration);
+                    $notify.data('timeoutId', timeoutId);
+                }
+
+                function updateCartAjax(variantId, quantity) {
+                    $.ajax({
+                        type: "POST",
+                        url:  '/api/cart/update', 
+                        contentType: "application/json",
+                        data: JSON.stringify({ variantId: variantId, quantity: quantity }),
+                        success: function(updatedCart) {
+                            currentCartData = updatedCart;
+                            var productRow = $('.cart_item[data-product-id="' + variantId + '"]');
+                            var updatedItem = updatedCart.items ? updatedCart.items[variantId] : null;
+
+                            if (updatedItem) {
+                                if (parseInt(productRow.find('.input-qty').val()) !== updatedItem.quantity) {
+                                    productRow.find('.input-qty').val(updatedItem.quantity);
+                                }
+                                productRow.find('.product-subtotal .main__cart-price').text(formatCurrency(updatedItem.subtotal));
+                            } else {
+                                productRow.remove();
+                            }
+
+                            if (!updatedItem || (currentCartData && Object.keys(currentCartData.items).length === 0)) {
+                                 $('tbody').html('<tr><td colspan="7" style="text-align: center; padding: 20px;">Giỏ hàng của bạn đang trống.</td></tr>');
+                            }
+
+                            updateCartSummary();
+                           
+                             if (typeof window.updateHeaderCart === 'function') {
+                                 window.updateHeaderCart(updatedCart);
+                             }
+                        },
+                        error: function(xhr) {
+                            console.error("Lỗi cập nhật giỏ hàng: ", xhr);
+                            let errorMsg = 'Có lỗi xảy ra, vui lòng thử lại.';
+                             if (xhr.status === 401 || xhr.status === 403) {
+                                errorMsg = 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.';
+                                setTimeout(() => { window.location.href = /*[[@{/login}]]*/ '/login'; }, 1500);
+                             } else if (xhr.responseJSON && xhr.responseJSON.message) {
+                                errorMsg = xhr.responseJSON.message;
+                                if (xhr.status === 400) {
+                                    showNotify('.main__notify', errorMsg + ' Đang tải lại...', 5000);
+                                    setTimeout(() => { location.reload(); }, 1500);
+                                    return;
+                                }
+                             }
+                             showNotify('.main__notify', errorMsg, 3000);
+                             
+                             var productRow = $('.cart_item[data-product-id="' + variantId + '"]');
+                             if(currentCartData && currentCartData.items && currentCartData.items[variantId]){
+                                productRow.find('.input-qty').val(currentCartData.items[variantId].quantity);
+                             } else {
+                                 productRow.find('.input-qty').val(1); 
+                             }
+                        }
+                    });
+                }
+
+                $('#applyVoucherBtn').on('click', function() {
+                    const voucherCode = $('#voucherCodeSelect').val();
+                    if (!voucherCode) {
+                        $('#voucher-error-msg').text('Vui lòng chọn một voucher.').show();
+                        return;
+                    }
+                    $('#voucher-error-msg').hide().text('');
+                    const $button = $(this);
+                    $button.prop('disabled', true).text('Đang áp dụng...');
+
+                    $.ajax({
+                        type: "POST",
+                        url:  '/api/cart/apply-voucher',
+                        contentType: "application/json",
+                        data: JSON.stringify({ code: voucherCode }),
+                        success: function(updatedCart) {
+                            currentCartData = updatedCart;
+                            updateCartSummary();
+                        },
+                        error: function(xhr) {
+                            let errorMsg = 'Có lỗi xảy ra khi áp dụng voucher.';
+                            if (xhr.responseJSON && xhr.responseJSON.message) {
+                                errorMsg = xhr.responseJSON.message;
+                            }
+                            $('#voucher-error-msg').text(errorMsg).show();
+                        },
+                        complete: function() {
+                             $button.prop('disabled', false).text('Áp dụng');
+                        }
+                    });
+                });
+                
+                $('#removeVoucherBtn').on('click', function() {
+                     $.ajax({
+                        type: "POST",
+                        url:  '/api/cart/remove-voucher',
+                        contentType: "application/json",
+                        data: JSON.stringify({}),
+                        success: function(updatedCart) {
+                            currentCartData = updatedCart;
+                            updateCartSummary();
+                            showNotify('.voucher__notify', 'Đã gỡ bỏ voucher.');
+                        },
+                        error: function(xhr) {
+                             let errorMsg = 'Có lỗi xảy ra khi gỡ voucher.';
+                             if (xhr.responseJSON && xhr.responseJSON.message) {
+                                 errorMsg = xhr.responseJSON.message;
+                             }
+                             showNotify('.voucher__error_notify', errorMsg, 3000);
+                        }
+                    });
+                });
+
+                $('#checkAll').on('change', function() {
+                    const isChecked = $(this).is(':checked');
+                    $('.item-checkbox').prop('checked', isChecked);
+                    updateCartSummary();
+                });
+
+                $('tbody').on('change', '.item-checkbox', function() {
+                    if (!$(this).is(':checked')) {
+                        $('#checkAll').prop('checked', false);
+                    } else {
+                        if ($('.item-checkbox:checked').length === $('.item-checkbox').length) {
+                            $('#checkAll').prop('checked', true);
+                        }
+                    }
+                    updateCartSummary();
+                });
+
+                /* LOGIC THỎA MÃN USE CASE THEO YÊU CẦU: Nhập số lượng 0 -> Xác nhận xóa */
+                $('tbody').on('click', '.plus, .minus', function() {
+                    var $input = $(this).closest('.buttons_added').find('.input-qty');
+                    var currentVal = parseInt($input.val());
+                    var maxVal = parseInt($input.attr('max')) || 99;
+                    var newVal = currentVal;
+                    var variantId = $(this).closest('.cart_item').data('product-id');
+
+                    if ($(this).hasClass('plus')) {
+                        if (currentVal < maxVal) newVal = currentVal + 1;
+                    } else {
+                        newVal = currentVal - 1; 
+                    }
+
+                    if (newVal === 0) {
+                        if (confirm("Số lượng bằng 0 sẽ xóa sản phẩm khỏi giỏ hàng. Bạn có đồng ý không?")) {
+                            window.location.href = '/cart/remove/' + variantId;
+                        } else {
+                            $input.val(currentVal); // Phục hồi giá trị cũ
+                        }
+                        return;
+                    }
+
+                    if (newVal !== currentVal && newVal > 0) {
+                         $input.val(newVal);
+                         clearTimeout($input.data('timeoutId'));
+                         const timeoutId = setTimeout(() => {
+                            updateCartAjax(variantId, newVal);
+                         }, 300);
+                         $input.data('timeoutId', timeoutId);
+                    }
+                });
+
+                /* LOGIC THỎA MÃN USE CASE THEO YÊU CẦU: Nhập tay số lượng 0 -> Xác nhận xóa */
+                $('tbody').on('blur', '.input-qty', function() {
+                    var $input = $(this);
+                    clearTimeout($input.data('timeoutId')); 
+                    
+                    var currentValInInput = parseInt($input.val());
+                    var variantId = $input.closest('.cart_item').data('product-id');
+
+                    let originalQty = 1;
+                    if(currentCartData && currentCartData.items && currentCartData.items[variantId]){
+                        originalQty = currentCartData.items[variantId].quantity;
+                    }
+
+                    if (currentValInInput === 0) {
+                        if (confirm("Số lượng bằng 0 sẽ xóa sản phẩm khỏi giỏ hàng. Bạn có đồng ý không?")) {
+                            window.location.href = '/cart/remove/' + variantId;
+                        } else {
+                            $input.val(originalQty);
+                        }
+                        return;
+                    }
+
+                    var minVal = parseInt($input.attr('min')) || 1;
+                    var maxVal = parseInt($input.attr('max')) || 99;
+                    var validatedVal = currentValInInput;
+
+                    if (isNaN(validatedVal) || validatedVal < minVal) {
+                        validatedVal = originalQty;
+                    } else if (validatedVal > maxVal) {
+                        validatedVal = maxVal;
+                    }
+
+                    if (validatedVal !== currentValInInput) {
+                        $input.val(validatedVal);
+                    }
+                    
+                    if (validatedVal !== originalQty) {
+                        updateCartAjax(variantId, validatedVal);
+                    }
+                });
+
+                $('#checkoutBtn').on('click', function() {
+                    const selectedIds = [];
+                    $('.item-checkbox:checked').each(function() { selectedIds.push($(this).val()); });
+                    if (selectedIds.length === 0) {
+                        alert('Vui lòng chọn ít nhất một sản phẩm để thanh toán.');
+                        return;
+                    }
+                    window.location.href = '/pay?variantIds=' + selectedIds.join(',');
+                });
+
+                updateCartSummary(); 
+
+            });
+             /*]]>*/
+        </script>
+	</th:block>
+</body>
+</html>

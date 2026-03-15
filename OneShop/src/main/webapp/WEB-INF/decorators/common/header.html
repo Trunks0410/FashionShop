@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<div th:fragment="header" class="header scrolling" id="myHeader">
+    <div class="grid wide">
+        <div class="header__top">
+            <div class="navbar-icon">
+                <span></span> <span></span> <span></span>
+            </div>
+            <a th:href="@{/}" class="header__logo">
+                <img th:src="@{/assets/logo.png}" alt="">
+            </a>
+            <div class="header__search">
+                <div class="header__search-wrap">
+                    <input type="text" class="header__search-input" placeholder="Tìm kiếm">
+                    <a class="header__search-icon" href="#">
+                        <i class="fas fa-search"></i>
+                    </a>
+                </div>
+            </div>
+            <div class="header__account">
+                <a href="#my-Login" class="header__account-login">Đăng Nhập</a>
+                <a href="#my-Register" class="header__account-register">Đăng Ký</a>
+            </div>
+            <div class="header__cart have" href="#">
+                <i class="fas fa-shopping-basket"></i>
+                <div class="header__cart-amount">3</div>
+                <div class="header__cart-wrap">
+                    <ul class="order__list">
+                        <li class="item-order">
+                            <div class="order-wrap">
+                                <a th:href="@{/product}" class="order-img">
+                                    <img th:src="@{/assets/img/product/product1.jpg}" alt="">
+                                </a>
+                                <div class="order-main">
+                                    <a th:href="@{/product}" class="order-main-name">Áo sơ mi caro kèm belt...</a>
+                                    <div class="order-main-price">2 x 45,000 ₫</div>
+                                </div>
+                                <a th:href="@{/product}" class="order-close">
+                                    <i class="far fa-times-circle"></i>
+                                </a>
+                            </div>
+                        </li>
+                    </ul>
+                    <div class="total-money">Tổng cộng: 120.000đ</div>
+                    <a th:href="@{/cart}" class="btn btn--default cart-btn">Xem giỏ hàng</a>
+                    <a th:href="@{/pay}" class="btn btn--default cart-btn orange">Thanh toán</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="header__nav">
+        <ul class="header__nav-list">
+            <li class="header__nav-item index"><a th:href="@{/}" class="header__nav-link">Trang chủ</a></li>
+            <li class="header__nav-item has-dropdown-menu">
+                <a th:href="@{/list-product}" class="header__nav-link">Sản Phẩm</a>
+                </li>
+            <li class="header__nav-item"><a th:href="@{/news}" class="header__nav-link">Tin Tức</a></li>
+            <li class="header__nav-item"><a th:href="@{/contact}" class="header__nav-link">Liên Hệ</a></li>
+        </ul>
+    </div>
+</div>
+</body>
+</html>

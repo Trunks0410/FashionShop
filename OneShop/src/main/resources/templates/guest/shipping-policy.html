@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/minimal}"> <head>
+    <title>Chính sách Vận chuyển & Đổi trả</title>
+    <th:block layout:fragment="css">
+        <style>
+            .policy-container {
+                max-width: 900px;
+                margin: 40px auto;
+                padding: 30px;
+                background: white;
+                border-radius: 8px;
+                box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            }
+            .policy-heading {
+                text-align: center;
+                font-size: 2.5rem;
+                font-weight: 700;
+                margin-bottom: 40px;
+            }
+            .shipping-section, .return-section {
+                padding: 20px 0;
+                border-bottom: 1px solid #eee;
+            }
+            .section-title-sub {
+                font-size: 1.8rem;
+                font-weight: 600;
+                color: var(--primary-color, #E85A70);
+                margin-bottom: 15px;
+            }
+            .policy-text {
+                font-size: 1rem;
+                line-height: 1.8;
+                color: #555;
+            }
+            .policy-highlight {
+                font-weight: 600;
+                color: #333;
+            }
+            .back-to-home {
+                display: inline-block;
+                margin-bottom: 20px;
+                font-size: 1rem;
+                color: #555;
+                text-decoration: none;
+                transition: color 0.2s;
+            }
+            .back-to-home:hover {
+                color: var(--primary-color, #E85A70);
+                text-decoration: underline;
+            }
+        </style>
+    </th:block>
+</head>
+
+<body>
+<div layout:fragment="content"> 
+    <div class="container my-4">
+        
+        <a th:href="@{/}" class="back-to-home">
+            <i class="fas fa-arrow-left me-1"></i> Quay về Trang chủ
+        </a>
+        
+        <div class="policy-container">
+            <h1 class="policy-heading">VẬN CHUYỂN & ĐỔI TRẢ</h1>
+    
+            <div class="shipping-section">
+                <h2 class="section-title-sub">Chính sách Vận chuyển</h2>
+                <p class="policy-text">
+                    OneShop chấp nhận <span class="policy-highlight">Ship COD (Thanh toán khi nhận hàng)</span> trên toàn quốc.
+                </p>
+                <ul class="policy-text">
+                    <li>Đối với các đơn hàng nội thành Hồ Chí Minh, phí ship đồng giá là <span class="policy-highlight">22.000₫</span>.</li>
+                    <li>Đối với các đơn nội thành Hà Nội và Nghệ An, phí ship là <span class="policy-highlight">35.000₫</span>.</li>
+                    <li>Đối với các tỉnh/thành khác, phí ship sẽ đồng giá <span class="policy-highlight">37.000₫</span>.</li>
+                </ul>
+                <p class="policy-text">
+                    Thời gian vận chuyển dự kiến kể từ lúc khách hàng nhận được email xác nhận "OneShop đã gửi hàng" là <span class="policy-highlight">2-3 ngày</span> (trừ lễ và Chủ nhật).
+                </p>
+                <p class="policy-text">
+                    Tất cả đơn hàng của OneShop sẽ được vận chuyển qua <span class="policy-highlight">Đơn vị Vận chuyển đối tác</span> (ví dụ: GHN, GHTK, Viettel Post).
+                </p>
+            </div>
+    
+            <div class="return-section">
+                <h2 class="section-title-sub">Chính sách Đổi trả</h2>
+                <p class="policy-text">
+                    Hiện tại, OneShop chấp nhận <span class="policy-highlight">nhận trả hàng và đổi hàng trong vòng 48 giờ</span> kể từ ngày đơn hàng được giao tới khách hàng.
+                </p>
+                <ul class="policy-text">
+                    <li>Sản phẩm trả/đổi phải còn mới, chưa qua sử dụng, còn nguyên tem mác và không bị giặt ủi hoặc tác động bất kỳ hình thức nào.</li>
+                    <li>Việc đổi hàng có thể được áp dụng trong trường hợp không vừa size, muốn đổi màu khác, hoặc sản phẩm khác.</li>
+                    <li>Quý khách vui lòng suy nghĩ và chọn kỹ khi mua hàng vì khách hàng sẽ phải <span class="policy-highlight">trả các khoản phí ship</span> cho việc đổi hàng.</li>
+                    <li>Quá trình kiểm tra và chấp nhận đổi trả có thể mất <span class="policy-highlight">1 ngày làm việc</span> (không bao gồm thời gian vận chuyển).</li>
+                </ul>
+                <p class="policy-text">
+                    Mọi thắc mắc và quy trình đổi trả có thể liên hệ trực tiếp với bộ phận hỗ trợ khách hàng của OneShop.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

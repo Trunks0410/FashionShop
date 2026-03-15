@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+	xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+	layout:decorate="~{layouts/guest}">
+<head>
+<meta charset="UTF-8">
+<title>Trang chủ</title>
+
+<th:block layout:fragment="css">
+	<link th:href="@{/assets/css/home.css}" rel="stylesheet" />
+	<link rel="stylesheet" th:href="@{/assets/css/common.css}">
+	<style>
+		/* CSS cho phần đánh giá và đã bán */
+		.product__rating {
+			display: flex;
+			align-items: center;
+			gap: 8px;
+			margin-bottom: 8px;
+		}
+
+		.rating-stars {
+			display: flex;
+			gap: 2px;
+		}
+
+		.rating-stars i {
+			font-size: 12px;
+			color: #ffa500;
+		}
+
+		.rating-stars i.empty {
+			color: #ddd;
+		}
+
+		.rating-count {
+			font-size: 12px;
+			color: #666;
+			font-weight: 400;
+		}
+
+		.product__sold {
+			font-size: 12px;
+			color: #666;
+			margin-bottom: 10px;
+			display: flex;
+			align-items: center;
+			gap: 4px;
+		}
+
+		.product__sold i {
+			font-size: 11px;
+			color: #999;
+		}
+
+		/* === CSS LÀM NỔI BẬT SỐ LƯỢNG ĐÃ BÁN === */
+        .product__sold.has-sales span { /* Chỉ áp dụng khi có class 'has-sales' */
+            font-weight: 600; /* Chữ đậm hơn */
+            color: #28a745; /* Màu xanh lá cây */
+        }
+        .product__sold.has-sales i { /* Icon cũng đổi màu xanh */
+             color: #28a745;
+        }
+        /* ========================================= */
+
+        /* *** THÊM HOẶC SỬA LẠI CSS CHO POLICY BOXES *** */
+        /* Đảm bảo các lớp .bg-1, .bg-2, .bg-3, .bg-4 được định nghĩa */
+        /* Giả sử màu nền được định nghĩa trong home.css hoặc common.css */
+        /* Nếu không, bạn cần thêm chúng vào đây hoặc vào file CSS tương ứng */
+        /* Ví dụ (màu sắc có thể cần điều chỉnh cho phù hợp): */
+        .policy.bg-1 { background-color: #fadde1; /* Màu hồng nhạt */ }
+        .policy.bg-2 { background-color: #e6d4f0; /* Màu tím nhạt */ }
+        .policy.bg-3 { background-color: #d1b1e0; /* Màu tím đậm hơn */ }
+        .policy.bg-4 { background-color: #f8cdda; /* Màu hồng đậm hơn */ }
+
+        /* Đảm bảo chữ trong policy box dễ đọc */
+        .policy__info .policy__title,
+        .policy__info .policy__description {
+            color: #333; /* Hoặc màu chữ phù hợp với nền */
+        }
+        /* *** KẾT THÚC PHẦN CSS SỬA ĐỔI *** */
+        .tab-content .tab-pane .row {
+            justify-content: center;
+        }
+	</style>
+</th:block>
+</head>
+
+<body>
+	<div class="main" layout:fragment="content">
+
+		<div class="main__slice">
+			<div class="slider">
+				<div class="slide active"
+					th:style="'background-image:url(' + @{/assets/img/slider/slide-6.jpg} + ')'">
+					<div class="container">
+						<div class="caption">
+							<h1>Giảm giá 30%</h1>
+							<p>Giảm giá cực sốc trong tháng 10!</p>
+							<a th:href="@{/products}" class="btn btn--default">Xem ngay</a>
+						</div>
+					</div>
+				</div>
+				<div class="slide"
+					th:style="'background-image:url(' + @{/assets/img/slider/slide-4.jpg} + ')'">
+					<div class="container">
+						<div class="caption">
+							<h1>Sản phẩm mới</h1>
+							<p>Khám phá bộ sưu tập son môi 2025.</p>
+							<a th:href="@{/products}" class="btn btn--default">Xem ngay</a>
+						</div>
+					</div>
+				</div>
+				<div class="slide"
+					th:style="'background-image:url(' + @{/assets/img/slider/slide-5.jpg} + ')'">
+					<div class="container">
+						<div class="caption">
+							<h1>Miễn phí vận chuyển</h1>
+							<p>Áp dụng cho mọi đơn hàng từ 500.000đ.</p>
+							<a th:href="@{/products}" class="btn btn--default">Xem ngay</a>
+						</div>
+					</div>
+				</div>
+			</div>
+			<div class="controls">
+				<div class="prev">
+					<i class="fas fa-chevron-left"></i>
+				</div>
+				<div class="next">
+					<i class="fas fa-chevron-right"></i>
+				</div>
+			</div>
+			<div class="indicator"></div>
+		</div>
+
+		<div class="main__tabnine">
+			<div class="grid wide">
+				<div class="tabs">
+					<div class="tab-item active">Bán Chạy</div>
+					<div class="tab-item">Mới Nhất</div>
+					<div class="tab-item">Giá Tốt</div>
+					<div class="line"></div>
+				</div>
+
+				<div class="tab-content">
+					<div class="tab-pane active">
+						<div class="row">
+							<div class="col l-2-4 m-4 c-6"
+								th:each="product : ${bestSellingProducts}">
+								<div class="product">
+									<div class="product__avt"
+										th:style="'background-image: url(' + @{${product.primaryImageUrl}} + ');'"></div>
+									<div class="product__info">
+										<h3 class="product__name" th:text="${product.name}">Tên
+											sản phẩm</h3>
+										<div class="product__rating">
+											<div class="rating-stars">
+												<i class="fas fa-star"
+													th:each="i : ${#numbers.sequence(1, 5)}"
+													th:classappend="${i <= product.rating} ? '' : 'empty'"></i>
+											</div>
+											<span class="rating-count"
+												th:text="'(' + ${product.reviewCount} + ')'"></span>
+										</div>
+										<div class="product__sold"
+											th:classappend="${product.soldCount > 0} ? 'has-sales' : ''">
+											<i class="fas fa-check-circle"></i> <span
+												th:text="'Đã bán ' + ${product.soldCount}"></span>
+										</div>
+										<div class="product__price">
+											<div class="price__old"
+												th:if="${product.originalPrice != null and product.originalPrice > product.price}"
+												th:text="${#numbers.formatDecimal(product.originalPrice, 0, 'COMMA', 0, 'POINT')} + ' đ'">
+											</div>
+											<div class="price__new">
+												<span
+													th:text="${#numbers.formatDecimal(product.price, 0, 'COMMA', 0, 'POINT')}"></span>
+												<span class="price__unit">đ</span>
+											</div>
+										</div>
+										<div class="product__sale"
+											th:if="${product.originalPrice != null and product.originalPrice > product.price and product.originalPrice > 0}">
+											<span class="product__sale-percent"
+												th:text="${#numbers.formatInteger(100 * (product.originalPrice - product.price) / product.originalPrice, 1)} + '%'"></span>
+											<span class="product__sale-text">Giảm</span>
+										</div>
+									</div>
+									<a th:href="@{/product/{id}(id=${product.productId})}"
+										class="viewDetail">Xem chi tiết</a> <a
+										th:href="@{/product/{id}(id=${product.productId})}"
+										class="addToCart">Chọn loại</a>
+								</div>
+							</div>
+						</div>
+					</div>
+
+					<div class="tab-pane">
+						<div class="row">
+							<div class="col l-2-4 m-4 c-6"
+								th:each="product : ${newestProducts}">
+								<div class="product">
+									<div class="product__avt"
+										th:style="'background-image: url(' + @{${product.primaryImageUrl}} + ');'"></div>
+									<div class="product__info">
+										<h3 class="product__name" th:text="${product.name}">Tên
+											sản phẩm</h3>
+										<div class="product__rating">
+											<div class="rating-stars">
+												<i class="fas fa-star"
+													th:each="i : ${#numbers.sequence(1, 5)}"
+													th:classappend="${i <= product.rating} ? '' : 'empty'"></i>
+											</div>
+											<span class="rating-count"
+												th:text="'(' + ${product.reviewCount} + ')'"></span>
+										</div>
+										<div class="product__sold"
+											 th:classappend="${product.soldCount > 0} ? 'has-sales' : ''"> <i class="fas fa-check-circle"></i> <span
+												th:text="'Đã bán ' + ${product.soldCount}"></span>
+										</div>
+										<div class="product__price">
+											<div class="price__old"
+												th:if="${product.originalPrice != null and product.originalPrice > product.price}"
+												th:text="${#numbers.formatDecimal(product.originalPrice, 0, 'COMMA', 0, 'POINT')} + ' đ'">
+											</div>
+											<div class="price__new">
+												<span
+													th:text="${#numbers.formatDecimal(product.price, 0, 'COMMA', 0, 'POINT')}"></span>
+												<span class="price__unit">đ</span>
+											</div>
+										</div>
+										<div class="product__sale"
+											th:if="${product.originalPrice != null and product.originalPrice > product.price and product.originalPrice > 0}">
+											<span class="product__sale-percent"
+												th:text="${#numbers.formatInteger(100 * (product.originalPrice - product.price) / product.originalPrice, 1)} + '%'"></span>
+											<span class="product__sale-text">Giảm</span>
+										</div>
+									</div>
+									<a th:href="@{/product/{id}(id=${product.productId})}"
+										class="viewDetail">Xem chi tiết</a> <a
+										th:href="@{/product/{id}(id=${product.productId})}"
+										class="addToCart">Chọn loại</a>
+								</div>
+							</div>
+						</div>
+					</div>
+
+					<div class="tab-pane">
+						<div class="row">
+							<div class="col l-2-4 m-4 c-6"
+								th:each="product : ${bestPriceProducts}">
+								<div class="product">
+									<div class="product__avt"
+										th:style="'background-image: url(' + @{${product.primaryImageUrl}} + ');'"></div>
+									<div class="product__info">
+										<h3 class="product__name" th:text="${product.name}">Tên
+											sản phẩm</h3>
+										<div class="product__rating">
+											<div class="rating-stars">
+												<i class="fas fa-star"
+													th:each="i : ${#numbers.sequence(1, 5)}"
+													th:classappend="${i <= product.rating} ? '' : 'empty'"></i>
+											</div>
+											<span class="rating-count"
+												th:text="'(' + ${product.reviewCount} + ')'"></span>
+										</div>
+										<div class="product__sold"
+											 th:classappend="${product.soldCount > 0} ? 'has-sales' : ''"> <i class="fas fa-check-circle"></i> <span
+												th:text="'Đã bán ' + ${product.soldCount}"></span>
+										</div>
+										<div class="product__price">
+											<div class="price__old"
+												th:if="${product.originalPrice != null and product.originalPrice > product.price}"
+												th:text="${#numbers.formatDecimal(product.originalPrice, 0, 'COMMA', 0, 'POINT')} + ' đ'">
+											</div>
+											<div class="price__new">
+												<span
+													th:text="${#numbers.formatDecimal(product.price, 0, 'COMMA', 0, 'POINT')}"></span>
+												<span class="price__unit">đ</span>
+											</div>
+										</div>
+										<div class="product__sale"
+											th:if="${product.originalPrice != null and product.originalPrice > product.price and product.originalPrice > 0}">
+											<span class="product__sale-percent"
+												th:text="${#numbers.formatInteger(100 * (product.originalPrice - product.price) / product.originalPrice, 1)} + '%'"></span>
+											<span class="product__sale-text">Giảm</span>
+										</div>
+									</div>
+									<a th:href="@{/product/{id}(id=${product.productId})}"
+										class="viewDetail">Xem chi tiết</a> <a
+										th:href="@{/product/{id}(id=${product.productId})}"
+										class="addToCart">Chọn loại</a>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<div class="main__policy">
+			<div class="grid wide">
+				<div class="row">
+					<div class="col l-3 m-6 s-12">
+						<div class="policy bg-1">
+							<img th:src="@{/assets/img/policy/policy1.png}"
+								class="policy__img">
+							<div class="policy__info">
+								<h3 class="policy__title">GIAO HÀNG MIỄN PHÍ</h3>
+								<p class="policy__description">Với đơn hàng trên 500.000đ</p>
+							</div>
+						</div>
+					</div>
+					<div class="col l-3 m-6 s-12">
+						<div class="policy bg-2">
+							<img th:src="@{/assets/img/policy/policy2.png}"
+								class="policy__img">
+							<div class="policy__info">
+								<h3 class="policy__title">HỖ TRỢ 24/7</h3>
+								<p class="policy__description">Hỗ trợ khách hàng mọi lúc</p>
+							</div>
+						</div>
+					</div>
+					<div class="col l-3 m-6 s-12">
+						<div class="policy bg-3">
+							<img th:src="@{/assets/img/policy/policy3.png}"
+								class="policy__img">
+							<div class="policy__info">
+								<h3 class="policy__title">HOÀN TRẢ HÀNG</h3>
+								<p class="policy__description">Trong vòng 30 ngày</p>
+							</div>
+						</div>
+					</div>
+					<div class="col l-3 m-6 s-12">
+						<div class="policy bg-4">
+							<img th:src="@{/assets/img/policy/policy4.png}"
+								class="policy__img">
+							<div class="policy__info">
+								<h3 class="policy__title">THANH TOÁN AN TOÀN</h3>
+								<p class="policy__description">Bảo mật thanh toán 100%</p>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<th:block layout:fragment="js">
+		<script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // --------- JAVASCRIPT CHO SLIDER ---------
+            const slides = document.querySelector('.slider').children;
+            const prev = document.querySelector('.prev');
+            const next = document.querySelector('.next');
+            const indicator = document.querySelector('.indicator');
+            let index = 0;
+
+            prev.addEventListener('click', function () {
+                prevSlide(); updateCircleIndicator(); resetTimer();
+            });
+            next.addEventListener('click', function () {
+                nextSlide(); updateCircleIndicator(); resetTimer();
+            });
+
+            function circleIndicator() {
+                // Kiểm tra indicator có tồn tại không trước khi thêm
+                if (!indicator) return;
+                indicator.innerHTML = ''; // Xóa indicator cũ nếu có
+                for (let i = 0; i < slides.length; i++) {
+                    const div = document.createElement('div');
+                    div.setAttribute('onclick', 'indicateSlide(this)');
+                    div.id = i;
+                    if (i == 0) div.className = 'active';
+                    indicator.appendChild(div);
+                }
+            }
+            circleIndicator();
+
+            // Đảm bảo indicator tồn tại trước khi truy cập children
+            function updateCircleIndicator() {
+                if (!indicator) return;
+                for (let i = 0; i < indicator.children.length; i++) {
+                    indicator.children[i].classList.remove('active');
+                }
+                // Kiểm tra index hợp lệ
+                if (indicator.children[index]) {
+                    indicator.children[index].classList.add('active');
+                }
+            }
+
+            function indicateSlide(element) {
+                index = parseInt(element.id); // Chuyển id sang số
+                changeSlide(); updateCircleIndicator(); resetTimer();
+            }
+
+            function prevSlide() {
+                index = (index == 0) ? slides.length - 1 : index - 1;
+                changeSlide();
+                updateCircleIndicator();
+            }
+            function nextSlide() {
+                index = (index == slides.length - 1) ? 0 : index + 1;
+                changeSlide();
+                updateCircleIndicator();
+            }
+            function changeSlide() {
+                for (let i = 0; i < slides.length; i++) {
+                    slides[i].classList.remove('active');
+                }
+                 // Kiểm tra index hợp lệ
+                if (slides[index]) {
+                    slides[index].classList.add('active');
+                }
+            }
+            let timer = setInterval(nextSlide, 5000);
+            function resetTimer() {
+                clearInterval(timer); timer = setInterval(nextSlide, 5000);
+            }
+        });
+
+        // --------- JAVASCRIPT CHO TABS ---------
+        function initializeTabs() {
+            const tabs = document.querySelectorAll('.tab-item');
+            const panes = document.querySelectorAll('.tab-pane');
+            const tabActive = document.querySelector('.tab-item.active');
+            const line = document.querySelector('.tabs .line');
+
+            if (!tabs.length || !panes.length || !tabActive || !line) return;
+
+            // Hàm cập nhật vị trí line
+            function updateLinePosition(activeTab) {
+                try { // Thêm try-catch để bắt lỗi nếu activeTab không hợp lệ
+                     line.style.left = activeTab.offsetLeft + 'px';
+                     line.style.width = activeTab.offsetWidth + 'px';
+                } catch (e) {
+                    console.error("Error updating tab line position:", e);
+                }
+            }
+            updateLinePosition(tabActive); // Cập nhật vị trí ban đầu
+
+            tabs.forEach((tab, index) => {
+                const pane = panes[index];
+                if (!pane) return; // Bỏ qua nếu không có pane tương ứng
+                // Sửa: Gắn sự kiện vào chính tab-item, không cần tìm thẻ a bên trong
+                tab.onclick = function (event) {
+                    // event.preventDefault(); // Bỏ preventDefault nếu không phải thẻ a
+
+                    // Chỉ xử lý nếu tab chưa active
+                    if (!tab.classList.contains('active')) {
+                        const currentActiveTab = document.querySelector('.tab-item.active');
+                        const currentActivePane = document.querySelector('.tab-pane.active');
+
+                        if (currentActiveTab) currentActiveTab.classList.remove('active');
+                        if (currentActivePane) currentActivePane.classList.remove('active');
+
+                        updateLinePosition(tab); // Cập nhật line
+
+                        tab.classList.add('active');
+                        pane.classList.add('active');
+                    }
+                }
+            });
+
+            // Cập nhật lại vị trí line khi resize cửa sổ
+            window.addEventListener('resize', () => {
+                const currentActiveTab = document.querySelector('.tab-item.active');
+                 if (currentActiveTab) {
+                    updateLinePosition(currentActiveTab);
+                 }
+            });
+        }
+        document.addEventListener('DOMContentLoaded', initializeTabs);
+        // Giữ lại pageshow để xử lý back/forward cache
+        window.addEventListener('pageshow', (event) => { if (event.persisted) initializeTabs(); });
+        </script>
+	</th:block>
+
+</body>
+</html>

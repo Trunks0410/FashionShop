@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<div th:fragment="footer">
+    <style>
+        .footer-new {
+            background-color: #333;
+            color: #ccc; 
+            padding: 40px 0 20px;
+            font-family: 'Roboto Slab', sans-serif;
+            font-size: 14px;
+        }
+        .footer-new a {
+            color: #ccc;
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+        .footer-new a:hover {
+            color: var(--primary-color, #E85A70);
+        }
+        /* Căn đều chiều cao các cột */
+        .footer-new .row.align-items-start {
+            display: flex;
+            align-items: flex-start;
+            flex-wrap: nowrap !important;
+            gap: 20px;
+        }
+        .footer-new .col.l-4,
+        .footer-new .col.m-4 {
+            flex: 1;
+            max-width: 33.333%;
+            display: flex;
+            flex-direction: column;
+            min-height: 100%;
+        }
+        .footer-new .col.s-12 {
+            display: flex;
+            flex-direction: column;
+        }
+        .footer__title-new {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: white; 
+            margin-bottom: 20px;
+            margin-top: 0;
+            border-bottom: 2px solid var(--primary-color, #E85A70);
+            display: inline-block;
+            padding-bottom: 5px;
+        }
+        .footer__list-new {
+            list-style: none;
+            padding: 0;
+            width: 100%; 
+            height: 100%;
+        }
+        .footer__item-new {
+            margin-bottom: 10px;
+        }
+        .copyright-new {
+            border-top: 1px solid #444;
+            padding-top: 15px;
+            margin-top: 30px;
+            text-align: center;
+            font-size: 0.9rem;
+        }
+        /* Style cho khối Đăng ký */
+        .footer-email-input {
+            width: 100%;
+            padding: 10px;
+            border: none;
+            border-radius: 4px;
+            font-size: 14px;
+            background-color: #444;
+            color: white;
+            box-sizing: border-box;
+        }
+        .submit-btn-new {
+            background-color: black;
+            color: white;
+            padding: 10px;
+            border: none;
+            border-radius: 4px;
+            width: 100%;
+            margin-top: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .submit-btn-new:hover {
+            background-color: var(--primary-color, #E85A70);
+        }
+
+        /* CSS căn ngang liên hệ */
+        .contact-row-new {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 5px;
+            margin-bottom: 10px;
+            flex-wrap: wrap;
+        }
+        .contact-row-new span {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            white-space: nowrap;
+        }
+        
+        @media (max-width: 768px) {
+            .contact-row-new {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 5px;
+            }
+            .footer-new .row.align-items-start {
+                flex-direction: column;
+                flex-wrap: wrap !important;
+            }
+            .footer-new .col.l-4,
+            .footer-new .col.m-4 {
+                max-width: 100%;
+                flex: none;
+            }
+        }
+    </style>
+    
+    <div class="footer-new">
+        <div class="grid wide">
+            <div class="row align-items-start">
+                
+                <div class="col l-4 m-4 s-12">
+                    <h3 class="footer__title-new">OneShop Cosmetics</h3>
+                    <ul class="footer__list-new">
+                        <li class="footer__item-new"><a th:href="@{/}" class="footer__link">Trang chủ</a></li>
+                        <li class="footer__item-new"><a th:href="@{/products}" class="footer__link">Sản phẩm</a></li>
+                        <li class="footer__item-new"><a th:href="@{/news}" class="footer__link">Tin tức & Ưu đãi</a></li>
+                        <li class="footer__item-new"><a th:href="@{/contact}" class="footer__link">Liên hệ</a></li>
+                    </ul>
+                </div>
+
+                <div class="col l-4 m-4 s-12">
+                    <h3 class="footer__title-new">Hỗ trợ khách hàng</h3>
+                    <ul class="footer__list-new">
+                        <li class="footer__item-new"><a th:href="@{/shipping-policy}" class="footer__link">Vận chuyển & Đổi trả</a></li>
+                        
+                        <li class="footer__item-new">
+                            <div class="contact-row-new">
+                                <span><i class="fas fa-phone"></i> 0367xxxxxxxx</span>
+                                <span><i class="fas fa-map-marked-alt"></i> Số 1 Võ Văn Ngân, Thủ Đức, Tp.HCM</span>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="col l-4 m-4 s-12">
+                    <h3 class="footer__title-new">THÀNH VIÊN ONESHOP</h3>
+                    <ul class="footer__list-new">
+                        <li class="footer__item-new">
+                            <span>Đăng ký để nhận thông tin về Sản phẩm mới, Chương trình khuyến mãi đặc biệt và Voucher từ OneShop.</span>
+                        </li>
+                        <li class="footer__item-new">
+                            <form>
+                                <input class="footer-email-input" type="email" placeholder="Địa chỉ Email*" required>
+                                <button type="submit" class="submit-btn-new">ĐĂNG KÝ</button>
+                            </form>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <div class="copyright-new">
+            <span class="footer__text">&copy; Bản quyền thuộc về Nhóm 6 | OneShop Cosmetics</span>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+	xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+	layout:decorate="~{layouts/guest}">
+
+<head>
+<title>Đơn hàng của tôi</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<link th:href="@{/assets/css/home.css}" rel="stylesheet" />
+<link rel="stylesheet" th:href="@{/assets/css/common.css}">
+<style>
+
+.container.my-4 {
+	background-color: var(--white-cl-1, #fff);
+	border-radius: var(--base-radius, 6px);
+	box-shadow: var(--shadow-medium, 0 4px 15px rgba(0, 0, 0, 0.08));
+	padding: 25px;
+}
+
+h1.mb-4 {
+	color: var(--black-cl-2, #222);
+	font-weight: 600; 
+	padding-bottom: 10px;
+	font-size: 2.2rem; 
+}
+
+.tabs {
+	display: flex;
+	position: relative;
+	margin-bottom: 25px;
+	border-bottom: 1px solid #ddd;
+	overflow-x: auto; 
+	white-space: nowrap; 
+	scrollbar-width: none; 
+}
+
+.tabs::-webkit-scrollbar {
+    display: none;
+}
+
+.tab-item {
+	padding: 15px 12px;
+	font-size: 1.5rem;
+	font-weight: 500;
+	color: var(--black-cl-1, #444);
+	cursor: pointer;
+	transition: color 0.3s ease;
+	text-align: center;
+	flex-grow: 1; 
+}
+
+.tab-item:hover {
+	color: var(--default-cl, #9e5bab); 
+}
+
+.tab-item.active {
+	color: var(--default-cl, #9e5bab) !important; 
+	font-weight: 600;
+}
+
+.line {
+	position: absolute;
+	height: 3px; 
+	bottom: -1px; 
+	background: var(--default-cl, #9e5bab) !important; 
+	transition: left 0.3s ease, width 0.3s ease;
+	border-radius: 3px 3px 0 0;
+}
+
+.tab-pane { display: none; }
+.tab-pane.active { display: block; animation: fadeIn 0.4s ease; }
+
+@keyframes fadeIn {
+	from { opacity: 0; transform: translateY(5px); }
+	to { opacity: 1; transform: translateY(0); }
+}
+
+.tab-pane .table {
+	border: 1px solid #eee;
+	border-radius: 6px;
+	overflow: hidden; 
+}
+
+.tab-pane .table thead {
+	background-color: var(--white-cl-3, #f8f7fd);
+	color: var(--black-cl-2, #333);
+	font-weight: 600;
+	font-size: 1.4rem;
+}
+
+.tab-pane tbody tr { transition: background-color 0.2s ease; }
+.tab-pane tbody tr:hover { background-color: #fcf8fd; }
+.tab-pane tbody tr td {
+    padding: 15px 10px;
+    vertical-align: middle;
+    font-size: 1.4rem;
+}
+
+.tab-pane tbody tr td[colspan="6"] {
+	padding: 60px 0;
+	font-size: 1.5rem;
+	color: #888;
+}
+
+.action-cell {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+}
+
+.action-cell .btn {
+	transition: all 0.2s ease;
+	font-size: 1.3rem;
+	padding: 6px 12px;
+}
+
+.action-cell .btn:hover { transform: translateY(-2px); }
+
+.btn.btn-info { background-color: var(--default-cl, #9e5bab); border-color: var(--default-cl, #9e5bab); color: white; }
+.btn.btn-info:hover { background-color: #8a4e9a; border-color: #8a4e9a; }
+.btn.btn-primary { background-color: var(--default-cl, #9e5bab); border-color: var(--default-cl, #9e5bab); }
+.btn.btn-danger { background-color: var(--orange-cl, #d26e4b); border-color: var(--orange-cl, #d26e4b); }
+.btn.btn-success { background-color: #28a745; border-color: #28a745; color: white; }
+.btn.btn-warning { background-color: #ffc107; color: #212529; }
+
+.order-product-image {
+	width: 55px; 
+	height: 55px; 
+	object-fit: cover;
+	border-radius: 4px;
+	border: 1px solid #eee;
+}
+
+.modal-header { background-color: var(--default-cl, #9e5bab); color: white; }
+.modal-header .btn-close { filter: brightness(0) invert(1); }
+
+.header__cart { position: relative; z-index: 1050 !important; }
+.header__cart > a { position: relative; z-index: 1060 !important; display: block; }
+.header__cart-amount { pointer-events: none; }
+.header__cart-wrap { z-index: 1040 !important; }
+</style>
+</head>
+
+<body>
+	<div layout:fragment="content">
+		<div class="container my-4">
+			<h1 class="mb-4">Đơn hàng của tôi</h1>
+
+			<div class="tabs">
+				<div class="tab-item active">Tất cả</div>
+				<div class="tab-item">Chờ xác nhận</div>
+				<div class="tab-item">Đang xử lý</div>
+				<div class="tab-item">Đang giao</div>
+				<div class="tab-item">Đã giao</div>
+				<div class="tab-item">Trả hàng</div>
+				<div class="tab-item">Đã hủy</div>
+				<div class="line"></div>
+			</div>
+
+			<div class="tab-content">
+                <div class="tab-pane active">
+					<table class="table table-bordered align-middle text-center">
+						<thead class="table-light">
+							<tr>
+								<th>Mã Đơn</th><th>Sản phẩm</th><th>Tổng tiền</th><th>Trạng thái</th><th>Ngày tạo</th><th>Hành động</th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr th:each="order : ${orders}">
+								<td th:text="${order.id}"></td>
+								<td><img th:if="${order.orderDetails != null and !order.orderDetails.isEmpty() and order.orderDetails[0].productVariant != null and order.orderDetails[0].productVariant.product != null}" th:src="@{${order.orderDetails[0].productVariant.product.primaryImageUrl ?: '/assets/img/product/no-image.jpg'}}" alt="Ảnh sản phẩm" class="order-product-image"> <span th:unless="${order.orderDetails != null and !order.orderDetails.isEmpty()}">N/A</span></td>
+								<td th:text="${#numbers.formatDecimal(order.total, 0, 'POINT', 0, 'COMMA')} + ' VNĐ'"></td>
+								<td th:text="${order.orderStatus}"></td>
+								<td th:text="${#temporals.format(order.createdAt, 'dd-MM-yyyy HH:mm')}"></td>
+								<td class="action-cell">
+                                    <th:block th:if="${order.orderStatus.name() == 'PENDING' or order.orderStatus.name() == 'CONFIRMED'}">
+                                        <button type="button" class="btn btn-danger btn-sm" th:onclick="'confirmCancellation(\'' + ${order.id} + '\', this)'">Hủy đơn</button>
+                                    </th:block>
+
+                                    <th:block th:if="${order.orderStatus.name() == 'DELIVERING'}">
+                                        <button type="button" class="btn btn-success btn-sm" th:onclick="'confirmReceivedOrder(\'' + ${order.id} + '\', this)'">Đã nhận hàng</button>
+                                    </th:block>
+                                    
+                                    <th:block th:if="${order.orderStatus.name() == 'DELIVERED'}">
+                                        <button type="button" class="btn btn-warning btn-sm" th:onclick="'openReturnModal(\'' + ${order.id} + '\')'">Trả hàng/Hoàn tiền</button>
+                                        <span class="review-status-container" th:if="${order.orderDetails != null and !order.orderDetails.isEmpty()}" th:data-order-id="${order.id}" th:data-product-id="${order.orderDetails[0].productVariant.product.productId}">
+										    <a th:href="@{/user/orders/{id}/review(id=${order.id})}" class="btn btn-primary btn-sm">Đánh giá</a>
+								        </span>
+                                    </th:block>
+
+									<button type="button" class="btn btn-info btn-sm" data-bs-toggle="modal" data-bs-target="#orderDetailsModal" th:data-order-id="${order.id}">Chi tiết</button>
+								</td>
+							</tr>
+							<tr th:if="${#lists.isEmpty(orders)}">
+								<td colspan="6">Bạn chưa có đơn hàng nào. Mua sắm ngay!</td>
+							</tr>
+						</tbody>
+					</table>
+				</div>
+
+                <div class="tab-pane">
+					<table class="table table-bordered align-middle text-center">
+						<thead class="table-light">
+							<tr>
+								<th>Mã Đơn</th><th>Sản phẩm</th><th>Tổng tiền</th><th>Trạng thái</th><th>Ngày tạo</th><th>Hành động</th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr th:each="order : ${orders}" th:if="${order.orderStatus.name() == 'PENDING'}">
+								<td th:text="${order.id}"></td>
+								<td><img th:if="${order.orderDetails != null and !order.orderDetails.isEmpty()}" th:src="@{${order.orderDetails[0].productVariant.product.primaryImageUrl ?: '/assets/img/product/no-image.jpg'}}" alt="Ảnh" class="order-product-image"></td>
+								<td th:text="${#numbers.formatDecimal(order.total, 0, 'POINT', 0, 'COMMA')} + ' VNĐ'"></td>
+								<td th:text="${order.orderStatus}"></td>
+								<td th:text="${#temporals.format(order.createdAt, 'dd-MM-yyyy HH:mm')}"></td>
+								<td class="action-cell">
+									<button type="button" class="btn btn-danger btn-sm" th:onclick="'confirmCancellation(\'' + ${order.id} + '\', this)'">Hủy đơn</button>
+									<button type="button" class="btn btn-info btn-sm" data-bs-toggle="modal" data-bs-target="#orderDetailsModal" th:data-order-id="${order.id}">Chi tiết</button>
+								</td>
+							</tr>
+							<tr th:if="${#lists.isEmpty(orders.?[orderStatus.name() == 'PENDING'])}">
+								<td colspan="6">Không có đơn hàng nào đang chờ xác nhận.</td>
+							</tr>
+						</tbody>
+					</table>
+				</div>
+
+                <div class="tab-pane">
+					<table class="table table-bordered align-middle text-center">
+						<thead class="table-light">
+							<tr>
+								<th>Mã Đơn</th><th>Sản phẩm</th><th>Tổng tiền</th><th>Trạng thái</th><th>Ngày tạo</th><th>Hành động</th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr th:each="order : ${orders}" th:if="${order.orderStatus.name() == 'CONFIRMED' or order.orderStatus.name() == 'PROCESSING'}">
+								<td th:text="${order.id}"></td>
+								<td><img th:if="${order.orderDetails != null and !order.orderDetails.isEmpty()}" th:src="@{${order.orderDetails[0].productVariant.product.primaryImageUrl ?: '/assets/img/product/no-image.jpg'}}" alt="Ảnh" class="order-product-image"></td>
+								<td th:text="${#numbers.formatDecimal(order.total, 0, 'POINT', 0, 'COMMA')} + ' VNĐ'"></td>
+								<td th:text="${order.orderStatus}"></td>
+								<td th:text="${#temporals.format(order.createdAt, 'dd-MM-yyyy HH:mm')}"></td>
+								<td class="action-cell">
+                                    <button th:if="${order.orderStatus.name() == 'CONFIRMED'}" type="button" class="btn btn-danger btn-sm" th:onclick="'confirmCancellation(\'' + ${order.id} + '\', this)'">Hủy đơn</button>
+									<button type="button" class="btn btn-info btn-sm" data-bs-toggle="modal" data-bs-target="#orderDetailsModal" th:data-order-id="${order.id}">Chi tiết</button>
+								</td>
+							</tr>
+							<tr th:if="${#lists.isEmpty(orders.?[orderStatus.name() == 'CONFIRMED' or orderStatus.name() == 'PROCESSING'])}">
+								<td colspan="6">Không có đơn hàng nào chờ lấy hàng.</td>
+							</tr>
+						</tbody>
+					</table>
+				</div>
+
+                <div class="tab-pane">
+					<table class="table table-bordered align-middle text-center">
+						<thead class="table-light">
+							<tr>
+								<th>Mã Đơn</th><th>Sản phẩm</th><th>Tổng tiền</th><th>Trạng thái</th><th>Ngày tạo</th><th>Hành động</th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr th:each="order : ${orders}" th:if="${order.orderStatus.name() == 'DELIVERING'}">
+								<td th:text="${order.id}"></td>
+								<td><img th:if="${order.orderDetails != null and !order.orderDetails.isEmpty()}" th:src="@{${order.orderDetails[0].productVariant.product.primaryImageUrl ?: '/assets/img/product/no-image.jpg'}}" alt="Ảnh" class="order-product-image"></td>
+								<td th:text="${#numbers.formatDecimal(order.total, 0, 'POINT', 0, 'COMMA')} + ' VNĐ'"></td>
+								<td th:text="${order.orderStatus}"></td>
+								<td th:text="${#temporals.format(order.createdAt, 'dd-MM-yyyy HH:mm')}"></td>
+								<td class="action-cell">
+                                    <button type="button" class="btn btn-success btn-sm" th:onclick="'confirmReceivedOrder(\'' + ${order.id} + '\', this)'">Đã nhận hàng</button>
+									<button type="button" class="btn btn-info btn-sm" data-bs-toggle="modal" data-bs-target="#orderDetailsModal" th:data-order-id="${order.id}">Theo dõi</button>
+								</td>
+							</tr>
+							<tr th:if="${#lists.isEmpty(orders.?[orderStatus.name() == 'DELIVERING'])}">
+								<td colspan="6">Không có đơn hàng nào đang được vận chuyển.</td>
+							</tr>
+						</tbody>
+					</table>
+				</div>
+
+                <div class="tab-pane">
+					<table class="table table-bordered align-middle text-center">
+						<thead class="table-light">
+							<tr>
+								<th>Mã Đơn</th><th>Sản phẩm</th><th>Tổng tiền</th><th>Trạng thái</th><th>Ngày tạo</th><th>Hành động</th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr th:each="order : ${orders}" th:if="${order.orderStatus.name() == 'DELIVERED'}">
+								<td th:text="${order.id}"></td>
+								<td><img th:if="${order.orderDetails != null and !order.orderDetails.isEmpty()}" th:src="@{${order.orderDetails[0].productVariant.product.primaryImageUrl ?: '/assets/img/product/no-image.jpg'}}" alt="Ảnh" class="order-product-image"></td>
+								<td th:text="${#numbers.formatDecimal(order.total, 0, 'POINT', 0, 'COMMA')} + ' VNĐ'"></td>
+								<td th:text="${order.orderStatus}"></td>
+								<td th:text="${#temporals.format(order.createdAt, 'dd-MM-yyyy HH:mm')}"></td>
+								<td class="action-cell">
+                                    <button type="button" class="btn btn-warning btn-sm" th:onclick="'openReturnModal(\'' + ${order.id} + '\')'">Trả hàng/Hoàn tiền</button>
+                                    <span class="review-status-container" th:if="${order.orderDetails != null and !order.orderDetails.isEmpty()}" th:data-order-id="${order.id}" th:data-product-id="${order.orderDetails[0].productVariant.product.productId}">
+										<a th:href="@{/user/orders/{id}/review(id=${order.id})}" class="btn btn-primary btn-sm">Đánh giá</a>
+								    </span> 
+									<button type="button" class="btn btn-info btn-sm" data-bs-toggle="modal" data-bs-target="#orderDetailsModal" th:data-order-id="${order.id}">Chi tiết</button>
+                                </td>
+							</tr>
+							<tr th:if="${#lists.isEmpty(orders.?[orderStatus.name() == 'DELIVERED'])}">
+								<td colspan="6">Chưa có đơn hàng nào giao thành công.</td>
+							</tr>
+						</tbody>
+					</table>
+				</div>
+
+                <div class="tab-pane">
+					<table class="table table-bordered align-middle text-center">
+						<thead class="table-light">
+							<tr>
+								<th>Mã Đơn</th><th>Sản phẩm</th><th>Tổng tiền</th><th>Trạng thái</th><th>Ngày tạo</th><th>Hành động</th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr th:each="order : ${orders}" th:if="${order.orderStatus.name() == 'RETURN_REQUESTED' or order.orderStatus.name() == 'RETURNED' or order.orderStatus.name() == 'REFUNDED'}">
+								<td th:text="${order.id}"></td>
+								<td><img th:if="${order.orderDetails != null and !order.orderDetails.isEmpty()}" th:src="@{${order.orderDetails[0].productVariant.product.primaryImageUrl ?: '/assets/img/product/no-image.jpg'}}" alt="Ảnh" class="order-product-image"></td>
+								<td th:text="${#numbers.formatDecimal(order.total, 0, 'POINT', 0, 'COMMA')} + ' VNĐ'"></td>
+								<td th:text="${order.orderStatus}"></td>
+								<td th:text="${#temporals.format(order.createdAt, 'dd-MM-yyyy HH:mm')}"></td>
+								<td class="action-cell">
+									<button type="button" class="btn btn-info btn-sm" data-bs-toggle="modal" data-bs-target="#orderDetailsModal" th:data-order-id="${order.id}">Chi tiết</button>
+								</td>
+							</tr>
+							<tr th:if="${#lists.isEmpty(orders.?[orderStatus.name() == 'RETURN_REQUESTED' or orderStatus.name() == 'RETURNED' or orderStatus.name() == 'REFUNDED'])}">
+								<td colspan="6">Không có đơn hàng nào đang trong trạng thái đổi trả.</td>
+							</tr>
+						</tbody>
+					</table>
+				</div>
+
+                <div class="tab-pane">
+					<table class="table table-bordered align-middle text-center">
+						<thead class="table-light">
+							<tr>
+								<th>Mã Đơn</th><th>Sản phẩm</th><th>Tổng tiền</th><th>Trạng thái</th><th>Ngày tạo</th><th>Hành động</th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr th:each="order : ${orders}" th:if="${order.orderStatus.name() == 'CANCELLED'}">
+								<td th:text="${order.id}"></td>
+								<td><img th:if="${order.orderDetails != null and !order.orderDetails.isEmpty()}" th:src="@{${order.orderDetails[0].productVariant.product.primaryImageUrl ?: '/assets/img/product/no-image.jpg'}}" alt="Ảnh" class="order-product-image"></td>
+								<td th:text="${#numbers.formatDecimal(order.total, 0, 'POINT', 0, 'COMMA')} + ' VNĐ'"></td>
+								<td th:text="${order.orderStatus}"></td>
+								<td th:text="${#temporals.format(order.createdAt, 'dd-MM-yyyy HH:mm')}"></td>
+								<td class="action-cell">
+									<button type="button" class="btn btn-info btn-sm" data-bs-toggle="modal" data-bs-target="#orderDetailsModal" th:data-order-id="${order.id}">Chi tiết</button>
+								</td>
+							</tr>
+							<tr th:if="${#lists.isEmpty(orders.?[orderStatus.name() == 'CANCELLED'])}">
+								<td colspan="6">Không có đơn hàng nào đã bị hủy.</td>
+							</tr>
+						</tbody>
+					</table>
+				</div>
+
+			</div>
+		</div>
+
+        <div class="modal fade" id="orderDetailsModal" tabindex="-1" aria-labelledby="orderDetailsModalLabel" aria-hidden="true">
+			<div class="modal-dialog modal-lg">
+				<div class="modal-content">
+					<div class="modal-header">
+						<h5 class="modal-title" id="orderDetailsModalLabel">Chi tiết Đơn hàng: <span id="modalOrderId"></span></h5>
+						<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+					</div>
+					<div class="modal-body" id="modalOrderDetailsContent">
+						<div class="text-center py-4">
+							<div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div>
+                            <p class="mt-2 text-muted">Đang tải dữ liệu...</p>
+						</div>
+					</div>
+					<div class="modal-footer">
+						<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+					</div>
+				</div>
+			</div>
+		</div>
+
+        <div class="modal fade" id="returnOrderModal" tabindex="-1" aria-labelledby="returnOrderModalLabel" aria-hidden="true">
+			<div class="modal-dialog">
+				<div class="modal-content">
+					<div class="modal-header">
+						<h5 class="modal-title" id="returnOrderModalLabel">Yêu cầu Trả hàng / Hoàn tiền</h5>
+						<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+					</div>
+					<div class="modal-body">
+                        <input type="hidden" id="returnOrderIdInput">
+                        <div class="mb-3">
+                            <label for="returnReason" class="form-label fw-bold">Lý do trả hàng <span class="text-danger">*</span></label>
+                            <select class="form-select" id="returnReason" required>
+                                <option value="">-- Chọn lý do --</option>
+                                <option value="Hàng lỗi/Hư hỏng">Sản phẩm bị lỗi hoặc hư hỏng</option>
+                                <option value="Giao sai sản phẩm">Giao sai sản phẩm (sai màu, sai size,...)</option>
+                                <option value="Thiếu phụ kiện/quà tặng">Thiếu phụ kiện, linh kiện</option>
+                                <option value="Khác">Lý do khác</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="returnDescription" class="form-label fw-bold">Mô tả chi tiết</label>
+                            <textarea class="form-control" id="returnDescription" rows="3" placeholder="Mô tả cụ thể tình trạng bạn gặp phải..."></textarea>
+                        </div>
+                        <p class="text-muted" style="font-size: 1.3rem;"><i>Lưu ý: Bộ phận CSKH có thể liên hệ để yêu cầu cung cấp thêm hình ảnh/video bằng chứng trước khi xét duyệt.</i></p>
+					</div>
+					<div class="modal-footer">
+						<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                        <button type="button" class="btn btn-warning" id="submitReturnBtn" onclick="submitReturnRequest()">Gửi yêu cầu</button>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+		<script th:src="@{/assets/js/jquery-3.6.0.min.js}"></script>
+
+		<script>
+        // Use Case: Hủy đơn hàng
+        function confirmCancellation(orderId, buttonElement) {
+            if (confirm('Bạn có chắc muốn hủy đơn hàng #' + orderId + ' này không?')) {
+                const originalText = $(buttonElement).text();
+                $(buttonElement).prop('disabled', true).text('Đang xử lý...');
+
+                $.ajax({
+                    url: '/user/orders/' + orderId + '/cancel',
+                    method: 'POST',
+                    success: function(response) {
+                        window.location.reload();
+                    },
+                    error: function(jqXHR) {
+                        const errorMsg = jqXHR.responseJSON ? jqXHR.responseJSON.error : 'Không thể hủy đơn hàng. Vui lòng thử lại.';
+                        alert('Lỗi: ' + errorMsg);
+                        $(buttonElement).prop('disabled', false).text(originalText);
+                    }
+                });
+            }
+        }
+
+        // Use Case: Xác nhận đã nhận hàng
+        function confirmReceivedOrder(orderId, buttonElement) {
+            if (confirm('Xác nhận bạn đã nhận được đơn hàng #' + orderId + ' thành công?')) {
+                const originalText = $(buttonElement).text();
+                $(buttonElement).prop('disabled', true).text('Đang xử lý...');
+
+                $.ajax({
+                    url: '/user/orders/' + orderId + '/confirm-received',
+                    method: 'POST',
+                    success: function(response) {
+                        alert(response.message || 'Đã xác nhận nhận hàng.');
+                        window.location.reload();
+                    },
+                    error: function(jqXHR) {
+                        const errorMsg = jqXHR.responseJSON ? jqXHR.responseJSON.error : 'Không thể xác nhận. Vui lòng thử lại.';
+                        alert('Lỗi: ' + errorMsg);
+                        $(buttonElement).prop('disabled', false).text(originalText);
+                    }
+                });
+            }
+        }
+
+        // Use Case: Yêu cầu trả hàng
+        function openReturnModal(orderId) {
+            $('#returnOrderIdInput').val(orderId);
+            $('#returnReason').val('');
+            $('#returnDescription').val('');
+            $('#returnOrderModal').modal('show');
+        }
+
+        function submitReturnRequest() {
+            const orderId = $('#returnOrderIdInput').val();
+            const reason = $('#returnReason').val();
+            const description = $('#returnDescription').val();
+
+            if (!reason) {
+                alert("Vui lòng chọn lý do trả hàng.");
+                return;
+            }
+
+            $('#submitReturnBtn').prop('disabled', true).text('Đang gửi...');
+
+            $.ajax({
+                url: '/user/orders/' + orderId + '/return',
+                method: 'POST',
+                data: {
+                    reason: reason,
+                    description: description
+                },
+                success: function(response) {
+                    alert(response.message || 'Gửi yêu cầu trả hàng thành công.');
+                    $('#returnOrderModal').modal('hide');
+                    window.location.reload();
+                },
+                error: function(jqXHR) {
+                    const errorMsg = jqXHR.responseJSON ? jqXHR.responseJSON.error : 'Lỗi hệ thống khi yêu cầu trả hàng.';
+                    alert('Lỗi: ' + errorMsg);
+                    $('#submitReturnBtn').prop('disabled', false).text('Gửi yêu cầu');
+                }
+            });
+        }
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            const tabs = document.querySelectorAll('.tab-item');
+            const panes = document.querySelectorAll('.tab-pane');
+            const line = document.querySelector('.tabs .line');
+            const orderModal = document.getElementById('orderDetailsModal');
+            
+            const cartLink = document.querySelector('.header__cart > a');
+            if (cartLink) {
+                cartLink.addEventListener('click', function(e) {
+                    e.preventDefault(); 
+                    e.stopPropagation();
+                    window.location.href = this.getAttribute('href'); 
+                });
+            }
+
+            if (!tabs.length || !panes.length || !line || !orderModal) return;
+
+            const updateLinePosition = (activeTab) => {
+                line.style.left = activeTab.offsetLeft + 'px';
+                line.style.width = activeTab.offsetWidth + 'px';
+            };
+
+            const activeTab = document.querySelector('.tab-item.active');
+            if(activeTab) {
+                setTimeout(() => updateLinePosition(activeTab), 100);
+            }
+
+            tabs.forEach((tab, index) => {
+                const pane = panes[index];
+                if (!pane) return;
+                
+                tab.onclick = function() {
+                    document.querySelector('.tab-item.active').classList.remove('active');
+                    document.querySelector('.tab-pane.active').classList.remove('active');
+
+                    tab.classList.add('active');
+                    pane.classList.add('active');
+                    updateLinePosition(tab);
+                    tab.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+                };
+            });
+            
+            window.addEventListener('resize', () => {
+                const currentActiveTab = document.querySelector('.tab-item.active');
+                if(currentActiveTab) updateLinePosition(currentActiveTab);
+            });
+
+            document.querySelectorAll('.review-status-container').forEach(container => {
+                const orderId = container.getAttribute('data-order-id');
+                const productId = container.getAttribute('data-product-id');
+
+                if (orderId && productId) {
+                    fetch(`/user/orders/${orderId}/reviewed/${productId}`)
+                        .then(response => {
+                            if (!response.ok) throw new Error('Network response error');
+                            return response.json(); 
+                        })
+                        .then(data => {
+                            if (data.reviewed) {
+                                container.innerHTML = `<span class="text-success" style="font-weight: 600; font-size: 1.4rem;">Đã đánh giá</span>`;
+                            }
+                        }).catch(err => console.error(err));
+                }
+            });
+            
+            orderModal.addEventListener('show.bs.modal', function (event) {
+                const button = event.relatedTarget;
+                const orderId = button.getAttribute('data-order-id');
+                
+                document.querySelector('#modalOrderId').textContent = orderId;
+                const modalBody = document.querySelector('#modalOrderDetailsContent');
+                
+                modalBody.innerHTML = '<div class="text-center py-4"><div class="spinner-border text-primary" role="status"></div><p class="mt-2 text-muted">Đang tải dữ liệu...</p></div>';
+                
+                $.ajax({
+                    url: '/user/orders/' + orderId + '/details', 
+                    method: 'GET',
+                    success: function(response) {
+                        modalBody.innerHTML = response;
+                    },
+                    error: function() {
+                        modalBody.innerHTML = '<p class="text-danger text-center">Đã có lỗi xảy ra, không thể lấy chi tiết đơn hàng.</p>';
+                    }
+                });
+            });
+        });
+    </script>
+	</div>
+</body>
+</html>

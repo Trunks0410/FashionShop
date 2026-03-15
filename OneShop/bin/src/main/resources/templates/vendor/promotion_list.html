@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+	xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+	layout:decorate="~{vendor/layout/app}">
+<head>
+<title>Quản lý Khuyến mãi</title>
+</head>
+<body>
+	<div layout:fragment="content">
+		<div
+			class="d-flex justify-content-between align-items-center mt-4 mb-3">
+			<h1 class="h3">Quản lý Khuyến mãi</h1>
+			<a th:href="@{/vendor/promotions/add}"
+				class="btn btn-primary shadow-sm"> <i class="fas fa-plus me-2"></i>Tạo
+				Khuyến mãi mới
+			</a>
+		</div>
+		<p class="lead mb-4">Tạo và quản lý các mã giảm giá, chương trình
+			ưu đãi cho sản phẩm của bạn.</p>
+
+		<div th:if="${successMessage}"
+			class="alert alert-success alert-dismissible fade show" role="alert">
+			<span th:text="${successMessage}"></span>
+			<button type="button" class="btn-close" data-bs-dismiss="alert"
+				aria-label="Close"></button>
+		</div>
+		<div th:if="${errorMessage}"
+			class="alert alert-danger alert-dismissible fade show" role="alert">
+			<span th:text="${errorMessage}"></span>
+			<button type="button" class="btn-close" data-bs-dismiss="alert"
+				aria-label="Close"></button>
+		</div>
+
+
+		<div class="card shadow">
+			<div class="card-header py-3">
+				<h6 class="m-0 font-weight-bold">Danh sách khuyến mãi của bạn</h6>
+			</div>
+			<div class="card-body">
+				<div class="table-responsive">
+					<table class="table table-hover align-middle" id="promotionsTable"
+						width="100%" cellspacing="0">
+						<thead class="table-light">
+							<tr class="text-center">
+								<th class="text-start">Tên chiến dịch</th>
+								<th>Mã giảm giá</th>
+								<th>Loại</th>
+								<th>Giá trị</th>
+								<th>Ngày bắt đầu</th>
+								<th>Ngày kết thúc</th>
+								<th>Trạng thái</th>
+								<th>Hành động</th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr th:each="promo : ${promotions}">
+								<td class="text-start" th:text="${promo.campaignName}">Tên
+									chiến dịch mẫu</td>
+								<td class="text-center" th:text="${promo.discountCode}">CODE</td>
+
+								<td class="text-center"
+									th:text="${promo.type != null ? promo.type.name : 'N/A'}">
+									Loại KM</td>
+								<td class="text-center"><span
+									th:if="${promo.type != null and promo.type.code == 'PERCENTAGE'}"
+									th:text="${promo.value != null ? #numbers.formatDecimal(promo.value, 0, 'COMMA', 0, 'POINT') + '%' : 'N/A'}">15%</span>
+									<span
+									th:if="${promo.type != null and promo.type.code == 'FIXED_AMOUNT'}"
+									th:text="${promo.value != null ? #numbers.formatCurrency(promo.value) : 'N/A'}">50.000₫</span>
+									<span
+									th:if="${promo.type != null and promo.type.code == 'FREE_SHIPPING'}">N/A</span>
+								</td>
+
+								<td class="text-center"
+									th:text="${#temporals.format(promo.startDate, 'dd/MM/yyyy')}">01/01/2025</td>
+								<td class="text-center"
+									th:text="${#temporals.format(promo.endDate, 'dd/MM/yyyy')}">31/12/2025</td>
+
+								<td class="text-center"><span
+									th:if="${#temporals.createNow().toLocalDate().isAfter(promo.endDate)}"
+									class="badge bg-secondary">Đã hết hạn</span> <span
+									th:if="${#temporals.createNow().toLocalDate().isBefore(promo.startDate)}"
+									class="badge bg-primary">Đã lên lịch</span> <span
+									th:if="${!#temporals.createNow().toLocalDate().isAfter(promo.endDate) && !#temporals.createNow().toLocalDate().isBefore(promo.startDate)}"
+									class="badge bg-success">Đang hoạt động</span></td>
+
+								<td class="text-center">
+									<form
+										th:action="@{/vendor/promotions/delete/{id}(id=${promo.id})}"
+										method="post" class="d-inline"
+										onsubmit="return confirm('Bạn có chắc muốn xóa khuyến mãi \'' + [[$promo.campaignName]] + '\'?');">
+										<button type="submit" class="btn btn-sm btn-outline-danger"
+											title="Xóa">
+											<i class="fas fa-trash"></i>
+										</button>
+									</form> <a th:href="@{/vendor/promotions/edit/{id}(id=${promo.id})}"
+									class="btn btn-sm btn-outline-info ms-1" title="Sửa"> <i
+										class="fas fa-edit"></i>
+								</a>
+								</td>
+							</tr>
+							<tr th:if="${#lists.isEmpty(promotions)}">
+								<td colspan="8" class="text-center">Bạn chưa tạo khuyến mãi
+									nào.</td>
+							</tr>
+						</tbody>
+					</table>
+				</div>
+			</div>
+		</div>
+	</div>
+</body>
+</html>

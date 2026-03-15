@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{vendor/layout/app}">
+<head>
+    <title>Chờ Duyệt Shop</title>
+    <style>
+        .pending-container {
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 40px;
+            background-color: #fff;
+            border-radius: 8px;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        .pending-icon {
+            font-size: 5rem;
+            color: #ffc107; /* Màu vàng chờ đợi */
+            margin-bottom: 20px;
+        }
+         .rejected-icon {
+            font-size: 5rem;
+            color: #dc3545; /* Màu đỏ lỗi/từ chối */
+            margin-bottom: 20px;
+        }
+        .pending-container h1 {
+            font-size: 1.8rem;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: #333;
+        }
+        .pending-container p {
+            font-size: 1.1rem;
+            color: #555;
+            line-height: 1.6;
+            margin-bottom: 30px;
+        }
+    </style>
+</head>
+<body>
+<div layout:fragment="content">
+    <div class="pending-container">
+        <div th:if="${shopStatus != null and shopStatus.name() == 'PENDING'}" class="pending-icon">
+            <i class="fas fa-hourglass-half"></i>
+        </div>
+        <div th:if="${shopStatus != null and shopStatus.name() == 'REJECTED'}" class="rejected-icon">
+             <i class="fas fa-times-circle"></i>
+        </div>
+         <div th:if="${shopStatus == null or (shopStatus.name() != 'PENDING' and shopStatus.name() != 'REJECTED')}" class="pending-icon">
+             <i class="fas fa-info-circle"></i> </div>
+
+        <h1 th:if="${shopStatus != null and shopStatus.name() == 'PENDING'}">Yêu cầu đang chờ duyệt</h1>
+        <h1 th:if="${shopStatus != null and shopStatus.name() == 'REJECTED'}">Yêu cầu bị từ chối</h1>
+        <h1 th:unless="${shopStatus != null and (shopStatus.name() == 'PENDING' or shopStatus.name() == 'REJECTED')}">Thông báo</h1>
+
+        <p th:if="${shopStatus != null and shopStatus.name() == 'PENDING'}">
+            Yêu cầu mở shop của bạn đang được xem xét bởi quản trị viên.
+            Bạn sẽ nhận được thông báo khi yêu cầu được duyệt. Vui lòng quay lại sau!
+        </p>
+         <p th:if="${shopStatus != null and shopStatus.name() == 'REJECTED'}">
+            Rất tiếc, yêu cầu mở shop của bạn đã bị từ chối.
+            Vui lòng liên hệ bộ phận hỗ trợ để biết thêm chi tiết.
+        </p>
+         <p th:unless="${shopStatus != null and (shopStatus.name() == 'PENDING' or shopStatus.name() == 'REJECTED')}">
+             Hiện tại bạn không thể truy cập khu vực này. Trạng thái shop: <span th:text="${shopStatus?.name() ?: 'Không xác định'}"></span>.
+        </p>
+
+        <div class="btn-actions">
+            <a th:href="@{/}" class="btn btn-secondary">Quay lại Trang chủ</a>
+            </div>
+    </div>
+</div>
+</body>
+</html>

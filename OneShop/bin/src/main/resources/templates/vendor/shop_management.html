@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+	xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+	layout:decorate="~{vendor/layout/app}">
+<head>
+<title>Quản lý Shop</title>
+</head>
+<body>
+	<div layout:fragment="content">
+		<h1 class="h3 mt-4 mb-3">Quản lý Shop</h1>
+		<p class="lead mb-4">Cập nhật thông tin và giao diện hiển thị cho
+			gian hàng của bạn.</p>
+		
+		<div th:if="${successMessage}" class="alert alert-success" role="alert" th:text="${successMessage}"></div>
+        <div th:if="${errorMessage}" class="alert alert-danger" role="alert" th:text="${errorMessage}"></div>
+
+		<div class="card shadow">
+			<div class="card-header py-3">
+				<h6 class="m-0 font-weight-bold">Thông tin chi tiết Shop</h6>
+			</div>
+			<div class="card-body">
+				<form th:action="@{/vendor/shop/update}" th:object="${shopDto}"
+					method="post" enctype="multipart/form-data">
+
+					<div class="mb-4">
+						<label for="shopName" class="form-label fw-bold">Tên Shop</label>
+						<input type="text" class="form-control" th:field="*{shopName}"
+							required>
+					</div>
+
+					<div class="mb-4">
+						<label for="shopDescription" class="form-label fw-bold">Mô
+							tả Shop</label>
+						<textarea class="form-control" th:field="*{shopDescription}"
+							rows="4" required></textarea>
+					</div>
+
+					<div class="row">
+						<div class="col-md-6 mb-4">
+							<label for="shopLogo" class="form-label fw-bold">Logo của
+								Shop</label>
+							<div class="mb-2">
+								<img th:if="${shop.logo != null && !#strings.isEmpty(shop.logo)}"
+									 th:src="@{'/uploads/images/' + ${shop.logo}}"
+									 alt="Logo hiện tại" class="img-thumbnail" width="150"
+									 style="border-radius: 0.5rem;">
+								<img th:if="${shop.logo == null || #strings.isEmpty(shop.logo)}"
+									 th:src="@{/assets/logo.png}" alt="Chưa có logo" class="img-thumbnail" width="150"
+									 style="border-radius: 0.5rem;">
+							</div>
+							<input class="form-control" type="file" id="shopLogo"
+								name="logoFile">
+						</div>
+
+						<div class="col-md-6 mb-4">
+							<label for="shopBanner" class="form-label fw-bold">Banner
+								trang chủ Shop</label>
+							<div class="mb-2">
+								<img th:if="${shop.banner != null && !#strings.isEmpty(shop.banner)}"
+									 th:src="@{'/uploads/images/' + ${shop.banner}}"
+									 alt="Banner hiện tại" class="img-fluid"
+									 style="border-radius: 0.5rem;">
+								<img th:if="${shop.banner == null || #strings.isEmpty(shop.banner)}"
+									 th:src="@{/assets/img/shop-banner-placeholder.png}" alt="Chưa có banner" class="img-fluid"
+									 style="border-radius: 0.5rem;">
+							</div>
+							<input class="form-control" type="file" id="shopBanner"
+								name="bannerFile">
+						</div>
+					</div>
+
+					<hr class="my-4">
+
+					<h5 class="mb-3">Thông tin liên hệ</h5>
+					<div class="row">
+						<div class="col-md-6 mb-3">
+							<label for="contactEmail" class="form-label fw-bold">Email
+								liên hệ công khai</label> <input type="email" class="form-control"
+								th:field="*{contactEmail}" required>
+						</div>
+						<div class="col-md-6 mb-3">
+							<label for="contactPhone" class="form-label fw-bold">Số
+								điện thoại công khai</label> <input type="tel" class="form-control"
+								th:field="*{contactPhone}">
+						</div>
+					</div>
+
+					<div class="mt-4">
+						<button type="submit" class="btn btn-primary px-4">Lưu
+							thay đổi</button>
+					</div>
+				</form>
+			</div>
+		</div>
+	</div>
+</body>
+</html>

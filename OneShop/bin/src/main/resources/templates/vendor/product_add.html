@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+	xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+	layout:decorate="~{vendor/layout/app}">
+<head>
+<title
+	th:text="${isEditMode} ? 'Chỉnh sửa Sản phẩm' : 'Thêm Sản phẩm mới'">Thêm
+	Sản phẩm mới</title>
+<th:block layout:fragment="css">
+	<style>
+/* --- CSS cho phần biến thể --- */
+#variants-container .variant-row {
+	/* Thêm 1 cột cho ảnh (1fr), điều chỉnh các cột khác */
+	grid-template-columns: 2fr 1fr 1.5fr 1.5fr 1fr 1fr auto;
+	/* Name, SKU, Price, Orig.Price, Stock, Image, Delete */
+	gap: 10px;
+	align-items: center;
+	padding: 10px 0;
+	border-bottom: 1px solid #eee;
+}
+
+#variants-container .variant-row:last-child {
+	border-bottom: none;
+}
+
+#variants-container .variant-row input {
+	width: 100%;
+}
+
+.variant-header {
+	/* Thêm header cho cột Ảnh */
+	grid-template-columns: 2fr 1fr 1.5fr 1.5fr 1fr 1fr auto;
+	gap: 10px;
+	padding-bottom: 5px;
+	margin-bottom: 5px;
+	font-weight: bold;
+	color: #555;
+	/* Hiển thị header trên mọi kích thước màn hình */
+	display: grid;
+}
+/* Ẩn header trên màn hình nhỏ nếu cần */
+/* @media (max-width: 767.98px) {
+                 .variant-header {
+                     display: none;
+                 }
+             } */
+/* Style cho từng dòng trên mobile */
+@media ( max-width : 767.98px) {
+	#variants-container .variant-row {
+		grid-template-columns: 1fr; /* Mỗi input chiếm 1 hàng */
+		padding: 15px;
+		border: 1px solid #eee;
+		border-radius: 5px;
+		margin-bottom: 15px;
+		background-color: #f9f9f9;
+		position: relative; /* Cho nút xóa */
+	}
+	#variants-container .variant-row>div {
+		margin-bottom: 10px; /* Khoảng cách giữa các input */
+	}
+	#variants-container .variant-row>div:last-child {
+		margin-bottom: 0;
+	}
+	.remove-variant-btn {
+		position: absolute;
+		top: 10px;
+		right: 10px;
+	}
+	.form-label.d-md-none {
+		display: block !important; /* Luôn hiển thị label trên mobile */
+		margin-bottom: 3px;
+		font-size: 0.9em;
+		color: #555;
+	}
+}
+
+.remove-variant-btn {
+	color: #dc3545;
+	cursor: pointer;
+	font-size: 1.2rem;
+}
+
+.remove-variant-btn:hover {
+	color: #a71d2a;
+}
+
+#variants-container .variant-row:first-child:last-child .remove-variant-btn
+	{
+	display: none;
+}
+
+/* Style cho ảnh thumbnail của variant */
+.variant-current-image img {
+	max-width: 50px; /* Giới hạn chiều rộng */
+	max-height: 50px; /* Giới hạn chiều cao */
+	width: auto; /* Để ảnh không bị kéo giãn */
+	height: auto; /* Để ảnh không bị kéo giãn */
+	object-fit: contain; /* Hiển thị toàn bộ ảnh */
+	border-radius: 4px;
+	border: 1px solid #ddd;
+	display: block; /* Để căn giữa dễ hơn */
+	margin: 0 auto; /* Căn giữa ảnh */
+}
+/* Style cho input file (có thể tùy chỉnh thêm) */
+.variant-image-upload input[type="file"] {
+	font-size: 0.85rem; /* Giảm cỡ chữ */
+	padding: 0.25rem 0.5rem; /* Giảm padding */
+}
+
+/* Căn chỉnh label & lỗi validation */
+label {
+	margin-bottom: 0.3rem;
+}
+
+.is-invalid {
+	border-color: #dc3545 !important;
+}
+
+.invalid-feedback {
+	display: block;
+	width: 100%;
+	margin-top: 0.25rem;
+	font-size: .875em;
+	color: #dc3545;
+}
+</style>
+</th:block>
+</head>
+<body>
+	<div layout:fragment="content">
+		<div
+			class="d-flex justify-content-between align-items-center mt-4 mb-3">
+			<h1 class="h3"
+				th:text="${isEditMode} ? 'Chỉnh sửa Sản phẩm' : 'Thêm Sản phẩm mới'">Thêm
+				Sản phẩm mới</h1>
+			<a th:href="@{/vendor/products}" class="btn btn-secondary"> <i
+				class="fas fa-arrow-left me-2"></i>Quay lại Danh sách
+			</a>
+		</div>
+
+		<div class="card shadow">
+			<div class="card-header py-3">
+				<h6 class="m-0 font-weight-bold">Thông tin Sản phẩm</h6>
+			</div>
+			<div class="card-body p-4">
+
+				<form th:action="@{/vendor/products/save}" th:object="${productDto}"
+					method="post" enctype="multipart/form-data" id="productForm">
+
+					<div th:if="${#fields.hasGlobalErrors()}"
+						class="alert alert-danger mb-3" role="alert">
+						<p th:each="err : ${#fields.globalErrors()}" th:text="${err}"></p>
+					</div>
+					<div
+						th:if="${#fields.hasErrors('*') and not #fields.hasGlobalErrors() and #fields.errorCount() > #fields.globalErrorCount()}"
+						class="alert alert-danger mb-3" role="alert">Vui lòng kiểm
+						tra lại thông tin. Các trường có lỗi đã được đánh dấu.</div>
+					<div th:if="${errorMessage}" class="alert alert-danger mb-3"
+						role="alert" th:text="${errorMessage}"></div>
+
+
+					<input type="hidden" th:field="*{id}" />
+					<div class="mb-3">
+						<label for="productName" class="form-label fw-bold">Tên
+							sản phẩm <span class="text-danger">*</span>
+						</label> <input type="text" class="form-control" th:field="*{productName}"
+							placeholder="Ví dụ: Serum Vitamin C" required
+							th:classappend="${#fields.hasErrors('productName')} ? 'is-invalid' : ''">
+						<div class="invalid-feedback"
+							th:if="${#fields.hasErrors('productName')}"
+							th:errors="*{productName}"></div>
+					</div>
+					<div class="mb-3">
+						<label for="productDescription" class="form-label fw-bold">Mô
+							tả chi tiết <span class="text-danger">*</span>
+						</label>
+						<textarea class="form-control" th:field="*{productDescription}"
+							rows="5"
+							placeholder="Mô tả công dụng, thành phần, cách sử dụng..."
+							required
+							th:classappend="${#fields.hasErrors('productDescription')} ? 'is-invalid' : ''"></textarea>
+						<div class="invalid-feedback"
+							th:if="${#fields.hasErrors('productDescription')}"
+							th:errors="*{productDescription}"></div>
+					</div>
+					<div class="mb-4">
+						<label for="productImages" class="form-label fw-bold">Hình
+							ảnh Chung (Đại diện)</label> <input class="form-control" type="file"
+							id="productImages" name="images" multiple accept="image/*">
+						<small class="form-text text-muted d-block mt-1">Ảnh đại
+							diện chung cho sản phẩm. Ảnh đầu tiên sẽ là ảnh chính.</small>
+						<div
+							th:if="${isEditMode and productDto.existingImageUrls != null and !productDto.existingImageUrls.isEmpty()}"
+							class="mt-2 current-images">
+							<small>Ảnh chung hiện tại:</small><br> <span
+								th:each="imgUrl, iterStat : ${productDto.existingImageUrls}"
+								class="me-2 d-inline-block border rounded p-1 position-relative">
+								<img th:src="@{'/uploads/images/' + ${imgUrl}}"
+								alt="Ảnh sản phẩm" height="60" style="object-fit: contain;">
+							</span>
+						</div>
+					</div>
+					<hr class="my-4">
+					<div class="row">
+						<div class="col-md-6 mb-3">
+							<label for="category" class="form-label fw-bold">Danh mục
+								sản phẩm <span class="text-danger">*</span>
+							</label> <select class="form-select" th:field="*{categoryId}" required
+								th:classappend="${#fields.hasErrors('categoryId')} ? 'is-invalid' : ''">
+								<option value="" disabled selected>-- Chọn danh mục --</option>
+								<option th:each="cat : ${categories}" th:value="${cat.id}"
+									th:text="${cat.name}">Danh mục</option>
+							</select>
+							<div class="invalid-feedback"
+								th:if="${#fields.hasErrors('categoryId')}"
+								th:errors="*{categoryId}"></div>
+						</div>
+						<div class="col-md-6 mb-3">
+							<label class="form-label fw-bold">Thương hiệu</label>
+							<div class="input-group">
+								<select class="form-select" th:field="*{brandId}"
+									id="brandSelect">
+									<option value="" selected>-- Chọn thương hiệu có sẵn
+										--</option>
+									<option th:each="brand : ${brands}" th:value="${brand.brandId}"
+										th:text="${brand.name}">Thương hiệu</option>
+								</select> <input type="text" class="form-control"
+									th:field="*{newBrandName}" id="newBrandNameInput"
+									placeholder="Hoặc nhập tên thương hiệu mới">
+							</div>
+							<div class="text-danger mt-1 small"
+								th:if="${#fields.hasErrors('newBrandName')}"
+								th:errors="*{newBrandName}"></div>
+							<div class="text-danger mt-1 small"
+								th:if="${#fields.hasErrors('brandId')}" th:errors="*{brandId}"></div>
+						</div>
+					</div>
+					<hr class="my-4">
+
+					<div class="mb-4">
+						<label class="form-label fw-bold">Các loại sản phẩm (Biến
+							thể) <span class="text-danger">*</span>
+						</label> <small class="form-text text-muted d-block mb-2">Nhập
+							thông tin cho từng loại (ví dụ: màu sắc, kích thước). Mỗi loại có
+							thể có ảnh riêng.</small>
+						<div class="text-danger mt-1 mb-2 small"
+							th:if="${#fields.hasErrors('variants') and not #strings.contains(#fields.errors('variants')[0], '[')}">
+							<span th:errors="*{variants}"></span>
+						</div>
+
+
+						<div id="variants-container">
+							<div class="variant-header d-none d-md-grid">
+								<div>
+									Tên loại <span class="text-danger">*</span>
+								</div>
+								<div>SKU</div>
+								<div>
+									Giá bán (VNĐ) <span class="text-danger">*</span>
+								</div>
+								<div>Giá gốc (VNĐ)</div>
+								<div>
+									Tồn kho <span class="text-danger">*</span>
+								</div>
+								<div>Ảnh loại</div>
+								<div>Xóa</div>
+							</div>
+
+							<div class="variant-row"
+								th:each="variant, iterStat : *{variants}">
+								<input type="hidden"
+									th:field="*{variants[__${iterStat.index}__].variantId}" /> <input
+									type="hidden"
+									th:field="*{variants[__${iterStat.index}__].existingImageUrl}" />
+
+								<div>
+									<label th:for="${'variant-name-' + iterStat.index}"
+										class="form-label d-md-none">Tên loại *</label> <input
+										type="text" th:id="${'variant-name-' + iterStat.index}"
+										class="form-control"
+										th:field="*{variants[__${iterStat.index}__].name}"
+										placeholder="VD: Màu Đỏ, Size L" required
+										th:classappend="${#fields.hasErrors('variants[__${iterStat.index}__].name')} ? 'is-invalid' : ''">
+									<div class="invalid-feedback"
+										th:if="${#fields.hasErrors('variants[__${iterStat.index}__].name')}"
+										th:errors="*{variants[__${iterStat.index}__].name}"></div>
+								</div>
+								<div>
+									<label th:for="${'variant-sku-' + iterStat.index}"
+										class="form-label d-md-none">SKU</label> <input type="text"
+										th:id="${'variant-sku-' + iterStat.index}"
+										class="form-control"
+										th:field="*{variants[__${iterStat.index}__].sku}"
+										placeholder="Mã SKU (nếu có)"
+										th:classappend="${#fields.hasErrors('variants[__${iterStat.index}__].sku')} ? 'is-invalid' : ''">
+									<div class="invalid-feedback"
+										th:if="${#fields.hasErrors('variants[__${iterStat.index}__].sku')}"
+										th:errors="*{variants[__${iterStat.index}__].sku}"></div>
+								</div>
+								<div>
+									<label th:for="${'variant-price-' + iterStat.index}"
+										class="form-label d-md-none">Giá bán (VNĐ) *</label> <input
+										type="number" th:id="${'variant-price-' + iterStat.index}"
+										class="form-control"
+										th:field="*{variants[__${iterStat.index}__].price}"
+										placeholder="Giá bán" required min="1"
+										th:classappend="${#fields.hasErrors('variants[__${iterStat.index}__].price')} ? 'is-invalid' : ''">
+									<div class="invalid-feedback"
+										th:if="${#fields.hasErrors('variants[__${iterStat.index}__].price')}"
+										th:errors="*{variants[__${iterStat.index}__].price}"></div>
+								</div>
+								<div>
+									<label th:for="${'variant-originalPrice-' + iterStat.index}"
+										class="form-label d-md-none">Giá gốc (VNĐ)</label> <input
+										type="number"
+										th:id="${'variant-originalPrice-' + iterStat.index}"
+										class="form-control"
+										th:field="*{variants[__${iterStat.index}__].originalPrice}"
+										placeholder="Giá gốc (nếu có)" min="0"
+										th:classappend="${#fields.hasErrors('variants[__${iterStat.index}__].originalPrice')} ? 'is-invalid' : ''">
+									<div class="invalid-feedback"
+										th:if="${#fields.hasErrors('variants[__${iterStat.index}__].originalPrice')}"
+										th:errors="*{variants[__${iterStat.index}__].originalPrice}"></div>
+								</div>
+								<div>
+									<label th:for="${'variant-stock-' + iterStat.index}"
+										class="form-label d-md-none">Tồn kho *</label> <input
+										type="number" th:id="${'variant-stock-' + iterStat.index}"
+										class="form-control"
+										th:field="*{variants[__${iterStat.index}__].stock}"
+										placeholder="Số lượng" required min="0"
+										th:classappend="${#fields.hasErrors('variants[__${iterStat.index}__].stock')} ? 'is-invalid' : ''">
+									<div class="invalid-feedback"
+										th:if="${#fields.hasErrors('variants[__${iterStat.index}__].stock')}"
+										th:errors="*{variants[__${iterStat.index}__].stock}"></div>
+								</div>
+
+								<div class="variant-image-upload">
+									<label th:for="${'variant-image-' + iterStat.index}"
+										class="form-label d-md-none">Ảnh loại</label> <input
+										type="file" th:id="${'variant-image-' + iterStat.index}"
+										class="form-control form-control-sm"
+										th:name="'variants[' + ${iterStat.index} + '].variantImageFile'"
+										accept="image/*">
+									<div class="mt-1 variant-current-image text-center"
+										th:if="${variant.existingImageUrl != null and !#strings.isEmpty(variant.existingImageUrl)}">
+										<img
+											th:src="@{'/uploads/images/' + ${variant.existingImageUrl}}"
+											alt="Ảnh hiện tại">
+									</div>
+								</div>
+								<div class="text-center">
+									<i class="fas fa-times-circle remove-variant-btn"
+										title="Xóa loại này"></i>
+								</div>
+							</div>
+						</div>
+
+						<button type="button" class="btn btn-outline-success mt-2"
+							id="add-variant-btn">
+							<i class="fas fa-plus me-1"></i> Thêm loại khác
+						</button>
+					</div>
+
+					<div class="mb-4">
+						<label for="productTags" class="form-label fw-bold">Thẻ
+							(Tags) / Từ khóa</label> <input type="text" class="form-control"
+							th:field="*{productTags}"
+							placeholder="ví dụ: thuần chay, cấp ẩm, chống lão hóa"> <small
+							class="form-text text-muted d-block mt-1">Các từ khóa
+							cách nhau bởi dấu phẩy (,)</small>
+					</div>
+
+					<div class="mt-4 pt-3 border-top">
+						<button type="submit" class="btn btn-primary px-4">Lưu
+							Sản phẩm</button>
+						<a th:href="@{/vendor/products}" class="btn btn-light ms-2">Hủy
+							bỏ</a>
+					</div>
+				</form>
+			</div>
+		</div>
+	</div>
+
+	<th:block layout:fragment="js">
+		<script>
+    $(document).ready(function() {
+        const variantsContainer = $('#variants-container');
+        let variantIndex = variantsContainer.find('.variant-row').length;
+
+        // --- Hàm tạo một dòng biến thể mới ---
+        function createVariantRow(index) {
+            // Thêm cột Ảnh và bỏ step="1000" ở giá gốc
+            return `
+                <div class="variant-row">
+                    <input type="hidden" name="variants[${index}].variantId" value="" />
+                    <input type="hidden" name="variants[${index}].existingImageUrl" value="" />
+                    <div>
+                        <label for="variant-name-${index}" class="form-label d-md-none">Tên loại *</label>
+                        <input type="text" id="variant-name-${index}" class="form-control" name="variants[${index}].name" placeholder="VD: Màu Đỏ, Size L" required>
+                         <div class="invalid-feedback"></div>
+                    </div>
+                    <div>
+                        <label for="variant-sku-${index}" class="form-label d-md-none">SKU</label>
+                        <input type="text" id="variant-sku-${index}" class="form-control" name="variants[${index}].sku" placeholder="Mã SKU (nếu có)">
+                         <div class="invalid-feedback"></div>
+                    </div>
+                    <div>
+                    <label for="variant-price-${index}" class="form-label d-md-none">Giá bán (VNĐ) *</label>
+                   <input type="number" id="variant-price-${index}" class="form-control" name="variants[${index}].price" placeholder="Giá bán" required min="1">
+                    <div class="invalid-feedback"></div>
+               </div>
+                    <div>
+                         <label for="variant-originalPrice-${index}" class="form-label d-md-none">Giá gốc (VNĐ)</label>
+                         <input type="number" id="variant-originalPrice-${index}" class="form-control" name="variants[${index}].originalPrice" placeholder="Giá gốc (nếu có)" min="0">
+                         <div class="invalid-feedback"></div>
+                    </div>
+                    <div>
+                         <label for="variant-stock-${index}" class="form-label d-md-none">Tồn kho *</label>
+                        <input type="number" id="variant-stock-${index}" class="form-control" name="variants[${index}].stock" placeholder="Số lượng" required min="0">
+                         <div class="invalid-feedback"></div>
+                    </div>
+                    <div class="variant-image-upload">
+                         <label for="variant-image-${index}" class="form-label d-md-none">Ảnh loại</label>
+                         <input type="file" id="variant-image-${index}" class="form-control form-control-sm" name="variants[${index}].variantImageFile" accept="image/*">
+                         <div class="mt-1 variant-current-image text-center"></div>
+                    </div>
+                    <div class="text-center">
+                        <i class="fas fa-times-circle remove-variant-btn" title="Xóa loại này"></i>
+                    </div>
+                </div>
+            `;
+        }
+
+        // --- Xử lý thêm dòng biến thể ---
+        $('#add-variant-btn').on('click', function() {
+            const newRowHtml = createVariantRow(variantIndex);
+            variantsContainer.append(newRowHtml);
+            variantIndex++;
+            updateRemoveButtonsVisibility();
+        });
+
+        // --- Xử lý xóa dòng biến thể ---
+        variantsContainer.on('click', '.remove-variant-btn', function() {
+            if (variantsContainer.find('.variant-row').length > 1) {
+                $(this).closest('.variant-row').remove();
+                updateVariantIndexes();
+                updateRemoveButtonsVisibility();
+            } else {
+                alert('Sản phẩm phải có ít nhất một loại.');
+            }
+        });
+
+        // --- Hàm cập nhật lại index cho các input/label sau khi xóa ---
+        function updateVariantIndexes() {
+             variantsContainer.find('.variant-row').each(function(newIndex) {
+                 $(this).find('input, select, textarea, label').each(function() {
+                     const oldName = $(this).attr('name');
+                     // Cập nhật name
+                     if (oldName) {
+                         const newName = oldName.replace(/variants\[\d+\]/g, `variants[${newIndex}]`);
+                         $(this).attr('name', newName);
+                     }
+                     // Cập nhật id
+                     const oldId = $(this).attr('id');
+                     if (oldId) {
+                          const newId = oldId.replace(/-\d+$/, `-${newIndex}`); // Chỉ thay thế số ở cuối
+                          $(this).attr('id', newId);
+                     }
+                     // Cập nhật for (của label)
+                     const oldFor = $(this).attr('for');
+                      if (oldFor) {
+                          const newFor = oldFor.replace(/-\d+$/, `-${newIndex}`); // Chỉ thay thế số ở cuối
+                          $(this).attr('for', newFor);
+                     }
+                 });
+             });
+             variantIndex = variantsContainer.find('.variant-row').length; // Cập nhật lại tổng số dòng
+        }
+
+
+        // --- Hàm ẩn/hiện nút xóa cuối cùng ---
+        function updateRemoveButtonsVisibility() {
+            const rows = variantsContainer.find('.variant-row');
+            rows.find('.remove-variant-btn').show(); // Hiện tất cả trước
+            if (rows.length <= 1) { // Nếu chỉ còn 1 hoặc 0 dòng
+                 rows.find('.remove-variant-btn').hide(); // Ẩn nút xóa của dòng đó
+            }
+        }
+
+        // --- Xử lý logic chọn/nhập Brand ---
+        $('#brandSelect').on('change', function() {
+            $('#newBrandNameInput').val('').prop('disabled', !!$(this).val());
+        });
+        $('#newBrandNameInput').on('input', function() {
+             $('#brandSelect').val('').prop('disabled', $(this).val().trim().length > 0);
+        });
+        // Initial state check for brand inputs
+        if ($('#brandSelect').val()) { $('#newBrandNameInput').prop('disabled', true); }
+        else if ($('#newBrandNameInput').val().trim()) { $('#brandSelect').prop('disabled', true); }
+
+        // Gọi lần đầu khi tải trang
+        updateVariantIndexes(); // Đảm bảo index đúng từ đầu
+        updateRemoveButtonsVisibility();
+
+        // Xử lý hiển thị ảnh preview khi chọn file cho variant
+        variantsContainer.on('change', 'input[type="file"]', function(event) {
+            const input = event.target;
+            const $currentRow = $(input).closest('.variant-row');
+            const $imagePreviewContainer = $currentRow.find('.variant-current-image');
+
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    // Xóa ảnh cũ (nếu có) và hiển thị ảnh mới
+                    $imagePreviewContainer.html(`<img src="${e.target.result}" alt="Ảnh xem trước">`);
+                    // Xóa giá trị của hidden input existingImageUrl để server biết là ảnh mới
+                    $currentRow.find('input[type="hidden"][name$=".existingImageUrl"]').val('');
+                }
+                reader.readAsDataURL(input.files[0]);
+            } else {
+                // Nếu không chọn file mới, kiểm tra xem có ảnh cũ không để hiển thị lại
+                const existingImageUrl = $currentRow.find('input[type="hidden"][name$=".existingImageUrl"]').val();
+                if (existingImageUrl) {
+                    $imagePreviewContainer.html(`<img src="/uploads/images/${existingImageUrl}" alt="Ảnh hiện tại">`);
+                } else {
+                    $imagePreviewContainer.empty(); // Xóa nếu không có file và cũng không có ảnh cũ
+                }
+            }
+        });
+
+
+    });
+</script>
+	</th:block>
+
+</body>
+</html>

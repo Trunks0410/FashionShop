@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/guest}">
+<head>
+    <title>Hồ sơ của tôi</title>
+    <th:block layout:fragment="css">
+        <link rel="stylesheet" th:href="@{/assets/css/common.css}">
+        <style>
+            .profile-container {
+                max-width: 800px;
+                margin: 40px auto;
+            }
+            /* CÁC STYLE CŨ (ĐÃ ĐƯỢC GHI ĐÈ BÊN DƯỚI) */
+            .card-header {
+                background-color: #f8f9fa;
+            }
+            .card-header h6 {
+                font-size: 1.25rem;
+                font-weight: 600;
+            }
+            .form-label {
+                font-size: 1rem;
+                margin-bottom: 0.5rem;
+            }
+            .form-control {
+                font-size: 1rem;
+                padding: 0.6rem 0.75rem;
+            }
+            h1.h3 {
+                font-size: 1.75rem;
+                font-weight: 600;
+            }
+            .btn {
+                font-size: 1rem;
+                padding: 0.5rem 1.5rem;
+            }
+
+            /* ================================================= */
+            /* === CSS NÂNG CẤP CHO TRANG HỒ SƠ (profile.html) === */
+            /* ================================================= */
+
+            /* --- 1. Tiêu đề & Card chính --- */
+            h1.h3 {
+                color: var(--black-cl-2, #222);
+                font-weight: 600;
+                font-size: 2.4rem;
+            }
+
+            .card.shadow {
+                /* Áp dụng style card nhất quán */
+                border-radius: var(--base-radius, 6px) !important;
+                box-shadow: var(--shadow-medium, 0 4px 15px rgba(0,0,0,0.15)) !important;
+                border: none; /* Bỏ border mặc định */
+                overflow: hidden; /* Giữ bo góc cho header */
+            }
+
+            /* --- 2. Card Header (Theo theme) --- */
+            .card-header {
+                background-color: var(--default-cl, #9e5bab) !important;
+                color: var(--white-cl-1, #fff);
+            }
+            .card-header h6 {
+                font-size: 1.8rem;
+                font-weight: 600;
+                color: var(--white-cl-1, #fff);
+            }
+
+            /* --- 3. Form Styling --- */
+            .form-label.fw-bold {
+                font-size: 1.4rem;
+                font-weight: 600 !important;
+                color: var(--black-cl-2, #222);
+            }
+
+            .form-control {
+                font-size: 1.4rem;
+                padding: 10px 12px;
+                height: auto;
+                /* Áp dụng style từ common.css */
+                border: 1px solid #ddd;
+                border-radius: 4px;
+                transition: border-color 0.3s, box-shadow 0.3s;
+            }
+
+            .form-control:focus {
+                /* Hiệu ứng focus màu tím */
+                outline: none;
+                border-color: var(--default-cl, #9e5bab);
+                box-shadow: 0 0 0 3px rgba(158, 91, 171, 0.2);
+            }
+            /* Đảm bảo style của bootstrap 'is-invalid' vẫn hoạt động */
+            .form-control.is-invalid:focus {
+                 box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.25);
+            }
+
+            /* --- 4. Buttons (Theo theme & Sống động) --- */
+            .btn {
+                /* Đảm bảo style nút từ common.css được áp dụng */
+                font-size: 1.4rem;
+                padding: 10px 24px;
+                text-transform: uppercase;
+                font-weight: 600;
+                transition: all 0.3s ease;
+            }
+            .btn:hover {
+                transform: translateY(-2px) scale(1.02);
+                box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            }
+
+            /* Nút 'Lưu thay đổi' */
+            .btn-primary {
+                background-color: var(--default-cl, #9e5bab);
+                border-color: var(--default-cl, #9e5bab);
+            }
+            .btn-primary:hover {
+                background-color: var(--default-cl-darker, #8a4e9a);
+                border-color: var(--default-cl-darker, #8a4e9a);
+            }
+
+            /* Nút 'Quay lại' */
+            .btn-secondary {
+                background-color: #6c757d;
+                border-color: #6c757d;
+            }
+            .btn-secondary:hover {
+                background-color: #5a6268;
+                border-color: #545b62;
+            }
+
+            /* Nút 'Quản lý Sổ Địa Chỉ' */
+            .btn-outline-info {
+                color: var(--default-cl, #9e5bab);
+                border-color: var(--default-cl, #9e5bab);
+            }
+            .btn-outline-info:hover {
+                background-color: var(--default-cl, #9e5bab);
+                border-color: var(--default-cl, #9e5bab);
+                color: var(--white-cl-1, #fff);
+            }
+
+            /* --- 5. Alerts (Thông báo) --- */
+            /* (Giả định bạn đã tải FontAwesome) */
+            .alert {
+                display: flex;
+                align-items: center;
+                padding: 15px 20px;
+                font-size: 1.5rem;
+                border-radius: var(--base-radius, 6px);
+                border-width: 0 0 0 5px; /* Chỉ giữ viền trái */
+                box-shadow: var(--shadow-light, 0 2px 8px rgba(0,0,0,0.08));
+                background-color: var(--white-cl-1, #fff);
+            }
+            .alert .btn-close {
+                margin-left: auto;
+            }
+            .alert::before {
+                font-family: "Font Awesome 5 Free"; /* Cần FontAwesome */
+                font-weight: 900;
+                font-size: 1.8rem;
+                margin-right: 15px;
+            }
+
+            .alert-success {
+                border-left-color: #198754; /* Màu xanh */
+                color: #146c43;
+            }
+            .alert-success::before {
+                content: "\f058"; /* Icon check-circle */
+                color: #198754;
+            }
+
+            .alert-danger {
+                border-left-color: #dc3545; /* Màu đỏ */
+                color: #b02a37;
+            }
+            .alert-danger::before {
+                content: "\f071"; /* Icon exclamation-triangle */
+                color: #dc3545;
+            }
+
+        </style>
+    </th:block>
+</head>
+<body>
+<div layout:fragment="content">
+    <div class="container profile-container">
+        <h1 class="h3 mb-4">Hồ sơ của tôi</h1>
+
+        <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show" role="alert">
+            <span th:text="${successMessage}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show" role="alert">
+            <span th:text="${errorMessage}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+
+        <div class="card shadow">
+            <div class="card-header py-3">
+                <h6 class="m-0">Thông tin cá nhân</h6>
+            </div>
+            <div class="card-body p-4">
+                <form th:action="@{/user/profile/update}" th:object="${profileUpdateDto}" method="post">
+
+                    <div th:if="${#fields.hasAnyErrors()}" class="alert alert-danger mb-3" role="alert">
+                        Vui lòng kiểm tra lại thông tin. Các trường có lỗi đã được đánh dấu.
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="fullName" class="form-label fw-bold">Họ và tên <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" th:field="*{fullName}" required
+                                   th:classappend="${#fields.hasErrors('fullName')} ? 'is-invalid' : ''">
+                            <div class="invalid-feedback" th:if="${#fields.hasErrors('fullName')}" th:errors="*{fullName}"></div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="email" class="form-label fw-bold">Email <span class="text-danger">*</span></label>
+                            <input type="email" class="form-control" th:field="*{email}" required
+                                   th:classappend="${#fields.hasErrors('email')} ? 'is-invalid' : ''">
+                            <div class="invalid-feedback" th:if="${#fields.hasErrors('email')}" th:errors="*{email}"></div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="phoneNumber" class="form-label fw-bold">Số điện thoại</label>
+                        <input type="tel" class="form-control" th:field="*{phoneNumber}"
+                               th:classappend="${#fields.hasErrors('phoneNumber')} ? 'is-invalid' : ''">
+                        <div class="invalid-feedback" th:if="${#fields.hasErrors('phoneNumber')}" th:errors="*{phoneNumber}"></div>
+                    </div>
+
+                    <div class="mt-4 pt-3 border-top">
+                        <button type="submit" class="btn btn-primary px-4">Lưu thay đổi</button>
+                        <a th:href="@{/}" class="btn btn-secondary ms-2">Quay lại</a>
+                        <a th:href="@{/user/addresses}" class="btn btn-outline-info ms-2">Quản lý Sổ Địa Chỉ</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

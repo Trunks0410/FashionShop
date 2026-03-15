@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đăng ký tài khoản OneShop</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+    <style>
+        /* CSS giữ nguyên như trước, bỏ phần .social-login nếu không cần */
+        :root { --primary-color: #E85A70; --left-bg-start: #fadde1; --left-bg-end: #e6d4f0; --secondary-color: #f07b8d; --gradient-start: #f8cdda; --gradient-end: #d1b1e0; --background-color: #f8f8f8; --text-color: #333; --text-muted: #666; --white: #fff; }
+        body { font-family: Arial, sans-serif; background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end)); display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; overflow: auto; }
+        .auth-container { background-color: var(--white); border-radius: 10px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1); overflow: hidden; display: flex; max-width: 900px; width: 95%; min-height: 500px; margin-top: 2rem; margin-bottom: 2rem; }
+        .auth-left { background: linear-gradient(135deg, var(--left-bg-start), var(--left-bg-end)); color: var(--primary-color); box-shadow: inset 0 0 50px rgba(255, 255, 255, 0.3), 0 5px 15px rgba(0, 0, 0, 0.1); display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 30px; text-align: center; flex: 1; position: relative; }
+        .auth-left img { width: 350px; margin-bottom: 20px; filter: drop-shadow(0px 0px 8px rgba(232, 90, 112, 0.6)) drop-shadow(0 6px 8px rgba(0, 0, 0, 0.25)); }
+        .auth-left h2 { font-size: 2.8rem; margin-bottom: 10px; font-weight: bold; color: var(--primary-color); text-shadow: 1px 1px 3px rgba(255, 255, 255, 0.5); }
+        .auth-left p { font-size: 1.1rem; line-height: 1.6; color: #6a4f7b; }
+        .auth-right { flex: 1; padding: 40px; display: flex; flex-direction: column; justify-content: center; }
+        .auth-right h3 { font-size: 1.8rem; margin-bottom: 30px; color: var(--text-color); text-align: center; font-weight: bold; }
+        .form-control { border-radius: 5px; padding: 12px 15px; font-size: 1rem; border: 1px solid #ddd; }
+        .form-control.is-invalid { border-color: #dc3545; } /* Thêm style lỗi */
+        .invalid-feedback { font-size: 0.875em; color: #dc3545; } /* Thêm style lỗi */
+        .form-control:focus { border-color: var(--primary-color); box-shadow: 0 0 0 0.25rem rgba(232, 90, 112, 0.25); }
+        .input-group { position: relative; }
+        .password-toggle-icon { position: absolute; right: 15px; top: 50%; transform: translateY(-50%); cursor: pointer; color: var(--text-muted); z-index: 10; }
+        .btn-primary { background-color: var(--primary-color); border-color: var(--primary-color); padding: 12px; font-size: 1.1rem; border-radius: 5px; transition: background-color 0.3s ease; font-weight: bold; }
+        .btn-primary:hover { background-color: var(--secondary-color); border-color: var(--secondary-color); }
+        .link-text { color: var(--primary-color); font-weight: 600; text-decoration: none; font-size: 0.9rem; }
+        .link-text:hover { text-decoration: underline; }
+        /* Bỏ .separator nếu không còn dùng */
+        @media (max-width: 768px) { .auth-container { flex-direction: column; max-width: 450px; margin-top: 1rem; margin-bottom: 1rem; } .auth-left { min-height: auto; padding: 30px 20px; } .auth-right { padding: 30px; } .auth-left h2 { font-size: 2rem; } .auth-left p { font-size: 1rem; } }
+    </style>
+</head>
+<body>
+<div class="auth-container">
+    <div class="auth-left">
+        <img th:src="@{/assets/logo.png}" alt="OneShop Logo">
+        <h2>OneShop</h2>
+        <p>Nền tảng thương mại điện tử yêu thích của bạn!</p>
+    </div>
+    <div class="auth-right">
+        <h3>Đăng ký tài khoản</h3>
+
+        <form th:action="@{/register}" th:object="${registerRequestDto}" method="post">
+
+            <div th:if="${#fields.hasAnyErrors()}" class="alert alert-danger mb-3" role="alert">
+                Vui lòng kiểm tra lại thông tin.
+            </div>
+            <div th:if="${errorMessage}" class="alert alert-danger mb-3" role="alert" th:text="${errorMessage}"></div>
+
+
+            <div class="mb-3">
+                <input type="text" class="form-control" th:field="*{fullName}" placeholder="Họ và tên" required
+                       th:classappend="${#fields.hasErrors('fullName')} ? 'is-invalid' : ''">
+                <div class="invalid-feedback" th:if="${#fields.hasErrors('fullName')}" th:errors="*{fullName}"></div>
+            </div>
+            <div class="mb-3">
+                <input type="email" class="form-control" th:field="*{email}" placeholder="Email" required
+                       th:classappend="${#fields.hasErrors('email')} ? 'is-invalid' : ''">
+                <div class="invalid-feedback" th:if="${#fields.hasErrors('email')}" th:errors="*{email}"></div>
+            </div>
+            <div class="mb-3">
+                <input type="tel" class="form-control" th:field="*{phoneNumber}" placeholder="Số điện thoại" required
+                       th:classappend="${#fields.hasErrors('phoneNumber')} ? 'is-invalid' : ''">
+                <div class="invalid-feedback" th:if="${#fields.hasErrors('phoneNumber')}" th:errors="*{phoneNumber}"></div>
+            </div>
+            <div class="mb-3">
+                <input type="text" class="form-control" th:field="*{username}" placeholder="Tên đăng nhập" required
+                       th:classappend="${#fields.hasErrors('username')} ? 'is-invalid' : ''">
+                <div class="invalid-feedback" th:if="${#fields.hasErrors('username')}" th:errors="*{username}"></div>
+            </div>
+            <div class="mb-3 input-group">
+                <input type="password" class="form-control" id="password" th:field="*{password}" placeholder="Mật khẩu" required
+                       th:classappend="${#fields.hasErrors('password')} ? 'is-invalid' : ''">
+                <span class="password-toggle-icon" onclick="togglePasswordVisibility('password', 'toggleIcon1')">
+                    <i class="fas fa-eye" id="toggleIcon1"></i>
+                </span>
+                 <div class="invalid-feedback" th:if="${#fields.hasErrors('password')}" th:errors="*{password}"></div>
+            </div>
+
+            <div class="mb-3 input-group">
+                <input type="password" class="form-control" id="confirmPassword" th:field="*{confirmPassword}" placeholder="Xác nhận mật khẩu" required
+                       th:classappend="${#fields.hasErrors('confirmPassword')} ? 'is-invalid' : ''">
+                <span class="password-toggle-icon" onclick="togglePasswordVisibility('confirmPassword', 'toggleIcon2')">
+                    <i class="fas fa-eye" id="toggleIcon2"></i>
+                </span>
+                 <div class="invalid-feedback" th:if="${#fields.hasErrors('confirmPassword')}" th:errors="*{confirmPassword}"></div>
+            </div>
+
+            <div class="d-grid mb-3">
+                <button type="submit" class="btn btn-primary">ĐĂNG KÝ</button>
+            </div>
+        </form>
+
+        <div class="text-center mt-3">
+            <p class="mb-0">
+                Bạn đã có tài khoản? <a th:href="@{/login}" class="link-text">Đăng nhập</a>
+            </p>
+        </div>
+    </div>
+</div>
+
+<script>
+    function togglePasswordVisibility(inputId, iconId) {
+        const passwordInput = document.getElementById(inputId);
+        const toggleIcon = document.getElementById(iconId);
+        const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+        passwordInput.setAttribute('type', type);
+        toggleIcon.classList.toggle('fa-eye');
+        toggleIcon.classList.toggle('fa-eye-slash');
+    }
+</script>
+</body>
+</html>

@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+	xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+	layout:decorate="~{vendor/layout/app}">
+<head>
+    <meta charset="UTF-8">
+    <title>Tin nhắn từ khách</title>
+
+    <th:block layout:fragment="css">
+        <style>
+            /* Các style cũ giữ nguyên */
+            .chat-container {
+                max-width: 100%;
+                margin: 0;
+                display: flex;
+                gap: 20px;
+                max-height: calc(100vh - 150px);
+                min-height: 500px;
+            }
+            .user-list {
+                width: 300px;
+                background: white;
+                border-radius: 10px;
+                box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+                overflow-y: auto;
+                flex-shrink: 0;
+                align-self: stretch;
+            }
+            .user-item {
+                padding: 14px 16px;
+                border-bottom: 1px solid #eee;
+                cursor: pointer;
+                transition: background 0.2s;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+             .user-item:last-child { border-bottom: none; }
+            .user-item:hover, .user-item.active { background: #f0f0f0; }
+            .user-info { display: flex; flex-direction: column; align-items: flex-start; flex-grow: 1; margin-right: 10px; overflow: hidden; }
+            .user-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+            .user-role { font-size: 0.8rem; color: #888; font-style: italic; }
+
+            /* Style cho chỉ báo chưa đọc (Số đếm) */
+            .unread-indicator {
+                background-color: #E85A70;
+                color: white;
+                font-size: 0.75rem;
+                font-weight: bold;
+                border-radius: 10px;
+                min-width: 20px;
+                height: 20px;
+                padding: 0 6px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                flex-shrink: 0;
+                display: none; /* Ẩn mặc định */
+            }
+            .user-item.has-unread .user-name { font-weight: 600; }
+            .user-item.has-unread .unread-indicator { display: flex; }
+
+            .chat-area { flex: 1; background: white; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); display: flex; flex-direction: column; align-self: stretch; }
+            .chat-header { background: #E85A70; color: white; padding: 16px; text-align: left; font-size: 1.1rem; font-weight: bold; border-radius: 10px 10px 0 0; display: flex; align-items: center; flex-shrink: 0; }
+            .chat-header h6 { margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+            .chat-body { flex: 1; overflow-y: auto; padding: 20px; background: #f9f9f9; display: flex; flex-direction: column; }
+            .msg { max-width: 75%; margin: 8px 0; padding: 10px 14px; border-radius: 18px; font-size: 14px; line-height: 1.4; word-wrap: break-word; }
+            .msg strong { display: block; margin-bottom: 2px; font-size: 0.8em; opacity: 0.8; }
+            .sent { background: #E85A70; color: white; margin-left: auto; align-self: flex-end; }
+            .received { background: #e9e9eb; color: #333; align-self: flex-start; }
+            .chat-footer { padding: 15px; background: white; border-top: 1px solid #eee; display: flex; align-items: center; flex-shrink: 0; border-radius: 0 0 10px 10px; }
+            .chat-footer input { flex: 1; padding: 10px 16px; border: 1px solid #ddd; border-radius: 25px; font-size: 14px; }
+            .chat-footer button { background: #E85A70; color: white; border: none; border-radius: 25px; padding: 0 22px; margin-left: 10px; height: 40px; font-weight: 600; }
+            .no-chat { display: flex; align-items: center; justify-content: center; height: 100%; color: #999; text-align: center; }
+        </style>
+    </th:block>
+</head>
+
+<div layout:fragment="content">
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0">Tin nhắn</h1>
+    </div>
+
+    <div class="chat-container">
+        <div class="user-list" id="userList">
+            <div class="text-center p-4 text-muted">Đang tải...</div>
+        </div>
+
+        <div class="chat-area" id="chatArea">
+             <div class="no-chat"><p>Chọn một người để bắt đầu trò chuyện</p></div>
+        </div>
+    </div>
+</div>
+
+<th:block layout:fragment="js">
+    <script th:src="@{/webjars/sockjs-client/1.5.1/sockjs.min.js}"></script>
+    <script th:src="@{/webjars/stomp-websocket/2.3.4/stomp.min.js}"></script>
+
+    <script th:inline="javascript">
+    /*<![CDATA[*/
+    // IIFE (Immediately Invoked Function Expression) để gói logic chat
+    (function() {
+        let stompClient = null;
+        const currentUsername = /*[[${#authentication.name}]]*/ null;
+        if (!currentUsername) return; // Dừng nếu không có username
+
+        let currentTarget = null;
+        let currentTargetFullName = '';
+
+        // ================== LOGIC LƯU TRỮ (Giống hệt layout) ==================
+        const UNREAD_STORAGE_KEY = 'vendorUnreadCounts_' + currentUsername;
+
+        function getUnreadCounts() {
+            try {
+                const storedCounts = localStorage.getItem(UNREAD_STORAGE_KEY);
+                return storedCounts ? JSON.parse(storedCounts) : {};
+            } catch (e) { return {}; }
+        }
+
+        function saveUnreadCounts(counts) {
+            try {
+                localStorage.setItem(UNREAD_STORAGE_KEY, JSON.stringify(counts));
+            } catch (e) { console.error("Lỗi lưu localStorage:", e); }
+        }
+        
+        let unreadCounts = getUnreadCounts();
+        // ================== KẾT THÚC LOGIC LƯU TRỮ ==================
+
+        const sidebarUnreadBadge = document.getElementById('sidebar-unread-count');
+
+        // ---> HÀM CẬP NHẬT TỔNG SỐ CHƯA ĐỌC TRÊN SIDEBAR <---
+        function updateTotalSidebarCount() {
+            let totalUnread = 0;
+            for (const username in unreadCounts) {
+                totalUnread += unreadCounts[username] || 0;
+            }
+            if (sidebarUnreadBadge) {
+                if (totalUnread > 0) {
+                    sidebarUnreadBadge.textContent = totalUnread > 99 ? '99+' : totalUnread;
+                    sidebarUnreadBadge.style.display = 'inline-block';
+                } else {
+                    sidebarUnreadBadge.textContent = '0';
+                    sidebarUnreadBadge.style.display = 'none';
+                }
+            }
+        }
+
+        function connect() {
+            const socket = new SockJS('/ws');
+            stompClient = Stomp.over(socket);
+
+            stompClient.connect({}, (frame) => {
+                console.log('Chat Connected: ' + frame);
+
+                stompClient.subscribe('/user/queue/private', (messageOutput) => {
+                    const message = JSON.parse(messageOutput.body);
+                    if (message.type !== 'CHAT') return;
+                    const senderUsername = message.sender;
+
+                    if (senderUsername !== currentUsername) {
+                        if (currentTarget && senderUsername === currentTarget) {
+                            displayMessage(message);
+                            // (Optional: Gửi 'đã đọc' về server)
+                        } else {
+                            // Lấy, Tăng, Lưu bộ đếm
+                            unreadCounts = getUnreadCounts();
+                            unreadCounts[senderUsername] = (unreadCounts[senderUsername] || 0) + 1;
+                            saveUnreadCounts(unreadCounts);
+                            
+                            // Cập nhật UI
+                            updateUnreadIndicator(senderUsername, unreadCounts[senderUsername]);
+                            updateTotalSidebarCount(); // Cập nhật sidebar
+                            sortUserList(); // Sắp xếp lại danh sách
+                        }
+                    }
+                });
+                
+                // Tải user và cập nhật sidebar khi kết nối
+                loadUsers();
+                updateTotalSidebarCount();
+
+            }, (error) => {
+                console.error('Connection error: ' + error);
+                setTimeout(connect, 3000);
+            });
+        }
+
+        // ---> HÀM CẬP NHẬT CHỈ BÁO CHƯA ĐỌC CHO TỪNG USER <---
+        function updateUnreadIndicator(username, count) {
+            const userItem = document.querySelector(`.user-item[data-username="${username}"]`);
+            if (!userItem) return;
+            const indicator = userItem.querySelector('.unread-indicator');
+            if (!indicator) return;
+            const numCount = parseInt(count) || 0;
+            if (numCount > 0) {
+                indicator.textContent = numCount > 9 ? '9+' : numCount;
+                indicator.style.display = 'flex';
+                userItem.classList.add('has-unread');
+            } else {
+                indicator.textContent = '';
+                indicator.style.display = 'none';
+                userItem.classList.remove('has-unread');
+            }
+        }
+
+        // ---> HÀM SẮP XẾP DANH SÁCH USER <---
+        function sortUserList() {
+            const userList = document.getElementById('userList');
+            if (!userList) return;
+            const items = Array.from(userList.querySelectorAll('.user-item'));
+            items.sort((a, b) => {
+                const hasUnreadA = a.classList.contains('has-unread');
+                const hasUnreadB = b.classList.contains('has-unread');
+                if (hasUnreadA && !hasUnreadB) return -1;
+                if (!hasUnreadA && hasUnreadB) return 1;
+                return 0;
+            });
+            userList.innerHTML = '';
+            items.forEach(item => userList.appendChild(item));
+        }
+
+        // ---> Tải danh sách người dùng (Sử dụng unreadCounts đã load) <---
+        function loadUsers() {
+            const userList = document.getElementById('userList');
+            userList.innerHTML = '<div class="text-center p-4 text-muted">Đang tải danh sách...</div>';
+
+            fetch('/api/chat/users')
+                .then(response => {
+                    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                    return response.json();
+                })
+                .then(users => {
+                    userList.innerHTML = '';
+                    if (users.length === 0) {
+                        userList.innerHTML = '<div class="text-center p-4 text-muted">Chưa có cuộc trò chuyện nào.</div>';
+                        return; // Đã gọi updateTotalSidebarCount() trong connect()
+                    }
+
+                    users.forEach(u => {
+                        const div = document.createElement('div');
+                        div.className = 'user-item';
+                        div.dataset.username = u.username;
+                        div.dataset.fullName = u.fullName;
+                        div.dataset.role = u.role;
+
+                        const userInfoDiv = document.createElement('div');
+                        userInfoDiv.className = 'user-info';
+                        const nameSpan = document.createElement('span');
+                        nameSpan.className = 'user-name';
+                        nameSpan.textContent = u.fullName;
+                        const roleSpan = document.createElement('span');
+                        roleSpan.className = 'user-role';
+                        roleSpan.textContent = `(${u.role})`;
+                        userInfoDiv.appendChild(nameSpan);
+                        userInfoDiv.appendChild(roleSpan);
+
+                        const indicatorSpan = document.createElement('span');
+                        indicatorSpan.className = 'unread-indicator';
+
+                        div.appendChild(userInfoDiv);
+                        div.appendChild(indicatorSpan);
+                        div.onclick = () => openChat(u.username, u.fullName, div);
+                        userList.appendChild(div);
+
+                        // Lấy số đếm từ biến global (đã load từ localStorage)
+                        updateUnreadIndicator(u.username, unreadCounts[u.username] || 0);
+                    });
+                     sortUserList(); // Sắp xếp sau khi load
+                     // Đã gọi updateTotalSidebarCount() trong connect()
+                })
+                .catch(error => {
+                    console.error('Error loading users:', error);
+                    userList.innerHTML = '<div class="text-center p-4 text-danger">Lỗi khi tải danh sách người dùng.</div>';
+                });
+        }
+
+        // ---> Mở khung chat (Cập nhật localStorage) <---
+        function openChat(username, fullName, element) {
+            console.log(`Opening chat with: ${username} (${fullName})`);
+            currentTarget = username;
+            currentTargetFullName = fullName;
+
+            document.querySelectorAll('.user-item').forEach(item => item.classList.remove('active'));
+            element.classList.add('active');
+
+            // --- RESET BỘ ĐẾM KHI MỞ CHAT ---
+            unreadCounts = getUnreadCounts(); // Lấy data mới nhất
+            unreadCounts[username] = 0; // Đặt lại bộ đếm cho user này
+            saveUnreadCounts(unreadCounts); // Lưu lại
+            
+            updateUnreadIndicator(username, 0); // Cập nhật list item
+            updateTotalSidebarCount(); // Cập nhật tổng sidebar
+            // --- KẾT THÚC RESET ---
+
+            const chatArea = document.getElementById('chatArea');
+            chatArea.innerHTML = `
+                <div class="chat-header">
+                    <h6>Chat với ${fullName} (${element.dataset.role})</h6>
+                </div>
+                <div class="chat-body" id="chatBody">
+                    <div class="text-center text-muted p-3">Đang tải lịch sử...</div>
+                </div>
+                <div class="chat-footer">
+                    <input type="text" id="messageInput" placeholder="Nhập tin nhắn..." autocomplete="off" onkeypress="handleKeyPress(event)">
+                    <button onclick="sendMessage()">Gửi</button>
+                </div>
+            `;
+
+            loadHistory();
+
+            setTimeout(() => {
+                 const messageInput = document.getElementById('messageInput');
+                 if (messageInput) messageInput.focus();
+             }, 100);
+        }
+
+        // Các hàm hỗ trợ (gửi, hiển thị, tải lịch sử)
+         function handleKeyPress(event) { if (event.key === 'Enter') sendMessage(); }
+        function sendMessage() {
+            const messageInput = document.getElementById('messageInput');
+            if (!messageInput) return;
+            const content = messageInput.value.trim();
+            if (content && stompClient && currentTarget) {
+                const chatMessage = { sender: currentUsername, receiver: currentTarget, content: content, type: 'CHAT' };
+                stompClient.send('/app/chat.send', {}, JSON.stringify(chatMessage));
+                displayMessage(chatMessage);
+                messageInput.value = '';
+                messageInput.focus();
+            }
+        }
+        function displayMessage(message) {
+            const chatBody = document.getElementById('chatBody');
+            if (!chatBody) return;
+            const messageElement = document.createElement('div');
+            const isSentByMe = message.sender === currentUsername;
+            messageElement.classList.add('msg', isSentByMe ? 'sent' : 'received');
+            const senderDisplayName = isSentByMe ? 'Bạn' : (message.sender === currentTarget ? currentTargetFullName : message.sender);
+            messageElement.innerHTML = `<strong>${senderDisplayName}:</strong> ${message.content}`;
+            chatBody.appendChild(messageElement);
+            chatBody.scrollTop = chatBody.scrollHeight;
+        }
+        function loadHistory() {
+            const chatBody = document.getElementById('chatBody');
+            if (!chatBody || !currentTarget) return;
+            fetch(`/api/chat/history?userA=${currentUsername}&userB=${currentTarget}`)
+                .then(response => { if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`); return response.json(); })
+                .then(history => {
+                    chatBody.innerHTML = '';
+                    if (history.length === 0) {
+                         chatBody.innerHTML = '<div class="text-center text-muted p-3">Chưa có tin nhắn nào.</div>';
+                    } else {
+                        history.forEach(message => displayMessage(message));
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading history:', error);
+                    chatBody.innerHTML = '<div class="text-center text-danger p-3">Lỗi khi tải lịch sử trò chuyện.</div>';
+                });
+        }
+
+        // --- Khởi tạo kết nối WebSocket ---
+        // Chỉ chạy logic nếu chúng ta đang ở trang chat
+        if(document.getElementById('chatArea')) {
+             connect();
+        }
+
+    })(); // Kết thúc IIFE
+    /*]]>*/
+    </script>
+</th:block>
+</html>

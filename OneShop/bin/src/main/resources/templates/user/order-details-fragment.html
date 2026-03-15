@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<div th:fragment="content" id="order-details-fragment"> 
+
+    
+    <h5>Thông tin cơ bản</h5>
+    <div style="margin-left: 15px;">
+        <p>
+            ID đơn hàng: <strong><span th:text="${order.id}">10122</span></strong>
+        </p>
+        <p>
+            Ngày đặt hàng: 
+            <strong><span th:text="${#temporals.format(order.createdAt, 'dd-MM-yyyy HH:mm')}">20-10-2025</span></strong>
+        </p>
+        <p>
+            Trạng thái: 
+            <strong><span th:text="${order.orderStatus.name()}">PENDING</span></strong>
+        </p>
+    </div>
+
+    <hr>
+    
+    <h5>Danh sách sản phẩm</h5>
+    <table class="table table-sm table-bordered mt-3">
+        <thead class="table-light">
+            <tr>
+                <th>Sản phẩm</th>
+                <th>Phân loại</th>
+                <th>Giá</th>
+                <th>Số lượng</th>
+                <th>Thành tiền</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr th:each="detail : ${order.orderDetails}">
+                <td th:text="${detail.productVariant != null and detail.productVariant.product != null ? 
+                              detail.productVariant.product.name : 'Sản phẩm lỗi'}">Tên sản phẩm</td>
+                
+                <td th:text="${detail.productVariant != null ? detail.productVariant.name : 'N/A'}">Màu Đỏ/Size L</td> 
+                
+                <td th:text="${#numbers.formatDecimal(detail.price, 0, 'POINT', 0, 'COMMA')} + ' VNĐ'">100.000 VNĐ</td>
+                <td th:text="${detail.quantity}">2</td>
+                <td>
+                    <span th:with="itemTotal=${detail.price.multiply(detail.quantity)}" 
+                          th:text="${#numbers.formatDecimal(itemTotal, 0, 'POINT', 0, 'COMMA')} + ' VNĐ'">200.000 VNĐ</span>
+                </td>
+            </tr>
+            <tr th:if="${#lists.isEmpty(order.orderDetails)}">
+                <td colspan="5" class="text-center">Đơn hàng này không có sản phẩm nào.</td>
+            </tr>
+        </tbody>
+        <tfoot class="table-group-divider">
+             <tr>
+                <td colspan="4" class="text-end">Tổng phụ (SP):</td>
+                <td th:text="${#numbers.formatDecimal(order.subtotal, 0, 'POINT', 0, 'COMMA')} + ' VNĐ'">1.000.000 VNĐ</td>
+            </tr>
+            <tr>
+                <td colspan="4" class="text-end">Phí vận chuyển:</td>
+                <td th:text="${#numbers.formatDecimal(order.shippingCost, 0, 'POINT', 0, 'COMMA')} + ' VNĐ'">30.000 VNĐ</td>
+            </tr>
+
+            <tr th:if="${order.discountAmount != null and order.discountAmount.compareTo(T(java.math.BigDecimal).ZERO) > 0}" style="color: green; font-weight: bold;">
+                <td colspan="4" class="text-end">
+                    Giảm giá voucher 
+                    <span th:if="${order.promotion != null}" 
+                          th:text="'(' + ${order.promotion.discountCode} + ')'">(VOUCHERCODE)</span>:
+                </td>
+                <td th:text="'-' + ${#numbers.formatDecimal(order.discountAmount, 0, 'POINT', 0, 'COMMA')} + ' VNĐ'">-50.000 VNĐ</td>
+            </tr>
+            <tr class="table-primary fw-bold">
+                <td colspan="4" class="text-end">TỔNG THANH TOÁN:</td>
+                <td th:text="${#numbers.formatDecimal(order.total, 0, 'POINT', 0, 'COMMA')} + ' VNĐ'">1.030.000 VNĐ</td>
+            </tr>
+        </tfoot>
+    </table>
+    
+    <hr>
+
+    <h5>Thông tin giao hàng</h5>
+    <div style="margin-left: 15px;">
+        <p>Người nhận: <span th:text="${order.recipientName}"></span></p>
+        <p>Điện thoại: <span th:text="${order.shippingPhone}"></span></p>
+        <p>Địa chỉ: <span th:text="${order.shippingAddress}"></span></p>
+        <p>Phương thức TT: <span th:text="${order.paymentMethod}"></span></p>
+    </div>
+    
+</div>
+</body>
+</html>

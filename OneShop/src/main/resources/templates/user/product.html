@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+	xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+	xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+	layout:decorate="~{layouts/guest}">
+<head>
+<meta charset="UTF-8">
+<title th:text="${product.name} ?: 'Chi tiết sản phẩm'"></title>
+
+<th:block layout:fragment="css">
+	<link rel="stylesheet"
+		th:href="@{/assets/owlCarousel/assets/owl.carousel.min.css}">
+	<link rel="stylesheet"
+		th:href="@{/assets/owlCarousel/assets/owl.theme.default.min.css}">
+	<link rel="stylesheet" th:href="@{/assets/css/common.css}">
+	<style>
+		/* === Giữ nguyên toàn bộ CSS bạn đã cung cấp === */
+		.productInfo__name { font-size: 26px; margin-bottom: 15px; }
+		.productInfo__description, .productDes__text, .productIndfo__category { font-size: 16px; line-height: 1.6; }
+		.productInfo__meta { padding: 10px 0; border-top: 1px solid #f0f0f0; margin-top: 15px; display: flex; align-items: center; gap: 20px; flex-wrap: wrap; }
+		.product__rating { display: flex; align-items: center; gap: 8px; }
+		.rating-stars i.fa-star, .rating-stars i.fas.fa-star { /* Thêm fas */ font-size: 14px; color: #ffc107; }
+		.rating-stars i.fa-star.text-secondary, .rating-stars i.fas.fa-star.text-secondary { /* Thêm fas */ color: #e4e5e9 !important; }
+		.rating-count { font-size: 14px; color: #666; }
+		.product__sold { font-size: 14px; color: #666; display: flex; align-items: center; gap: 5px; }
+		.price__old { text-decoration: line-through; color: #999; font-size: 16px; margin-right: 15px; }
+		.productInfo__price { display: flex; align-items: baseline; margin-top: 10px; margin-bottom: 20px; font-weight: 700; color: var(--primary-color); font-size: 28px; }
+		.priceInfo__unit { font-size: 22px; margin-left: 5px; }
+		.product__sale-tag { background-color: var(--primary-color); color: white; padding: 2px 8px; border-radius: 4px; font-size: 14px; font-weight: 500; margin-left: 15px; }
+		.productInfo__brand { font-size: 16px; margin-bottom: 10px; color: #555; }
+		.productDes__title { font-size: 18px; font-weight: 600; margin-top: 25px; margin-bottom: 15px; }
+		.productDes__ratting-title { font-size: 20px; font-weight: 600; margin-bottom: 25px; }
+		.rate__author { font-size: 16px; font-weight: 600; }
+		.rate__content { font-size: 15px; line-height: 1.5; }
+		.no-reviews-message { font-size: 16px; color: #555; margin-top: 15px; }
+		#product-image-carousel .item .product__avt { height: 400px; background-size: contain; background-repeat: no-repeat; background-position: center center; border: 1px solid #eee; border-radius: 5px; }
+		#product-thumbnail-carousel .item { cursor: pointer; }
+		#product-thumbnail-carousel .item .product__avt { height: 80px; background-size: contain; background-repeat: no-repeat; background-position: center center; border: 2px solid #ddd; border-radius: 4px; opacity: 0.6; transition: opacity 0.3s ease, border-color 0.3s ease; }
+		#product-thumbnail-carousel .owl-item.current .item .product__avt, #product-thumbnail-carousel .item:hover .product__avt { opacity: 1; border-color: var(--primary-color); }
+		#product-image-carousel { position: relative; }
+		#product-image-carousel .owl-nav { position: static; margin: 0; }
+		#product-image-carousel .owl-prev, #product-image-carousel .owl-next { position: absolute; top: auto; bottom: 15px; transform: none; font-size: 2.8rem !important; width: 50px; height: 50px; line-height: 46px; color: var(--primary-color) !important; background: rgba(255, 255, 255, 0.7) !important; border-radius: 50%; padding: 0 !important; transition: all 0.3s ease; z-index: 10; box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1); }
+		#product-image-carousel .owl-prev:hover, #product-image-carousel .owl-next:hover { color: var(--secondary-color) !important; background: rgba(255, 255, 255, 1) !important; }
+		#product-image-carousel .owl-prev { left: -25px; }
+		#product-image-carousel .owl-next { right: -25px; }
+		.owl-nav button.disabled { opacity: 0.2; cursor: default; }
+		.productInfo__variants h4 { font-size: 18px; font-weight: 700; margin-bottom: 10px; }
+		.variant-options-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 10px; margin-bottom: 20px; border: 1px solid #e0e0e0; border-radius: 8px; padding: 15px; background-color: #fcfcfc; }
+		.variant-box { border: 2px solid #eee; padding: 8px; text-align: center; cursor: pointer; border-radius: 5px; transition: border-color 0.2s ease, box-shadow 0.2s ease; position: relative; font-size: 13px; line-height: 1.3; word-break: break-word; background-color: #fff; }
+		.variant-box:hover { border-color: #ccc; }
+		.variant-box.selected { border-color: var(--primary-color); box-shadow: 0 0 4px rgba(232, 90, 112, 0.4); }
+		.variant-box input[type="radio"] { position: absolute; opacity: 0; width: 0; height: 0; }
+		.productInfo__actions { display: flex; align-items: center; gap: 15px; margin-bottom: 20px; }
+		.productInfo__actions button { transition: background-color 0.3s, border-color 0.3s, opacity 0.3s; }
+		.btn.disabled { background-color: #ccc !important; border-color: #ccc !important; cursor: not-allowed; opacity: 0.7; }
+		.btn.needs-action { background-color: #ccc !important; border-color: #ccc !important; cursor: not-allowed; opacity: 0.7; }
+		.btn.guest-active { cursor: pointer; opacity: 1; }
+		.btn.active-action { cursor: pointer; opacity: 1; }
+		.tabs { display: flex; position: relative; margin-bottom: 15px; border-bottom: 2px solid #f1f1f1; }
+		.tab-item { padding: 12px 20px; cursor: pointer; font-size: 16px; font-weight: 500; color: #555; position: relative; transition: color 0.3s ease; }
+		.tab-item.active { color: var(--primary-color); font-weight: 600; }
+		.line { position: absolute; left: 0; bottom: -2px; height: 2px; background: var(--primary-color); transition: all 0.3s ease; }
+		.tab-content { padding-top: 15px; }
+		.tab-pane { display: none; }
+		.tab-pane.active { display: block; animation: fadeIn 0.5s ease; }
+		@keyframes fadeIn {from { opacity:0; } to { opacity: 1; } }
+		.add-to-cart-toast { position: fixed; top: 20px; right: 20px; background-color: rgba(0, 0, 0, 0.75); color: white; padding: 12px 20px; border-radius: 5px; z-index: 1050; font-size: 14px; display: none; opacity: 0; transition: opacity 0.5s ease; }
+		.add-to-cart-toast.show { display: block; opacity: 1; }
+		.write-review-container { border: 1px solid #eee; padding: 20px; border-radius: 8px; margin-bottom: 30px; background-color: #fcfcfc; }
+		.write-review-container h3 { font-size: 18px; font-weight: 600; margin-bottom: 20px; }
+		.write-review-container .form-group { margin-bottom: 15px; }
+		.write-review-container label { display: block; font-weight: 500; margin-bottom: 5px; font-size: 14px; }
+		.write-review-container .form-control { width: 100%; padding: 8px 12px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; }
+		.write-review-container .form-control-file { font-size: 14px; }
+		.write-review-container .btn-primary { background-color: var(--primary-color); color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; font-size: 15px; font-weight: 500; transition: background-color 0.3s ease; }
+		.write-review-container .btn-primary:hover { background-color: #c23e51; }
+		.review-rating-stars { display: inline-block; border: none; }
+		.review-rating-stars>input { display: none; }
+		.review-rating-stars>label { color: #ddd; float: right; font-size: 24px; cursor: pointer; transition: color 0.2s; }
+		.review-rating-stars>input:checked ~ label, .review-rating-stars:not(:checked)>label:hover, .review-rating-stars:not(:checked)>label:hover ~ label { color: #ffc107; }
+		.review-rating-stars>input:checked+label:hover, .review-rating-stars>input:checked ~ label:hover, .review-rating-stars>label:hover ~ input:checked ~ label, .review-rating-stars>input:checked ~ label:hover ~ label { color: #ffdd72; }
+		.review-rating-stars>label:before { content: '★'; }
+	</style>
+</th:block>
+</head>
+
+<body>
+	<div class="main" layout:fragment="content" style="margin-top: 30px;">
+		<div class="grid wide">
+			<div class="productInfo">
+				<div class="row">
+					<div class="col l-5 m-12 s-12">
+						<div class="owl-carousel owl-theme" id="product-image-carousel">
+							<div class="item" th:each="imgUrl, iterStat : ${displayImages}"
+								th:data-hash="${'image-' + iterStat.index}">
+								<div class="product__avt"
+									th:style="'background-image: url(' + @{${imgUrl}} + ')'"
+									th:if="${#strings.startsWith(imgUrl, '/')}"></div>
+								<div class="product__avt"
+									th:style="'background-image: url(' + @{'/uploads/images/' + ${imgUrl}} + ')'"
+									th:unless="${#strings.startsWith(imgUrl, '/')}"></div>
+							</div>
+						</div>
+						<div class="owl-carousel owl-theme mt-3"
+							id="product-thumbnail-carousel"
+							th:if="${!#lists.isEmpty(displayImages) and #lists.size(displayImages) > 1}">
+							<div class="item" th:each="imgUrl, iterStat : ${displayImages}">
+								<a th:href="${'#image-' + iterStat.index}">
+									<div class="product__avt"
+										th:style="'background-image: url(' + @{${imgUrl}} + ')'"
+										th:if="${#strings.startsWith(imgUrl, '/')}"></div>
+									<div class="product__avt"
+										th:style="'background-image: url(' + @{'/uploads/images/' + ${imgUrl}} + ')'"
+										th:unless="${#strings.startsWith(imgUrl, '/')}"></div>
+								</a>
+							</div>
+						</div>
+					</div>
+					<div class="col l-7 m-12s s-12 pl">
+						<div class="main__breadcrumb">
+							<div class="breadcrumb__item"> <a th:href="@{/}" class="breadcrumb__link">Trang chủ</a> </div>
+							<div class="breadcrumb__item"> <a th:href="@{/products}" class="breadcrumb__link">Sản phẩm</a> </div>
+							<div class="breadcrumb__item" th:if="${product.category}"> <a th:href="@{/products(categories=${product.category.id})}" class="breadcrumb__link" th:text="${product.category.name}"></a> </div>
+						</div>
+						<p class="productInfo__brand"> Thương hiệu:
+							<a href="#" th:if="${product.brand}" th:href="@{/products(brands=${product.brand.brandId})}" th:text="${product.brand.name}">Brand</a>
+							<span th:unless="${product.brand}">Không rõ</span>
+						</p>
+						<h3 class="productInfo__name" th:text="${product.name}">Product Name</h3>
+						<div class="productInfo__meta">
+							<div class="product__rating">
+								<div class="rating-stars">
+									<i class="fas fa-star" th:each="i : ${#numbers.sequence(1, 5)}" th:classappend="${i <= product.rating} ? '' : 'text-secondary'"></i>
+								</div>
+								<span class="rating-count" th:text="'(' + ${product.reviewCount} + ' đánh giá)'"></span>
+							</div>
+							<div class="product__sold">
+								<i class="fas fa-shopping-cart"></i>
+								<span th:text="'Đã bán ' + ${product.soldCount}"></span>
+							</div>
+						</div>
+						<div class="productInfo__price">
+							<span class="price__old" style="display: none;"></span>
+							<span class="price__current"></span> <span class="priceInfo__unit">đ</span>
+							<span class="product__sale-tag" style="display: none;"></span>
+						</div>
+						<div class="productInfo__variants" th:if="${product.variants != null and !product.variants.isEmpty()}">
+							<h4>Chọn loại:</h4>
+							<div class="variant-options-grid">
+								<label th:each="variant : ${product.variants}"
+									th:for="${'variant-' + variant.variantId}" class="variant-box"
+									th:data-variant-id="${variant.variantId}"
+									th:data-price="${variant.price}"
+									th:data-original-price="${variant.originalPrice}"
+									th:data-variant-image-url="${variant.imageUrl}">
+									<input type="radio" name="selectedVariantId"
+										th:id="${'variant-' + variant.variantId}"
+										th:value="${variant.variantId}" required>
+									<span th:text="${variant.name}">Variant Name</span>
+								</label>
+							</div>
+						</div>
+						<div th:if="${product.variants == null or product.variants.isEmpty()}">
+							<p style="color: red;">Sản phẩm này hiện chưa có sẵn để bán.</p>
+						</div>
+						<div class="productInfo__actions" th:if="${product.variants != null and !product.variants.isEmpty()}">
+							<div class="buttons_added">
+								<input class="minus is-form" type="button" value="-">
+								<input aria-label="quantity" class="input-qty" min="1" name="quantity" type="number" value="1">
+								<input class="plus is-form" type="button" value="+">
+							</div>
+							<button type="button" class="btn btn--default orange needs-action" id="addToCartBtn">
+								<i class="fas fa-cart-plus"></i> Thêm vào giỏ
+							</button>
+							<button type="button" class="btn btn--default needs-action" id="buyNowBtn">Mua ngay</button>
+						</div>
+						<div class="productIndfo__category">
+							<p class="productIndfo__category-text"> Danh mục :
+								<a href="#" class="productIndfo__category-link"
+									th:if="${product.category}"
+									th:href="@{/products(categories=${product.category.id})}"
+									th:text="${product.category.name}"></a>
+							</p>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<div class="productDetail">
+				<div class="main__tabnine">
+					<div class="grid wide">
+						<div class="tabs">
+							<div class="tab-item active">Mô tả</div>
+							<div class="tab-item"> Đánh giá (<span th:text="${product.reviewCount ?: 0}"></span>) </div>
+							<div class="line"></div>
+						</div>
+						<div class="tab-content">
+							<div class="tab-pane active">
+								<div class="productDes">
+									<div class="productDes__title">Mô tả chi tiết sản phẩm</div>
+									<div class="productDes__text" th:utext="${product.description}"></div>
+								</div>
+							</div>
+							<div class="tab-pane">
+								<div class="productDes__ratting">
+									<div sec:authorize="!isAuthenticated()" style="padding: 15px; background: #f5f5f5; border-radius: 5px; text-align: center; margin-bottom: 20px;">
+										<p> Vui lòng <a th:href="@{/login}" style="color: var(--primary-color); font-weight: 600;">đăng nhập</a> để gửi đánh giá của bạn. </p>
+									</div>
+									<div class="productDes__ratting-title">Đánh giá của khách hàng</div>
+									<div th:if="${reviews == null or #lists.isEmpty(reviews)}" class="no-reviews-message">
+										<p>Chưa có đánh giá nào cho sản phẩm này.</p>
+									</div>
+									<ul class="rate__list" th:unless="${reviews == null or #lists.isEmpty(reviews)}">
+										<li th:each="review, reviewStat : ${reviews}" class="rate__item" style="margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 15px;">
+											<div class="rate__info">
+												<strong class="rate__author" th:text="${review.username ?: 'Ẩn danh'}"></strong>
+												<span class="rate__date" th:text="' - ' + ${#temporals.format(review.reviewDate, 'dd/MM/yyyy HH:mm')}"></span>
+											</div>
+											<div class="productDes__ratting-star mb-2">
+												<span th:each="i : ${#numbers.sequence(1, 5)}">
+													<i class="fas fa-star" th:if="${i <= review.rating}" style="color: #ffc107;"></i>
+													<i class="far fa-star" th:if="${i > review.rating}" style="color: #e4e5e9;"></i>
+												</span>
+											</div>
+											<p class="rate__content" th:text="${review.comment}"></p>
+											<div class="review-media mt-2" th:if="${!#lists.isEmpty(review.mediaUrls)}">
+												<img th:each="mediaUrl, mediaStat : ${review.mediaUrls}"
+													th:src="@{${'/uploads/images/' + mediaUrl}}" alt="Review image"
+													style="width: 100px; height: 100px; margin-right: 10px; object-fit: cover; border-radius: 6px; border: 1px solid #eee; cursor: zoom-in;"
+													class="review-image-thumbnail"
+													th:data-review-group="${reviewStat.index}"
+													th:data-index="${mediaStat.index}" />
+											</div>
+										</li>
+									</ul>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<div class="main__frame" th:if="${relatedProducts != null and !relatedProducts.isEmpty()}">
+				<div class="grid wide">
+					<h3 class="category__title">OneShop Cometics</h3>
+					<h3 class="category__heading">Sản Phẩm Tương tự</h3>
+					<div class="owl-carousel hight owl-theme" th:if="${!relatedProducts.isEmpty()}">
+						<a th:href="@{/product/{id}(id=${related.productId})}" class="product" th:each="related : ${relatedProducts}">
+							<div class="product__avt" th:style="'background-image: url(' + @{${related.primaryImageUrl}} + ')'"></div>
+							<div class="product__info">
+								<h3 class="product__name" th:text="${related.name}"></h3>
+								<div class="product__price">
+									<div class="price__old" th:if="${related.originalPrice != null and related.originalPrice > related.price}" th:text="${#numbers.formatDecimal(related.originalPrice, 0, 'COMMA', 0, 'POINT')} + ' đ'"></div>
+									<div class="price__new" th:text="${#numbers.formatDecimal(related.price, 0, 'COMMA', 0, 'POINT')} + ' đ'"></div>
+								</div>
+							</div>
+						</a>
+					</div>
+				</div>
+			</div>
+
+			<div id="reviewImageModal" class="review-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.95); z-index: 9999; justify-content: center; align-items: center; padding: 20px; box-sizing: border-box;">
+				<span class="modal-close" style="position: absolute; top: 20px; right: 30px; color: white; font-size: 40px; font-weight: bold; cursor: pointer; user-select: none;">&times;</span>
+				<img id="modalImage" src="" alt="Review full size" style="max-width: 90%; max-height: 90%; object-fit: contain; border-radius: 8px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);">
+				<div class="modal-nav" style="position: absolute; top: 50%; width: 100%; display: flex; justify-content: space-between; transform: translateY(-50%); pointer-events: none;">
+					<button class="modal-prev" style="background: rgba(255, 255, 255, 0.8); color: #333; border: none; width: 50px; height: 50px; border-radius: 50%; font-size: 24px; cursor: pointer; pointer-events: all; margin-left: 20px;">&#8249;</button>
+					<button class="modal-next" style="background: rgba(255, 255, 255, 0.8); color: #333; border: none; width: 50px; height: 50px; border-radius: 50%; font-size: 24px; cursor: pointer; pointer-events: all; margin-right: 20px;">&#8250;</button>
+				</div>
+			</div>
+		</div>
+		<div id="toast" class="add-to-cart-toast">
+			<i class="fas fa-check-circle"></i> Đã thêm vào giỏ hàng!
+		</div>
+	</div>
+
+	<th:block layout:fragment="js">
+		<script th:src="@{/assets/js/jquery-3.6.0.min.js}"></script>
+		<script th:src="@{/assets/owlCarousel/owl.carousel.min.js}"></script>
+		<script th:inline="javascript">
+        /*<![CDATA[*/
+        $(document).ready(function() {
+            // --- Giữ nguyên các biến và hàm helper ---
+            const isAuthenticated = /*[[${#authorization.expression('isAuthenticated()')}]]*/ false;
+            const loginUrl = /*[[@{/login}]]*/ '/login';
+            const logger = { debug: function(...args) { console.log("[DEBUG]", ...args); }, info: function(...args) { console.info("[INFO]", ...args); }, warn: function(...args) { console.warn("[WARN]", ...args); }, error: function(...args) { console.error("[ERROR]", ...args); } };
+            function formatCurrency(number) { const n = parseFloat(number); return isNaN(n) ? '0 đ' : new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(n).replace('₫', 'đ'); }
+            function formatPrice(number) { if (typeof number === 'undefined' || number === null || isNaN(number)) return '0'; try { return new Intl.NumberFormat('vi-VN').format(parseFloat(number)); } catch (e) { console.error("Error formatting price:", number, e); return 'Lỗi'; } }
+            function updateCartHeaderCount(totalItems) { const $el = $('.header__cart-amount'); if ($el.length) { $el.text(totalItems || 0); $('.header__cart').toggleClass('have', totalItems > 0); } else { logger.warn("Không tìm thấy .header__cart-amount"); } }
+            function buildHeaderCartContent(cartData) { const items=cartData.items||cartData.cartItems; if (!items || (Array.isArray(items) && items.length===0) || (!Array.isArray(items) && Object.keys(items).length===0)){return `<div class="cart__empty"><img src="/assets/img/cart-empty.png" alt="Empty Cart" class="cart__empty-img"><p class="cart__empty-text">Giỏ hàng của bạn trống</p></div>`;} let h='<ul class="order__list">'; if (Array.isArray(items)){items.forEach(i => {const u=i.imageUrl||i.image_url||'/assets/img/product/no-image.jpg'; const p=i.productId||i.product_id||i.variantId; const n=i.name||i.productName||'Tên sản phẩm'; const q=i.quantity||0; const r=i.price||0; h+=`<li class="item-order" data-variant-id="${p}"><div class="order-wrap"><a href="/product/${p}" class="order-img"><img src="${u}" alt="Product Image"></a><div class="order-main"><a href="/product/${p}" class="order-main-name">${n}</a><div class="order-main-price">${q} x ${formatCurrency(r)}</div></div><button type="button" class="order-close remove-item-header-btn" title="Xóa sản phẩm" data-variant-id="${p}"><i class="far fa-times-circle"></i></button></div></li>`;});} else {for (const v in items){if (items.hasOwnProperty(v)){const i=items[v]; const u=i.imageUrl||i.image_url||'/assets/img/product/no-image.jpg'; const p=i.productId||i.product_id||v; const n=i.name||i.productName||'Tên sản phẩm'; const q=i.quantity||0; const r=i.price||0; h+=`<li class="item-order" data-variant-id="${p}"><div class="order-wrap"><a href="/product/${p}" class="order-img"><img src="${u}" alt="Product Image"></a><div class="order-main"><a href="/product/${p}" class="order-main-name">${n}</a><div class="order-main-price">${q} x ${formatCurrency(r)}</div></div><button type="button" class="order-close remove-item-header-btn" title="Xóa sản phẩm" data-variant-id="${p}"><i class="far fa-times-circle"></i></button></div></li>`;}}} h+='</ul>'; const t=`<div class="total-money">Tổng cộng: ${formatCurrency(cartData.grandTotal||cartData.total||0)}</div><a href="/cart" class="btn btn--default cart-btn">Xem giỏ hàng</a><a href="/pay" class="btn btn--default cart-btn orange">Thanh toán</a>`; return h+t;}
+            function showToast(message) { const $t = $('#toast'); $t.text(message || 'Đã thêm vào giỏ hàng!'); $t.addClass('show'); setTimeout(() => { $t.removeClass('show'); }, 2500); }
+            function addToCartAjax(variantId, quantity, successCallback, errorCallback) {
+                if (!isAuthenticated) { window.location.href = loginUrl; return; }
+                if (!variantId) { alert('Vui lòng chọn một loại sản phẩm!'); if (errorCallback) errorCallback(); return; }
+                $.ajax({
+                    type: 'POST', url: `/api/cart/add/${variantId}`, contentType: 'application/json', data: JSON.stringify({ quantity: quantity }),
+                    success: function(response) { logger.info('Added to cart:', response); showToast(response.message || 'Đã thêm vào giỏ!'); updateCartHeaderCount(response.totalItems); if (response.cart) { const h = buildHeaderCartContent(response.cart); const $cw = $('.header__cart-wrap'); if ($cw.find('.cart__empty').length > 0) { $cw.html(`<div id="header-cart-content">${h}</div>`); } else if ($cw.find('#header-cart-content').length > 0) { $('#header-cart-content').html(h); } else { $cw.html(`<div id="header-cart-content">${h}</div>`); } } if (successCallback) successCallback(response); },
+                    error: function(xhr) { logger.error('Add to cart error:', xhr); let m = 'Có lỗi xảy ra.'; if (xhr.status === 401) { m = 'Vui lòng đăng nhập.'; setTimeout(() => { window.location.href = loginUrl; }, 1000); } else if (xhr.responseJSON && xhr.responseJSON.message) { m = xhr.responseJSON.message; } alert(m); if (errorCallback) errorCallback(); }
+                });
+            }
+
+            // --- Carousel setup ---
+            const mainCarousel = $("#product-image-carousel");
+            const thumbCarousel = $("#product-thumbnail-carousel");
+            var slidesPerPage = 5; // Hoặc số lượng thumbnail bạn muốn hiển thị
+            mainCarousel.owlCarousel({ items: 1, loop: false, margin: 10, nav: true, dots: false, URLhashListener: true, startPosition: 'URLHash' });
+            if (thumbCarousel.length && thumbCarousel.find('.item').length > 1) {
+                thumbCarousel.owlCarousel({ items: slidesPerPage, loop: false, margin: 10, nav: false, dots: false, responsive: { 0: { items: 3 }, 600: { items: 4 }, 1000: { items: slidesPerPage } } });
+                // Đồng bộ hóa thumbnail khi carousel chính thay đổi
+                mainCarousel.on('changed.owl.carousel', function(e) {
+                    // Cập nhật lớp 'current' cho thumbnail tương ứng
+                    thumbCarousel.find(".owl-item").removeClass("current").eq(e.item.index).addClass("current");
+                    // Đảm bảo thumbnail đang active được cuộn vào view nếu cần
+                    thumbCarousel.trigger('to.owl.carousel', [e.item.index, 300, true]);
+                });
+                // Đặt lớp 'current' ban đầu dựa trên hash URL hoặc slide đầu tiên
+                var initialHash = window.location.hash;
+                var initialActiveIndex = 0;
+                if (initialHash && initialHash.startsWith('#image-')) { try { initialActiveIndex = parseInt(initialHash.substring(7)); } catch(e) { initialActiveIndex = 0; } }
+                thumbCarousel.find(".owl-item").eq(initialActiveIndex).addClass("current");
+                thumbCarousel.trigger('to.owl.carousel', [initialActiveIndex, 0, true]); // Đảm bảo thumbnail đầu tiên hiển thị
+            } else { thumbCarousel.hide(); } // Ẩn thumbnail nếu chỉ có 1 ảnh hoặc không có
+            const $relatedCarousel = $('.owl-carousel.hight');
+            if ($relatedCarousel.length > 0 && $relatedCarousel.find('.item, .product').length > 0) { $relatedCarousel.owlCarousel({ loop: false, margin: 20, nav: true, dots: false, responsive: { 0: { items: 2 }, 600: { items: 3 }, 1000: { items: 5 } } }); }
+            else if ($relatedCarousel.length > 0) { $relatedCarousel.hide(); }
+
+            // --- Quantity +/- logic ---
+            $(document).on('click', '.plus, .minus', function() { var $q=$(this).closest('.buttons_added').find('.input-qty'); var c=parseInt($q.val())||1; var max=parseInt($q.attr('max'))||999; var min=parseInt($q.attr('min'))||1; if ($(this).hasClass('plus')){if(c<max) $q.val(c+1).trigger('change');} else {if(c>min) $q.val(c-1).trigger('change');}});
+
+            // --- Price, Variant, and Button Logic ---
+            const $variantBoxes = $('.variant-box');
+            const $priceContainer = $('.productInfo__price');
+            const $currentPriceSpan = $priceContainer.find('.price__current');
+            const $oldPriceSpan = $priceContainer.find('.price__old');
+            const $saleTag = $priceContainer.find('.product__sale-tag');
+            const $addToCartBtn = $('#addToCartBtn');
+            const $buyNowBtn = $('#buyNowBtn');
+            let selectedVariantId = null;
+
+            // Lấy giá gốc của sản phẩm cha từ Thymeleaf
+            const baseProductPrice = /*[[${product.price}]]*/ null;
+            const baseProductOriginalPrice = /*[[${product.originalPrice}]]*/ null;
+
+            // Hàm cập nhật hiển thị giá
+            function displayPrice(currentP, originalP) {
+                $currentPriceSpan.text(formatPrice(currentP));
+                if (originalP && !isNaN(originalP) && parseFloat(originalP) > parseFloat(currentP)) {
+                    $oldPriceSpan.text(formatPrice(originalP) + ' đ').show();
+                    const discount = Math.round(100 * (parseFloat(originalP) - parseFloat(currentP)) / parseFloat(originalP));
+                    $saleTag.text('-' + discount + '%').show();
+                } else {
+                    $oldPriceSpan.hide();
+                    $saleTag.hide();
+                }
+            }
+
+            // Hiển thị giá gốc ban đầu
+            if (baseProductPrice !== null) {
+                logger.debug("Setting initial price:", baseProductPrice, baseProductOriginalPrice);
+                displayPrice(baseProductPrice, baseProductOriginalPrice);
+            } else {
+                 logger.warn("Base product price is null.");
+                 $currentPriceSpan.text("Liên hệ");
+            }
+
+            // Cập nhật trạng thái nút
+            function updateButtonState() {
+                 if (selectedVariantId) {
+                     if (isAuthenticated) { $addToCartBtn.removeClass('needs-action guest-active').addClass('active-action').prop('disabled', false); $buyNowBtn.removeClass('needs-action guest-active').addClass('active-action').prop('disabled', false); }
+                     else { $addToCartBtn.removeClass('needs-action').addClass('guest-active').prop('disabled', false); $buyNowBtn.removeClass('needs-action').addClass('guest-active').prop('disabled', false); }
+                 } else {
+                      $addToCartBtn.removeClass('guest-active active-action').addClass('needs-action').prop('disabled', true);
+                      $buyNowBtn.removeClass('guest-active active-action').addClass('needs-action').prop('disabled', true);
+                 }
+            }
+
+            // Xử lý khi chọn variant
+            $variantBoxes.on('click', function() {
+                const $selectedBox = $(this);
+                if ($selectedBox.hasClass('selected')) return;
+
+                selectedVariantId = $selectedBox.data('variant-id');
+                $variantBoxes.removeClass('selected');
+                $selectedBox.addClass('selected');
+                $selectedBox.find('input[type="radio"]').prop('checked', true);
+
+                const variantPrice = $selectedBox.data('price');
+                const variantOriginalPrice = $selectedBox.data('original-price');
+                const imgUrl = $selectedBox.data('variant-image-url');
+
+                logger.debug("Variant selected, updating price:", variantPrice, variantOriginalPrice);
+                displayPrice(variantPrice, variantOriginalPrice); // Cập nhật giá
+
+                updateButtonState(); // Cập nhật nút
+
+                // Cập nhật ảnh carousel (Kiểm tra xem URL ảnh có '/' ở đầu không)
+                if (imgUrl) {
+                    let targetIndex = -1;
+                    const imageName = imgUrl.substring(imgUrl.lastIndexOf('/') + 1); // Lấy tên file ảnh từ URL
+
+                    mainCarousel.find('.owl-item:not(.cloned) .item').each(function(index) {
+                        const styleAttr = $(this).find('.product__avt').attr('style');
+                        const bgUrlMatch = styleAttr ? styleAttr.match(/url\(['"]?(.*?)['"]?\)/) : null;
+                        const backgroundUrl = bgUrlMatch ? bgUrlMatch[1] : null;
+
+                        if (backgroundUrl) {
+                            // Xử lý cả trường hợp URL đầy đủ và URL tương đối
+                            const bgImageName = backgroundUrl.substring(backgroundUrl.lastIndexOf('/') + 1);
+                            if (bgImageName === imageName) {
+                                targetIndex = index;
+                                return false; // Dừng vòng lặp khi tìm thấy
+                            }
+                        }
+                    });
+
+                    if (targetIndex !== -1) {
+                        logger.debug(`Found matching image at index ${targetIndex} for variant image ${imageName}`);
+                        mainCarousel.trigger('to.owl.carousel', [targetIndex, 300, true]);
+                    } else {
+                         logger.warn(`No matching image found in carousel for variant image ${imageName}. Staying at first slide.`);
+                        mainCarousel.trigger('to.owl.carousel', [0, 300, true]); // Quay về ảnh đầu nếu không khớp
+                    }
+                } else {
+                    mainCarousel.trigger('to.owl.carousel', [0, 300, true]); // Nếu variant ko có ảnh, về ảnh đầu
+                }
+            });
+
+            // Khởi tạo trạng thái nút
+            if ($variantBoxes.length > 0) {
+                updateButtonState(); // Disable nút ban đầu nếu có variant
+            } else {
+                $addToCartBtn.addClass('needs-action').prop('disabled', true);
+                $buyNowBtn.addClass('needs-action').prop('disabled', true);
+            }
+
+            // --- Add to Cart / Buy Now Handlers ---
+            $addToCartBtn.on('click', function(e) { e.preventDefault(); if (!isAuthenticated) { window.location.href = loginUrl; return; } if (!selectedVariantId) { alert('Vui lòng chọn một loại sản phẩm!'); return; } const q = parseInt($('.input-qty').val()) || 1; addToCartAjax(selectedVariantId, q); });
+            $buyNowBtn.on('click', function(e) { e.preventDefault(); if (!isAuthenticated) { window.location.href = loginUrl; return; } if (!selectedVariantId) { alert('Vui lòng chọn một loại sản phẩm!'); return; } const q = parseInt($('.input-qty').val()) || 1; addToCartAjax(selectedVariantId, q, function(r) { window.location.href = `/pay?variantIds=${selectedVariantId}`; }, function() {}); });
+
+            // --- Tab Logic ---
+            $('.tabs .tab-item').on('click', function(){const $t=$(this); if($t.hasClass('active')) return; const $c=$t.closest('.tabs'); const $tc=$t.closest('.main__tabnine').find('.tab-content'); const $l=$c.find('.line'); const i=$t.index(); $c.find('.tab-item.active').removeClass('active'); $t.addClass('active'); $tc.find('.tab-pane.active').removeClass('active'); $tc.find('.tab-pane').eq(i).addClass('active'); if($l.length){try{$l.css({left:$t.position().left+'px',width:$t.outerWidth()+'px'});} catch(e){console.error("Tab line error:",e);}}});
+            const $iT=$('.tabs .tab-item.active'); if($iT.length){const $l=$('.tabs .line'); if($l.length){setTimeout(function(){try{$l.css({left:$iT.position().left+'px',width:$iT.outerWidth()+'px'});} catch(e){console.error("Tab line init error:",e);}},100);}}
+
+            // --- Review Image Modal Logic ---
+            let currentReviewImages = [];
+            let currentImageIndex = 0;
+            function openReviewModal(imgElement, reviewGroup) {
+                 const modal = document.getElementById('reviewImageModal');
+                 const modalImg = document.getElementById('modalImage');
+                 currentReviewImages = Array.from(document.querySelectorAll(`img.review-image-thumbnail[data-review-group="${reviewGroup}"]`)).map(img => img.src);
+                 currentImageIndex = parseInt(imgElement.getAttribute('data-index'));
+                 if (isNaN(currentImageIndex)) currentImageIndex = 0;
+                 if (currentReviewImages.length > 0) {
+                     modalImg.src = currentReviewImages[currentImageIndex];
+                     modal.style.display = 'flex';
+                     document.body.style.overflow = 'hidden';
+                 }
+             }
+            function closeReviewModal() { /* ... */ document.getElementById('reviewImageModal').style.display = 'none'; document.body.style.overflow = 'auto'; currentReviewImages = []; }
+            function changeReviewImage(direction) { /* ... */ currentImageIndex += direction; if (currentImageIndex < 0) currentImageIndex = currentReviewImages.length - 1; if (currentImageIndex >= currentReviewImages.length) currentImageIndex = 0; document.getElementById('modalImage').src = currentReviewImages[currentImageIndex]; }
+            $(document).on('click', '.modal-close', closeReviewModal);
+            $(document).on('click', '.modal-prev', () => changeReviewImage(-1));
+            $(document).on('click', '.modal-next', () => changeReviewImage(1));
+            $(document).on('click', '.review-image-thumbnail', function() { const reviewGroup = this.getAttribute('data-review-group'); openReviewModal(this, reviewGroup); });
+            $(document).on('keydown', function(e) { if (e.key === 'Escape' && $('#reviewImageModal').is(':visible')) { closeReviewModal(); } });
+
+            logger.debug("Product page loaded.");
+            
+            
+        });
+        /*]]>*/
+        </script>
+	</th:block>
+</body>
+</html>

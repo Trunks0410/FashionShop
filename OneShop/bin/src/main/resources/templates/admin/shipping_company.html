@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{admin/layout/app}">
+<head>
+<meta charset="UTF-8">
+<title>Quản lý Nhà vận chuyển</title>
+<th:block layout:fragment="css">
+    <style>
+        .table th, .table td { vertical-align: middle; }
+        .action-btns a, .action-btns button { margin: 0 3px; }
+        .modal-title { font-weight: 600; }
+        /* Style cho switch */
+        .form-switch .form-check-input { width: 3em; height: 1.5em; }
+        /* Style cho phần quy tắc trong modal */
+        .rule-entry, .rule-entry-edit {
+            background-color: #f8f9fa; /* Nền nhạt hơn */
+        }
+        .rule-entry h4, .rule-entry-edit h4 {
+            font-size: 1.1rem; /* Giảm cỡ chữ tiêu đề quy tắc */
+            color: #495057;
+        }
+    </style>
+</th:block>
+</head>
+
+<body>
+	<div layout:fragment="content">
+		<div class="d-sm-flex align-items-center justify-content-between mb-4 mt-4">
+			 <h1 class="h3 mb-0">Quản lý Nhà Vận Chuyển</h1>
+             <button type="button" class="btn btn-primary shadow-sm"
+					data-bs-toggle="modal" data-bs-target="#addShippingCompanyModal"
+					id="btnAddCompany">
+					<i class="fas fa-plus me-2"></i> Thêm Nhà Vận Chuyển
+				</button>
+		</div>
+        <p class="lead mb-4">Thêm mới, chỉnh sửa và quản lý các đơn vị vận chuyển.</p>
+
+        <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show" role="alert">
+            <span th:text="${successMessage}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+         <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show" role="alert">
+            <span th:text="${errorMessage}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                 <h6 class="m-0 font-weight-bold">Danh sách Nhà Vận Chuyển</h6>
+            </div>
+             <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover table-bordered align-middle">
+                        <thead class="table-light text-center">
+                            <tr>
+                                <th scope="col" style="width: 50px;">STT</th>
+                                <th scope="col">Tên nhà vận chuyển</th>
+                                <th scope="col" style="width: 150px;">SĐT</th>
+                                <th scope="col" class="text-center" style="width: 120px;">Trạng thái</th>
+                                <th scope="col" class="text-center" style="width: 100px;">Quy tắc</th>
+                                <th scope="col" class="text-center" style="width: 70px;">Sửa</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="company, iStat : ${shippingCompanies}">
+                                <td th:text="${iStat.index + 1}" class="text-center"></td>
+                                <td th:text="${company.name}"></td>
+                                <td th:text="${company.phone}" class="text-center"></td>
+                                <td class="text-center">
+                                    <div class="form-check form-switch d-flex justify-content-center">
+                                        <input class="form-check-input traditional-status-toggle"
+                                               type="checkbox" th:id="'statusSwitch' + ${company.shippingId}"
+                                               th:checked="${company.isActive}"
+                                               th:data-id="${company.shippingId}"
+                                               th:data-current-active="${company.isActive}"
+                                               style="cursor: pointer;">
+                                        <label class="form-check-label visually-hidden" th:for="'statusSwitch' + ${company.shippingId}">Trạng thái</label>
+                                    </div>
+                                </td>
+                                <td class="text-center action-btns">
+                                    <a th:href="@{/admin/shipping-companies/{id}/rules(id=${company.shippingId})}"
+                                       class="btn btn-sm btn-outline-primary" title="Xem Quy tắc tính phí">
+                                        <i class="fas fa-list-alt"></i>
+                                    </a>
+                                </td>
+                                <td class="text-center action-btns">
+                                    <a th:href="@{/admin/shipping-companies/{id}/edit(id=${company.shippingId})}"
+                                       class="btn btn-sm btn-info text-white" title="Chỉnh sửa chi tiết">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                             <tr th:if="${#lists.isEmpty(shippingCompanies)}">
+                                <td colspan="6" class="text-center text-muted py-4">Chưa có nhà vận chuyển nào.</td>
+                             </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+		<div class="modal fade" id="addShippingCompanyModal" tabindex="-1"
+			aria-labelledby="addShippingCompanyModalLabel" aria-hidden="true">
+			<div class="modal-dialog modal-lg"> <div class="modal-content">
+                    <div class="modal-header">
+						<h5 class="modal-title" id="addShippingCompanyModalLabel">Thêm Nhà Vận Chuyển Mới</h5>
+						<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+					</div>
+					<form th:action="@{/admin/shipping-companies/save}" method="post"
+						th:object="${newShippingCompany}">
+						<div class="modal-body">
+							<h6 class="mb-3 font-weight-bold text-primary">Thông tin Nhà Vận Chuyển</h6>
+							<div class="mb-3">
+								<label for="companyName" class="form-label">Tên Nhà Vận Chuyển <span class="text-danger">*</span></label>
+								<input type="text" class="form-control form-control-sm" id="companyName" th:field="*{name}" required placeholder="VD: Giao Hàng Nhanh">
+							</div>
+							<div class="mb-3">
+								<label for="companyPhone" class="form-label">Số Điện Thoại</label>
+								<input type="text" class="form-control form-control-sm" id="companyPhone" th:field="*{phone}" placeholder="VD: 1900xxxx">
+							</div>
+
+							<hr class="my-4">
+
+							<h6 class="mb-3 font-weight-bold text-primary d-flex align-items-center">
+                                Quy tắc tính phí
+                                <button type="button" class="btn btn-sm btn-outline-success ms-2" id="btnAddRule">
+                                    <i class="fas fa-plus"></i> Thêm Quy tắc
+                                </button>
+                            </h6>
+
+							<div id="rulesContainer" class="p-3 border rounded mb-3" style="max-height: 300px; overflow-y: auto;">
+								<div th:if="*{rules == null or #lists.isEmpty(rules)}" class="text-muted text-center">Chưa có quy tắc nào.</div>
+                                <div th:each="rule, i : *{rules}" class="rule-entry mb-3 p-3 border rounded bg-light" th:data-index="${i.index}">
+                                    <div class="d-flex justify-content-between align-items-start mb-2">
+                                        <h6 class="text-secondary mb-0" th:text="'Quy tắc #' + (${i.index} + 1)"></h6>
+                                        <button type="button" class="btn btn-sm btn-outline-danger btnRemoveRule" title="Xóa quy tắc này"><i class="fas fa-times"></i></button>
+                                    </div>
+                                    <div class="row g-2">
+                                        <div class="col-12 mb-2">
+                                            <label class="form-label form-label-sm visually-hidden">Tên quy tắc</label>
+                                            <input type="text" class="form-control form-control-sm" th:field="*{rules[__${i.index}__].ruleName}" required placeholder="Tên quy tắc (VD: Nội thành HCM)">
+                                        </div>
+                                        <div class="col-md-6 mb-2">
+                                             <label class="form-label form-label-sm visually-hidden">TG Giao hàng</label>
+                                            <input type="text" class="form-control form-control-sm" th:field="*{rules[__${i.index}__].estimatedDeliveryTime}" required placeholder="TG Giao hàng (VD: 1-2 ngày)">
+                                        </div>
+                                        <div class="col-md-6 mb-2">
+                                             <label class="form-label form-label-sm visually-hidden">Phí</label>
+                                            <input type="number" step="1000" min="0" class="form-control form-control-sm" th:field="*{rules[__${i.index}__].baseFee}" required placeholder="Phí (VNĐ)">
+                                        </div>
+                                        <div class="col-md-4">
+                                             <label class="form-label form-label-sm visually-hidden">Vùng Gửi</label>
+                                            <input type="text" class="form-control form-control-sm" th:field="*{rules[__${i.index}__].fromRegion}" required placeholder="Vùng Gửi (VD: HCM)">
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label form-label-sm visually-hidden">Vùng Nhận</label>
+                                            <input type="text" class="form-control form-control-sm" th:field="*{rules[__${i.index}__].toRegion}" required placeholder="Vùng Nhận (VD: Hà Nội)">
+                                        </div>
+                                        <div class="col-md-4 d-flex align-items-center">
+                                            <div class="form-check form-switch"> <input class="form-check-input" type="checkbox" role="switch" th:id="'isExpress_' + ${i.index}" th:field="*{rules[__${i.index}__].isExpress}">
+                                                <label class="form-check-label" th:for="'isExpress_' + ${i.index}">Hỏa tốc</label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+							</div>
+						</div>
+						<div class="modal-footer">
+							<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+							<button type="submit" class="btn btn-primary">Lưu Nhà Vận Chuyển</button>
+						</div>
+					</form>
+				</div>
+			</div>
+		</div>
+
+        <div class="modal fade" id="editShippingCompanyModal" tabindex="-1"
+			aria-labelledby="editShippingCompanyModalLabel" aria-hidden="true">
+			<div class="modal-dialog modal-lg"> <div class="modal-content">
+                    <div class="modal-header">
+						<h5 class="modal-title" id="editShippingCompanyModalLabel">Chỉnh Sửa Nhà Vận Chuyển</h5>
+						<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+					</div>
+					<form th:action="@{/admin/shipping-companies/update}" method="post"
+                          th:object="${shippingCompanyToEdit}"> <div class="modal-body">
+							<h6 class="mb-3 font-weight-bold text-primary">Thông tin Nhà Vận Chuyển</h6>
+                            <input type="hidden" th:field="*{shippingId}">
+							<div class="mb-3">
+								<label for="companyNameEdit" class="form-label">Tên Nhà Vận Chuyển <span class="text-danger">*</span></label>
+								<input type="text" class="form-control form-control-sm" id="companyNameEdit" th:field="*{name}" required>
+							</div>
+							<div class="mb-3">
+								<label for="companyPhoneEdit" class="form-label">Số Điện Thoại</label>
+								<input type="text" class="form-control form-control-sm" id="companyPhoneEdit" th:field="*{phone}">
+							</div>
+
+							<hr class="my-4">
+
+                            <h6 class="mb-3 font-weight-bold text-primary d-flex align-items-center">
+                                Quy tắc tính phí
+                                <button type="button" class="btn btn-sm btn-outline-success ms-2" id="btnAddRuleEdit">
+                                    <i class="fas fa-plus"></i> Thêm Quy tắc
+                                </button>
+                            </h6>
+
+							<div id="editRulesContainer" class="p-3 border rounded mb-3" style="max-height: 300px; overflow-y: auto;">
+								<div th:each="rule, i : *{rules}" class="rule-entry-edit mb-3 p-3 border rounded bg-light" th:data-index="${i.index}">
+                                    <div class="d-flex justify-content-between align-items-start mb-2">
+                                        <h6 class="text-secondary mb-0" th:text="'Quy tắc #' + (${i.index} + 1)"></h6>
+                                        <input type="hidden" th:field="*{rules[__${i.index}__].ruleId}"> <button type="button" class="btn btn-sm btn-outline-danger btnRemoveRuleEdit" title="Xóa quy tắc này"><i class="fas fa-times"></i></button>
+                                    </div>
+                                    <div class="row g-2">
+                                        <div class="col-12 mb-2">
+                                             <label class="form-label form-label-sm visually-hidden">Tên quy tắc</label>
+                                            <input type="text" class="form-control form-control-sm" th:field="*{rules[__${i.index}__].ruleName}" required placeholder="Tên quy tắc">
+                                        </div>
+                                         <div class="col-md-6 mb-2">
+                                             <label class="form-label form-label-sm visually-hidden">TG Giao hàng</label>
+                                            <input type="text" class="form-control form-control-sm" th:field="*{rules[__${i.index}__].estimatedDeliveryTime}" required placeholder="TG Giao hàng">
+                                        </div>
+                                        <div class="col-md-6 mb-2">
+                                            <label class="form-label form-label-sm visually-hidden">Phí</label>
+                                            <input type="number" step="1000" min="0" class="form-control form-control-sm" th:field="*{rules[__${i.index}__].baseFee}" required placeholder="Phí (VNĐ)">
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label form-label-sm visually-hidden">Vùng Gửi</label>
+                                            <input type="text" class="form-control form-control-sm" th:field="*{rules[__${i.index}__].fromRegion}" required placeholder="Vùng Gửi">
+                                        </div>
+                                        <div class="col-md-4">
+                                             <label class="form-label form-label-sm visually-hidden">Vùng Nhận</label>
+                                            <input type="text" class="form-control form-control-sm" th:field="*{rules[__${i.index}__].toRegion}" required placeholder="Vùng Nhận">
+                                        </div>
+                                        <div class="col-md-4 d-flex align-items-center">
+                                            <div class="form-check form-switch">
+                                                <input class="form-check-input" type="checkbox" role="switch" th:id="'isExpressEdit_' + ${i.index}" th:field="*{rules[__${i.index}__].isExpress}">
+                                                <label class="form-check-label" th:for="'isExpressEdit_' + ${i.index}">Hỏa tốc</label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+							</div>
+						</div>
+						<div class="modal-footer">
+							<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+							<button type="submit" class="btn btn-primary">Lưu Thay Đổi</button>
+						</div>
+					</form>
+				</div>
+			</div>
+		</div>
+
+		<script type="text/template" id="ruleTemplate">
+			<div class="rule-entry mb-3 p-3 border rounded bg-light" data-index="{INDEX}">
+				<div class="d-flex justify-content-between align-items-start mb-2">
+					<h6 class="text-secondary mb-0">Quy tắc #{INDEX_DISPLAY}</h6>
+					<input type="hidden" name="rules[{INDEX}].ruleId" value="">
+					<button type="button" class="btn btn-sm btn-outline-danger btnRemoveRule" title="Xóa quy tắc này"><i class="fas fa-times"></i></button>
+				</div>
+				<div class="row g-2">
+					<div class="col-12 mb-2">
+						<label class="form-label form-label-sm visually-hidden">Tên quy tắc</label>
+						<input type="text" class="form-control form-control-sm" name="rules[{INDEX}].ruleName" required placeholder="Tên quy tắc (VD: Nội thành HCM)">
+					</div>
+					<div class="col-md-6 mb-2">
+						 <label class="form-label form-label-sm visually-hidden">TG Giao hàng</label>
+						<input type="text" class="form-control form-control-sm" name="rules[{INDEX}].estimatedDeliveryTime" required placeholder="TG Giao hàng (VD: 1-2 ngày)">
+					</div>
+					<div class="col-md-6 mb-2">
+						<label class="form-label form-label-sm visually-hidden">Phí</label>
+						<input type="number" step="1000" min="0" class="form-control form-control-sm" name="rules[{INDEX}].baseFee" required placeholder="Phí (VNĐ)">
+					</div>
+					<div class="col-md-4">
+						<label class="form-label form-label-sm visually-hidden">Vùng Gửi</label>
+						<input type="text" class="form-control form-control-sm" name="rules[{INDEX}].fromRegion" required placeholder="Vùng Gửi (VD: HCM)">
+					</div>
+					<div class="col-md-4">
+						 <label class="form-label form-label-sm visually-hidden">Vùng Nhận</label>
+						<input type="text" class="form-control form-control-sm" name="rules[{INDEX}].toRegion" required placeholder="Vùng Nhận (VD: Hà Nội)">
+					</div>
+					<div class="col-md-4 d-flex align-items-center">
+						<div class="form-check form-switch">
+							<input class="form-check-input" type="checkbox" role="switch" id="isExpress_{INDEX}" name="rules[{INDEX}].isExpress" value="true">
+							<label class="form-check-label" for="isExpress_{INDEX}">Hỏa tốc</label>
+							
+							<input type="hidden" name="rules[{INDEX}].isExpress" value="false" />
+						</div>
+					</div>
+				</div>
+			</div>
+		</script>
+		</div>
+	<th:block layout:fragment="js">
+        <script th:inline="javascript">
+            // Biến này sẽ là true nếu nó được Flash Attribute từ showEditForm
+            const openEditModal = /*[[${openEditModal == true}]]*/ false;
+        </script>
+        
+        <script>
+            // *** TOÀN BỘ LOGIC TỪ shipping_company.js ĐƯỢC CHUYỂN VÀO ĐÂY ***
+
+            // Hàm re-index các quy tắc
+            function reIndexRules(containerSelector, entryClass, idPrefix) {
+                $(containerSelector).children('.' + entryClass).each(function(newIndex) {
+                    const $ruleEntry = $(this);
+                    $ruleEntry.attr('data-index', newIndex);
+                    // Cập nhật tiêu đề quy tắc (ví dụ: "Quy tắc #1")
+                    $ruleEntry.find('h6.text-secondary').text('Quy tắc #' + (newIndex + 1));
+        
+                    $ruleEntry.find('[name]').each(function() {
+                        const $input = $(this);
+                        const oldName = $input.attr('name');
+                        if (oldName) {
+                            // Cập nhật name (ví dụ: rules[0].ruleName)
+                            const newName = oldName.replace(/rules\[\d+\]/g, 'rules[' + newIndex + ']');
+                            $input.attr('name', newName);
+                        }
+                    });
+                    
+                    // Cập nhật ID và 'for' cho checkbox 'isExpress'
+                    const $checkbox = $ruleEntry.find('input[type="checkbox"][id^="' + idPrefix + '"]');
+                    if ($checkbox.length) {
+                        const newId = idPrefix + newIndex;
+                        $checkbox.attr('id', newId);
+                        // Cập nhật label đi kèm
+                        $ruleEntry.find('label[for^="' + idPrefix + '"]').attr('for', newId);
+                    }
+
+                    // Cập nhật name cho hidden input (nếu có)
+                    // Cú pháp $(this).attr('name') sẽ lấy name, không phải th:name
+                    const $hiddenInput = $ruleEntry.find('input[type="hidden"][name*="isExpress"]');
+                     if ($hiddenInput.length) {
+                         const newName = 'rules[' + newIndex + '].isExpress';
+                         $hiddenInput.attr('name', newName);
+                     }
+                });
+            }
+
+            $(document).ready(function() {
+                // Tự đóng alert sau 5 giây (logic gốc)
+                $('.alert').each(function() {
+                    const alert = this;
+                    // Sử dụng try-catch để an toàn hơn
+                    try {
+                        setTimeout(function() {
+                            var bsAlert = bootstrap.Alert.getInstance(alert);
+                            if (bsAlert) { bsAlert.close(); } else { $(alert).alert('close'); }
+                        }, 5000);
+                    } catch (e) {
+                         console.error("Error closing alert:", e);
+                         $(alert).hide(); 
+                    }
+                });
+
+
+                // Xử lý toggle status bằng AJAX (logic gốc, đã sửa lỗi)
+                $('.traditional-status-toggle').on('change', function() {
+                    const checkbox = $(this);
+                    const companyId = checkbox.data('id');
+                    const currentActive = checkbox.data('current-active');
+                    const isActiveNew = checkbox.is(':checked');
+                    // Lấy URL đúng (giả sử bạn có context path, nhưng ở đây dùng đường dẫn tuyệt đối)
+                    const formAction = `/admin/shipping_company/${companyId}/toggle-status`; 
+                    
+                    const actionText = isActiveNew ? 'kích hoạt' : 'vô hiệu hóa';
+                    if (!confirm(`Bạn có chắc muốn ${actionText} nhà vận chuyển này?`)) {
+                        checkbox.prop('checked', !isActiveNew); // Hoàn tác nếu hủy
+                        return;
+                    }
+
+                    // Gửi AJAX POST (Đảm bảo Thymeleaf CSRF token được gửi nếu có)
+                    // Lưu ý: Nếu bạn dùng Spring Security và CSRF, bạn cần thêm token vào request.
+                    // Vì đây là form submit truyền thống (dù qua AJAX), nên có thể cần cấu hình CSRF.
+                    // Tạm thời giả định CSRF đã được xử lý hoặc vô hiệu hóa cho /admin/**
+                    $.post(formAction, { isActiveNew: isActiveNew })
+                        .done(function(data) {
+                            // Cập nhật trạng thái data-
+                            checkbox.data('current-active', isActiveNew);
+                             // Hiển thị thông báo thành công (thêm vào sau .lead)
+                             const successMsg = `<div class="alert alert-success alert-dismissible fade show" role="alert">
+                                                    Đã ${actionText} nhà vận chuyển thành công!
+                                                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                                 </div>`;
+                             $('.lead.mb-4').after(successMsg); 
+                             // Tự đóng thông báo
+                             setTimeout(() => { $('.alert-success').alert('close'); }, 3000);
+                        })
+                        .fail(function(xhr) {
+                            // Thất bại, trả lại checkbox
+                            checkbox.prop('checked', !isActiveNew);
+                             // Hiển thị thông báo lỗi
+                             const errorMsg = `<div class="alert alert-danger alert-dismissible fade show" role="alert">
+                                                  Lỗi khi ${actionText}: ${xhr.responseText || 'Vui lòng thử lại.'}
+                                                  <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                               </div>`;
+                             $('.lead.mb-4').after(errorMsg);
+                             setTimeout(() => { $('.alert-danger').alert('close'); }, 5000);
+                        });
+                });
+
+                // *** LOGIC TỪ shipping_company.js ***
+                // Mở modal Edit nếu biến openEditModal là true
+                if (typeof openEditModal !== 'undefined' && openEditModal) {
+                    var editModal = new bootstrap.Modal(document.getElementById('editShippingCompanyModal'));
+                    if(editModal) {
+                        editModal.show();
+                    } else {
+                        console.error("Không tìm thấy #editShippingCompanyModal để mở.");
+                    }
+                }
+
+                // Logic cho modal Edit
+                const $editRulesContainer = $('#editRulesContainer');
+                let editRuleTemplate = '';
+                if ($("#ruleTemplate").length) {
+                    editRuleTemplate = $("#ruleTemplate").html()
+                        .replace(/{INDEX_DISPLAY}/g, 'TEMP_DISPLAY') // Thay thế placeholder
+                        .replace(/{INDEX}/g, 'TEMP_INDEX')       // Thay thế placeholder
+                        .replace(/rule-entry/g, 'rule-entry-edit') // Đổi class
+                        .replace(/isExpress_/g, 'isExpressEdit_') // Đổi id/for
+                        .replace(/btnRemoveRule/g, 'btnRemoveRuleEdit'); // Đổi class nút xóa
+                } else {
+                     console.error("#ruleTemplate không tồn tại!");
+                }
+            
+                $('#btnAddRuleEdit').on('click', function() {
+                    if (!editRuleTemplate) {
+                         console.error("editRuleTemplate rỗng, không thể thêm quy tắc.");
+                         return;
+                    }
+                    const index = $editRulesContainer.children('.rule-entry-edit').length;
+                    let template = editRuleTemplate
+                        .replace(/TEMP_INDEX/g, index)
+                        .replace(/TEMP_DISPLAY/g, (index + 1));
+                        
+                    $editRulesContainer.append(template);
+                    // Đảm bảo ruleId mới là rỗng
+                    $editRulesContainer.find('.rule-entry-edit').last().find('input[name*="ruleId"]').val('0'); // Gán là 0
+                    reIndexRules('#editRulesContainer', 'rule-entry-edit', 'isExpressEdit_');
+                });
+            
+                $editRulesContainer.on('click', '.btnRemoveRuleEdit', function() {
+                    $(this).closest('.rule-entry-edit').remove();
+                    reIndexRules('#editRulesContainer', 'rule-entry-edit', 'isExpressEdit_');
+                });
+            
+                // Logic cho modal Add
+                const $rulesContainer = $('#rulesContainer');
+                let addRuleTemplate = '';
+                if ($("#ruleTemplate").length) {
+                    addRuleTemplate = $("#ruleTemplate").html()
+                        .replace(/{INDEX_DISPLAY}/g, 'TEMP_DISPLAY')
+                        .replace(/{INDEX}/g, 'TEMP_INDEX');
+                } else {
+                     console.error("#ruleTemplate không tồn tại!");
+                }
+            
+                $('#btnAddRule').on('click', function() {
+                    if (!addRuleTemplate) {
+                        console.error("addRuleTemplate rỗng, không thể thêm quy tắc.");
+                        return;
+                    }
+                    const index = $rulesContainer.children('.rule-entry').length;
+                    let template = addRuleTemplate
+                        .replace(/TEMP_INDEX/g, index)
+                        .replace(/TEMP_DISPLAY/g, (index + 1));
+                        
+                    $rulesContainer.append(template);
+                    $rulesContainer.find('.rule-entry').last().find('input[name*="ruleId"]').val('0'); // Gán là 0
+                    reIndexRules('#rulesContainer', 'rule-entry', 'isExpress_'); 
+                });
+            
+                $rulesContainer.on('click', '.btnRemoveRule', function() {
+                    $(this).closest('.rule-entry').remove();
+                    reIndexRules('#rulesContainer', 'rule-entry', 'isExpress_'); 
+                });
+            });
+        </script>
+	</th:block>
+
+</body>
+</html>

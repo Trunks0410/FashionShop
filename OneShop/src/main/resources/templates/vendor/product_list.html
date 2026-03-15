@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+	xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+	layout:decorate="~{vendor/layout/app}">
+<head>
+<title>Quản lý Sản phẩm</title>
+ <style>
+        /* Tăng padding và căn giữa nội dung table */
+        .table th, .table td {
+            vertical-align: middle;
+            padding: 0.8rem;
+        }
+        .table thead th {
+             background-color: #f8f9fa; /* Màu nền header nhẹ nhàng */
+             font-weight: 600; /* Chữ đậm hơn */
+        }
+        /* Style cho ảnh sản phẩm */
+        .product-image {
+            width: 60px;
+            height: 60px;
+            object-fit: cover; /* Đảm bảo ảnh không bị méo */
+            border-radius: 0.25rem; /* Bo góc nhẹ */
+        }
+        /* Nút hành động */
+        .action-buttons a, .action-buttons form button {
+            margin: 0 3px; /* Khoảng cách giữa các nút */
+        }
+        
+        /* === CSS CHO TRẠNG THÁI === */
+        .status-badge { 
+            font-size: 0.8em; 
+            padding: .3em .6em; 
+            color: white; /* Đảm bảo chữ trắng trên nền màu */
+        }
+        .bg-warning { 
+            background-color: #f6c23e !important; 
+            color: #5a5c69 !important; /* Chữ tối màu cho nền vàng */
+        }
+        .bg-success { 
+            background-color: #1cc88a !important; 
+        }
+        .bg-danger { 
+            background-color: #e74a3b !important; 
+        }
+         .bg-secondary {
+            background-color: #858796 !important;
+        }
+    </style>
+</head>
+<body>
+	<div layout:fragment="content">
+		<div
+			class="d-flex justify-content-between align-items-center mt-4 mb-3">
+			<h1 class="h3">Quản lý Sản phẩm</h1>
+			<a th:href="@{/vendor/products/add}"
+				class="btn btn-primary shadow-sm"> <i class="fas fa-plus me-2"></i>Thêm
+				Sản phẩm mới
+			</a>
+		</div>
+		<p class="lead mb-4">Xem, thêm mới, chỉnh sửa hoặc xóa các sản
+			phẩm của bạn.</p>
+
+        <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show" role="alert">
+            <span th:text="${successMessage}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show" role="alert">
+            <span th:text="${errorMessage}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+
+		<div class="card shadow">
+			<div class="card-header py-3">
+				<h6 class="m-0 font-weight-bold">Danh sách sản phẩm của bạn</h6>
+			</div>
+			<div class="card-body">
+				<div class="table-responsive">
+					<table class="table table-hover align-middle" id="productsTable"
+						width="100%" cellspacing="0">
+						<thead class="table-light">
+							<tr class="text-center">
+								<th>Ảnh</th>
+								<th class="text-start">Tên sản phẩm</th>
+								<th>Danh mục</th>
+								<th>Giá bán</th>
+								<th>Tồn kho</th>
+								<th>Trạng thái</th>
+								<th>Hành động</th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr th:each="product : ${productPage.content}">
+								<td class="text-center">
+                                    <img th:src="@{${product.primaryImageUrl}}"
+                                         alt="Ảnh sản phẩm" class="product-image">
+                                </td>
+								<td class="text-start" th:text="${product.name}">Tên sản phẩm</td>
+								<td class="text-center" th:text="${product.category?.name ?: 'N/A'}">Danh mục</td>
+								<td class="text-center" th:text="${#numbers.formatCurrency(product.price)}">Giá bán</td>
+								<td class="text-center" th:text="${product.stock}">Tồn kho</td>
+								
+                                <td class="text-center">
+                                    <span th:switch="${product.status?.name()}" class="badge status-badge"
+                                          th:classappend="${product.status?.name() == 'PENDING'} ? 'bg-warning' :
+                                                          (${product.status?.name() == 'SELLING'} ? 'bg-success' :
+                                                          (${product.status?.name() == 'REJECTED'} ? 'bg-danger' : 'bg-secondary'))">
+                                        
+                                        <span th:if="${product.status?.name() == 'SELLING' and product.stock <= 0}" 
+                                              class="badge status-badge bg-warning text-dark">Hết hàng</span>
+                                        
+                                        <span th:unless="${product.status?.name() == 'SELLING' and product.stock <= 0}">
+                                            <span th:case="'PENDING'">Chờ Duyệt</span>
+                                            <span th:case="'SELLING'">Đang Bán</span>
+                                            <span th:case="'REJECTED'">Bị Từ Chối</span> <span th:case="*">Không xác định</span>
+                                        </span>
+                                    </span>
+                                </td>
+                                <td class="text-center action-buttons">
+                                    <a th:href="@{/vendor/products/edit/{id}(id=${product.productId})}" class="btn btn-sm btn-info" title="Sửa">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                     <form th:action="@{/vendor/products/delete/{id}(id=${product.productId})}" method="post" class="d-inline"
+                                          onsubmit="return confirm('Bạn có chắc chắn muốn xóa sản phẩm \'' + [[$product.name]] + '\'?');">
+                                        <button type="submit" class="btn btn-sm btn-danger" title="Xóa">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </form>
+                                </td>
+							</tr>
+                            <tr th:if="${productPage.empty}">
+                                <td colspan="7" class="text-center text-muted py-4">Không có sản phẩm nào trong cửa hàng của bạn.</td>
+                            </tr>
+						</tbody>
+					</table>
+				</div>
+
+                 <nav aria-label="Page navigation" class="d-flex justify-content-center mt-4" th:if="${productPage.totalPages > 1}">
+                    <ul class="pagination">
+                        <li class="page-item" th:classappend="${productPage.first} ? 'disabled' : ''">
+                            <a class="page-link" th:href="@{/vendor/products(page=${productPage.number - 1}, size=${productPage.size})}">&laquo;</a>
+                        </li>
+                         <th:block th:each="pageNumber : ${#numbers.sequence(0, productPage.totalPages - 1)}">
+                              <li class="page-item" th:classappend="${pageNumber == productPage.number} ? 'active' : ''">
+                                  <a class="page-link" th:href="@{/vendor/products(page=${pageNumber}, size=${productPage.size})}" th:text="${pageNumber + 1}">1</a>
+                              </li>
+                        </th:block>
+                        <li class="page-item" th:classappend="${productPage.last} ? 'disabled' : ''">
+                            <a class="page-link" th:href="@{/vendor/products(page=${productPage.number + 1}, size=${productPage.size})}">&raquo;</a>
+                        </li>
+                    </ul>
+                </nav>
+
+			</div>
+		</div>
+	</div>
+</body>
+</html>

@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+    xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <!-- Thêm các thẻ meta và CSS cần thiết nếu có -->
+</head>
+<body>
+    <div th:fragment="header" class="header scrolling" id="myHeader">
+        <div class="grid wide">
+            <div class="header__top">
+                <div class="navbar-icon">
+                    <span></span> <span></span> <span></span>
+                </div>
+                <a th:href="@{/}" class="header__logo">
+                    <img th:src="@{/assets/logo.png}" alt="OneShop Logo">
+                </a>
+
+                <div class="header__search">
+                    <form th:action="@{/products}" method="GET" class="header__search-wrap">
+                        <input type="text" name="name" class="header__search-input"
+                            placeholder="Tìm kiếm sản phẩm..."
+                            th:value="${searchTerm}"> 
+                        <button type="submit" class="header__search-icon">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </form>
+                </div>
+                
+                <div class="header__account">
+                    <div sec:authorize="isAnonymous()" class="header__account-guest-links">
+                        <a th:href="@{/login}" class="header__account-login">Đăng Nhập</a>
+                        <a th:href="@{/register}" class="header__account-register">Đăng Kí</a>
+                    </div>
+
+                    <div sec:authorize="isAuthenticated()" id="userAccountMenu" class="user-account-widget">
+                        <span class="user-greeting" th:text="'Xin chào, ' + ${#authentication.principal.username}"></span>
+                        <div class="avatar-dropdown-container">
+                            <div class="account__avatar-btn">
+                                <i class="fas fa-user"></i>
+                            </div>
+                            <div class="account__dropdown">
+                                <div class="dropdown__actions">
+                                    <!-- Hiển thị Hồ sơ theo role -->
+                                    <a th:href="@{${#authorization.expression('hasAuthority(''ROLE_SHIPPER'')') ? '/shipper/profile' : '/user/profile'}}"
+                                       class="dropdown__item">
+                                        <i class="fas fa-address-card"></i> Hồ sơ
+                                    </a>
+
+                                    <!-- Hiển thị Đơn hàng theo role -->
+                                    <a th:href="@{${#authorization.expression('hasAuthority(''ROLE_SHIPPER'')') ? '/shipper/orders' : '/user/orders'}}"
+                                       class="dropdown__item">
+                                        <i class="fas fa-box-open"></i> Đơn hàng
+                                    </a>
+                                    
+                                    <!-- Hiển thị Kênh Người Bán cho VENDOR -->
+                                    <th:block th:with="currentUserShop=${#authentication.principal.shop}">
+                                        <a th:if="${#authorization.expression('hasAuthority(''ROLE_VENDOR'')') and currentUserShop != null and currentUserShop.status.name() == 'APPROVED'}"
+                                           th:href="@{/vendor/dashboard}" class="dropdown__item">
+                                            <i class="fas fa-store"></i> Kênh Người Bán
+                                        </a>
+                                        <a th:if="${#authorization.expression('hasAuthority(''ROLE_VENDOR'')') and currentUserShop != null and currentUserShop.status.name() != 'APPROVED'}"
+                                           href="javascript:void(0);" class="dropdown__item"
+                                           onclick="alert('Shop của bạn đang chờ duyệt hoặc đã bị từ chối. Vui lòng liên hệ quản trị viên.');">
+                                            <i class="fas fa-store"></i> Kênh Người Bán (Chờ)
+                                        </a>
+                                        <a th:if="${!#authorization.expression('hasAnyAuthority(''ROLE_VENDOR'', ''ROLE_SHIPPER'')') and currentUserShop == null}"
+                                           th:href="@{/shop/register}" class="dropdown__item">
+                                            <i class="fas fa-plus-circle"></i> Đăng ký mở Shop
+                                        </a>
+                                        <a th:if="${not #authorization.expression('hasAuthority(''ROLE_VENDOR'')') and currentUserShop != null}"
+                                           href="javascript:void(0);" class="dropdown__item"
+                                           onclick="alert('Yêu cầu đăng ký shop của bạn đang chờ duyệt.');">
+                                            <i class="fas fa-info-circle"></i> Trạng thái ĐK Shop
+                                        </a>
+                                    </th:block>
+                                    
+                                    <!-- Đăng xuất -->
+                                    <a th:href="@{/logout}" class="dropdown__item"
+                                        onclick="event.preventDefault(); document.getElementById('logoutForm').submit();">
+                                        <i class="fas fa-sign-out-alt"></i> Đăng xuất
+                                    </a>
+                                    <form th:action="@{/logout}" method="post" id="logoutForm" style="display: none;"></form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="header__cart"
+                    th:classappend="${cart != null and cart.items != null and !cart.items.isEmpty()} ? 'have' : ''">
+                    <a th:href="@{/cart}"><i class="fas fa-shopping-basket"></i></a>
+                    <div class="header__cart-amount" th:text="${cart?.totalItems ?: 0}">0</div>
+                    <div class="header__cart-wrap">
+                        <div class="cart__empty" th:if="${cart == null or cart.items == null or cart.items.isEmpty()}">
+                            <img th:src="@{/assets/img/cart-empty.png}" alt="Empty Cart" class="cart__empty-img">
+                            <p class="cart__empty-text">Giỏ hàng của bạn trống</p>
+                        </div>
+                        <div id="header-cart-content" th:unless="${cart == null or cart.items == null or cart.items.isEmpty()}">
+                            <ul class="order__list">
+                                <li class="item-order" th:each="cartItemEntry : ${cart.items}"
+                                    th:with="cartItem=${cartItemEntry.value}"
+                                    th:data-variant-id="${cartItem.productId}">
+                                    <div class="order-wrap">
+                                        <a th:href="@{/product/{id}(id=${cartItem.productId})}" class="order-img">
+                                            <img th:src="@{${cartItem.imageUrl}}" alt="Product Image">
+                                        </a>
+                                        <div class="order-main">
+                                            <a th:href="@{/product/{id}(id=${cartItem.productId})}" class="order-main-name" th:text="${cartItem.name}"></a>
+                                            <div class="order-main-price" 
+                                                th:text="${cartItem.quantity} + ' x ' + ${#numbers.formatDecimal(cartItem.price, 0, 'COMMA', 0, 'POINT')} + ' đ'">
+                                            </div>
+                                        </div>
+                                        <button type="button" class="order-close remove-item-header-btn" title="Xóa sản phẩm"
+                                            th:data-variant-id="${cartItem.productId}">
+                                            <i class="far fa-times-circle"></i>
+                                        </button>
+                                    </div>
+                                </li>
+                            </ul>
+                            <div class="total-money" 
+                                th:text="'Tổng cộng: ' + ${#numbers.formatDecimal(cart?.grandTotal ?: 0, 0, 'COMMA', 0, 'POINT')} + ' đ'">
+                            </div>
+                            <a th:href="@{/cart}" class="btn btn--default cart-btn">Xem giỏ hàng</a>
+                            <a th:href="@{/pay}" class="btn btn--default cart-btn orange">Thanh toán</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="header__nav">
+            <ul class="header__nav-list">
+                <li class="header__nav-item index"><a th:href="@{/}" class="header__nav-link">Trang chủ</a></li>
+                <li class="header__nav-item has-dropdown-menu"><a th:href="@{/products}" class="header__nav-link">Sản Phẩm</a></li>
+                <li class="header__nav-item"><a th:href="@{/news}" class="header__nav-link">Tin Tức</a></li>
+                <li class="header__nav-item"><a th:href="@{/contact}" class="header__nav-link">Liên Hệ</a></li>
+            </ul>
+        </div>
+
+        <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+        <script th:src="@{/assets/owlCarousel/owl.carousel.min.js}"></script>
+        <script th:inline="javascript">
+            /*<![CDATA[*/
+            // Helper định dạng tiền tệ
+            function formatCurrency(number) {
+                const numericValue = parseFloat(number);
+                if (isNaN(numericValue)) { return '0 đ'; }
+                return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(numericValue).replace('₫', 'đ');
+            }
+
+            // Hàm cập nhật số lượng trên icon giỏ hàng
+            function updateCartHeaderCount(totalItems) {
+                const $cartAmount = $('.header__cart-amount');
+                if ($cartAmount.length) {
+                    $cartAmount.text(totalItems || 0);
+                    $('.header__cart').toggleClass('have', totalItems > 0);
+                }
+            }
+
+            // Hàm tạo HTML cho nội dung giỏ hàng mini
+            function buildHeaderCartContent(cartData) {
+                const cartBaseUrl = /*[[@{/cart}]]*/ '/cart';
+                const payBaseUrl = /*[[@{/pay}]]*/ '/pay';
+                const productBaseUrl = /*[[@{/product/}]]*/ '/product/';
+                const emptyCartImageUrl = /*[[@{/assets/img/cart-empty.png}]]*/ '/assets/img/cart-empty.png';
+
+                if (!cartData || !cartData.items || Object.keys(cartData.items).length === 0) {
+                    return `
+                        <div class="cart__empty">
+                            <img src="${emptyCartImageUrl}" alt="Empty Cart" class="cart__empty-img">
+                            <p class="cart__empty-text">Giỏ hàng của bạn trống</p>
+                        </div>`;
+                }
+
+                let itemsHtml = '<ul class="order__list">';
+                for (const variantId in cartData.items) {
+                    if (cartData.items.hasOwnProperty(variantId)) {
+                        const item = cartData.items[variantId];
+                        const imageUrl = item.imageUrl ? item.imageUrl : '/assets/img/product/no-image.jpg';
+                        const idToUse = item.productId || variantId;
+                        itemsHtml += `
+                            <li class="item-order" data-variant-id="${idToUse}">
+                                <div class="order-wrap">
+                                    <a href="${productBaseUrl}${idToUse}" class="order-img">
+                                        <img src="${imageUrl}" alt="Product Image">
+                                    </a>
+                                    <div class="order-main">
+                                        <a href="${productBaseUrl}${idToUse}" class="order-main-name">${item.name || 'Tên sản phẩm'}</a>
+                                        <div class="order-main-price">${item.quantity || 0} x ${formatCurrency(item.price || 0)}</div>
+                                    </div>
+                                    <button type="button" class="order-close remove-item-header-btn" title="Xóa sản phẩm" data-variant-id="${idToUse}">
+                                        <i class="far fa-times-circle"></i>
+                                    </button>
+                                </div>
+                            </li>`;
+                    }
+                }
+                itemsHtml += '</ul>';
+
+                const totalHtml = `
+                    <div class="total-money">Tổng cộng: ${formatCurrency(cartData.grandTotal || 0)}</div>
+                    <a href="${cartBaseUrl}" class="btn btn--default cart-btn">Xem giỏ hàng</a>
+                    <a href="${payBaseUrl}" class="btn btn--default cart-btn orange">Thanh toán</a>`;
+
+                return itemsHtml + totalHtml;
+            }
+
+            $(document).ready(function() {
+                // --- Owl Carousel ---
+                if ($('.owl-carousel.hight').length) {
+                    $('.owl-carousel.hight').owlCarousel({
+                        loop: true, margin: 20, nav: true, dots: false, autoplay: true,
+                        autoplayTimeout: 3000, autoplayHoverPause: true,
+                        responsive: { 0: { items: 2 }, 600: { items: 3 }, 1000: { items: 5 } }
+                    });
+                }
+                if ($('.owl-carousel.news').length) {
+                    $('.owl-carousel.news').owlCarousel({
+                        loop: true, margin: 20, nav: true, dots: false, autoplay: true,
+                        autoplayTimeout: 4000, autoplayHoverPause: true,
+                        responsive: { 0: { items: 1 }, 600: { items: 1 }, 1000: { items: 2 } }
+                    });
+                }
+                if ($('.owl-carousel.bands').length) {
+                    $('.owl-carousel.bands').owlCarousel({
+                        loop: true, margin: 20, nav: false, dots: false, autoplay: true,
+                        autoplayTimeout: 2000, autoplayHoverPause: true,
+                        responsive: { 0: { items: 2 }, 600: { items: 3 }, 1000: { items: 6 } }
+                    });
+                }
+
+                // --- Avatar Dropdown ---
+                const $accountMenu = $('#userAccountMenu');
+                if ($accountMenu.length) {
+                    $accountMenu.on('mouseenter', function() { 
+                        $accountMenu.addClass('active'); 
+                    });
+                    $accountMenu.on('mouseleave', function() { 
+                        $accountMenu.removeClass('active'); 
+                    });
+                }
+
+                // --- Toggle Navbar Mobile ---
+                $('.navbar-icon').on('click', function() { 
+                    $(this).toggleClass('open'); 
+                    $('.header__nav').toggleClass('show'); 
+                });
+
+                // --- Remove Item from Mini Cart AJAX ---
+                $('.header__cart-wrap').on('click', '.remove-item-header-btn', function(e) {
+                    e.preventDefault(); 
+                    e.stopPropagation();
+                    const $button = $(this);
+                    const variantId = $button.data('variant-id');
+                    const $itemToRemove = $button.closest('.item-order');
+                    
+                    if (!variantId) {
+                        console.error("Không tìm thấy variantId để xóa.");
+                        return;
+                    }
+                    
+                    $button.prop('disabled', true).css('opacity', 0.5);
+                    
+                    $.ajax({
+                        type: 'POST',
+                        url: `/api/cart/remove/${variantId}`,
+                        success: function(response) {
+                            console.log('Xóa thành công:', response);
+                            $itemToRemove.fadeOut(300, function() {
+                                $(this).remove();
+                                
+                                if (response.cart) {
+                                    const newContentHtml = buildHeaderCartContent(response.cart);
+                                    if (Object.keys(response.cart.items || {}).length === 0) {
+                                        $('.header__cart-wrap').html(newContentHtml);
+                                    } else if ($('#header-cart-content').length) {
+                                        $('#header-cart-content').html(newContentHtml);
+                                    } else {
+                                        $('.header__cart-wrap').html(`<div id="header-cart-content">${newContentHtml}</div>`);
+                                    }
+                                    updateCartHeaderCount(response.cart.totalItems);
+                                } else {
+                                    updateCartHeaderCount(response.totalItems);
+                                    window.location.reload();
+                                }
+                            });
+                        },
+                        error: function(xhr) {
+                            console.error('Lỗi khi xóa sản phẩm:', xhr);
+                            let errorMsg = 'Lỗi khi xóa sản phẩm.';
+                            if (xhr.status === 401) {
+                                errorMsg = 'Vui lòng đăng nhập lại.';
+                            } else if (xhr.responseJSON && xhr.responseJSON.message) {
+                                errorMsg = xhr.responseJSON.message;
+                            }
+                            alert(errorMsg);
+                            $button.prop('disabled', false).css('opacity', 1);
+                        }
+                    });
+                });
+
+                // --- Update Header Cart Function ---
+                window.updateHeaderCart = function(response) {
+                    if (response && response.cart) {
+                        updateCartHeaderCount(response.totalItems);
+                        const newContentHtml = buildHeaderCartContent(response.cart);
+                        if ($('.header__cart-wrap').find('.cart__empty').length > 0) {
+                            $('.header__cart-wrap').html(`<div id="header-cart-content">${newContentHtml}</div>`);
+                        } else {
+                            $('#header-cart-content').html(newContentHtml);
+                        }
+                    }
+                }
+            });
+            /*]]>*/
+        </script>
+    </div>
+</body>
+</html>

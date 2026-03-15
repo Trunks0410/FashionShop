@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{admin/layout/app}">
+<head>
+    <meta charset="UTF-8">
+    <title>Quản lý Chiết khấu App</title>
+
+    <th:block layout:fragment="css">
+        <style>
+            .table th, .table td { vertical-align: middle; }
+            .action-btns a, .action-btns button { margin: 0 3px; }
+            .modal-title { font-weight: 600; }
+            .shop-name-col { max-width: 250px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        </style>
+    </th:block>
+</head>
+
+<body>
+<!-- =================== NỘI DUNG TRANG =================== -->
+<div layout:fragment="content">
+    <div class="d-sm-flex align-items-center justify-content-between mb-4 mt-4">
+        <h1 class="h3 mb-0">Quản lý Chiết khấu App</h1>
+    </div>
+    <p class="lead mb-4">Thiết lập tỉ lệ chiết khấu hoa hồng cho từng gian hàng.</p>
+
+    <!-- Alert -->
+    <div th:if="${message}"
+         th:classappend="'alert alert-' + (${status == 'success'} ? 'success' : (${status == 'error'} ? 'danger' : 'info')) + ' alert-dismissible fade show'"
+         role="alert">
+        <span th:text="${message}" class="fs-5"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+
+    <!-- Bảng danh sách shop -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold">Danh sách Shop đã duyệt</h6>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover table-bordered align-middle">
+                    <thead class="table-light text-center">
+                    <tr>
+                        <th scope="col" style="width: 50px;">STT</th>
+                        <th scope="col" class="text-start">Tên cửa hàng</th>
+                        <th scope="col">Tỉ lệ chiết khấu</th>
+                        <th scope="col">Cập nhật lần cuối</th>
+                        <th scope="col" class="text-center" style="width: 120px;">Thao tác</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="shop, shopStat : ${shops}">
+                        <td th:text="${shopStat.index + 1}" class="text-center"></td>
+                        <td th:text="${shop.name}" class="shop-name-col text-start" title="${shop.name}"></td>
+                        <td th:text="${#numbers.formatDecimal(shop.commissionRate * 100, 1, 1)} + '%'"
+                            class="text-center"></td>
+                        <td th:text="${shop.commissionUpdatedAt != null ? #temporals.format(shop.commissionUpdatedAt, 'dd/MM/yyyy HH:mm') : 'N/A'}"
+                            class="text-center"></td>
+                        <td class="text-center action-btns">
+                            <!-- NÚT CHỈNH SỬA: DÙNG JS, KHÔNG DÙNG data-bs-toggle -->
+                            <button type="button"
+                                    class="btn btn-sm btn-info text-white btn-edit-commission"
+                                    th:data-shop-id="${shop.id}"
+                                    th:data-shop-name="${shop.name}"
+                                    th:data-commission-rate="${shop.commissionRate * 100}"
+                                    title="Chỉnh sửa chiết khấu">
+                                <i class="fas fa-pencil-alt"></i>
+                            </button>
+                        </td>
+                    </tr>
+                    <tr th:if="${#lists.isEmpty(shops)}">
+                        <td colspan="5" class="text-center text-muted py-4">Không có Shop nào đã được duyệt.</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL PHẢI Ở TRONG content -->
+    <div class="modal fade" id="editCommissionModal" tabindex="-1" aria-labelledby="editCommissionModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editCommissionModalLabel">Chỉnh sửa Chiết khấu App</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form th:action="@{/admin/app-discounts/update}" method="post" id="commissionForm">
+                    <div class="modal-body">
+                        <input type="hidden" name="shopId" id="modalShopId">
+                        <div class="mb-3">
+                            <label for="modalShopName" class="form-label">Tên cửa hàng</label>
+                            <input type="text" class="form-control" id="modalShopName" readonly>
+                        </div>
+                        <div class="mb-3">
+                            <label for="newCommissionRate" class="form-label">Chiết khấu App mới (%) <span class="text-danger">*</span></label>
+                            <input type="number" class="form-control" id="newCommissionRate" name="newCommissionRatePercent"
+                                   required min="0" max="100" step="0.1">
+                            <div class="form-text">Nhập giá trị từ 0 đến 100 (Ví dụ: 5.5 cho 5.5%)</div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                        <button type="submit" class="btn btn-primary">Lưu thay đổi</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- KẾT THÚC content -->
+
+<!-- =================== SCRIPT: DÙNG new bootstrap.Modal() =================== -->
+<th:block layout:fragment="js">
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    console.log('DOM ready - App Discounts');
+
+    // KIỂM TRA BOOTSTRAP
+    if (typeof bootstrap === 'undefined') {
+        console.error('Bootstrap JS chưa được load!');
+        return;
+    }
+
+    // KIỂM TRA MODAL
+    const modalEl = document.getElementById('editCommissionModal');
+    if (!modalEl) {
+        console.error('Modal #editCommissionModal không tồn tại trong DOM!');
+        return;
+    }
+    console.log('Modal tồn tại');
+
+    // GẮN SỰ KIỆN CHO NÚT CHỈNH SỬA
+    document.querySelectorAll('.btn-edit-commission').forEach(button => {
+        button.addEventListener('click', function () {
+            const shopId = this.dataset.shopId;
+            const shopName = this.dataset.shopName;
+            const commissionRate = parseFloat(this.dataset.commissionRate).toFixed(1);
+
+            // Điền dữ liệu
+            modalEl.querySelector('#modalShopId').value = shopId;
+            modalEl.querySelector('#modalShopName').value = shopName;
+            modalEl.querySelector('#newCommissionRate').value = commissionRate;
+
+            // MỞ MODAL BẰNG JS
+            const modal = new bootstrap.Modal(modalEl);
+            modal.show();
+        });
+    });
+
+    // TỰ ĐÓNG ALERT
+    document.querySelectorAll('.alert.alert-dismissible').forEach(alert => {
+        setTimeout(() => {
+            const bsAlert = bootstrap.Alert.getOrCreateInstance(alert);
+            if (bsAlert) bsAlert.close();
+        }, 5000);
+    });
+});
+</script>
+</th:block>
+<!-- =================== KẾT THÚC SCRIPT =================== -->
+
+</body>
+</html>

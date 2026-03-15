@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{vendor/layout/app}">
+<head>
+    <title>Quản lý Thương hiệu</title>
+    <th:block layout:fragment="css">
+        <style>
+            .list-group-item span {
+                color: var(--text-dark); /* Chữ đen cho dễ đọc */
+                font-weight: 500;
+            }
+        </style>
+    </th:block>
+</head>
+<body>
+<div layout:fragment="content">
+    <h1 class="h3 mt-4 mb-3">Quản lý Thương hiệu</h1>
+    <p class="lead mb-4">Thêm mới hoặc xóa các thương hiệu cho sản phẩm của bạn.</p>
+
+    <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show" role="alert">
+        <span th:text="${successMessage}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show" role="alert">
+        <span th:text="${errorMessage}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+
+    <div class="row">
+        <div class="col-md-7">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold">Danh sách Thương hiệu hiện có</h6>
+                </div>
+                <div class="card-body">
+                    <div th:if="${#lists.isEmpty(brands)}" class="text-center text-muted">
+                        Chưa có thương hiệu nào.
+                    </div>
+                    <ul th:unless="${#lists.isEmpty(brands)}" class="list-group list-group-flush">
+                        <li th:each="brand : ${brands}" class="list-group-item d-flex justify-content-between align-items-center">
+                            <span th:text="${brand.name}">Tên thương hiệu</span>
+                            <form th:action="@{/vendor/brands/delete/{id}(id=${brand.brandId})}"
+                                  method="post" class="d-inline delete-brand-form"
+                                  th:data-brand-name="${brand.name}">
+                                <button type="submit" class="btn btn-sm btn-outline-danger" title="Xóa">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </form>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-5">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold">Thêm Thương hiệu mới</h6>
+                </div>
+                <div class="card-body">
+                    <form th:action="@{/vendor/brands/add}" th:object="${newBrand}" method="post">
+                        <div class="mb-3">
+                            <label for="brandName" class="form-label">Tên thương hiệu mới</label>
+                            <input type="text" class="form-control" id="brandName" th:field="*{name}" required placeholder="Ví dụ: Dior"
+                                   th:classappend="${#fields.hasErrors('name')} ? 'is-invalid' : ''">
+                            <div class="invalid-feedback" th:if="${#fields.hasErrors('name')}" th:errors="*{name}"></div>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Thêm mới</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<th:block layout:fragment="js">
+    <script>
+        $(document).ready(function() {
+            // Lắng nghe sự kiện submit trên các form có class 'delete-brand-form'
+            $('.delete-brand-form').on('submit', function(event) {
+                // Lấy tên thương hiệu từ thuộc tính data-*
+                var brandName = $(this).data('brand-name');
+                // Hiển thị hộp thoại confirm
+                var confirmation = confirm('Bạn có chắc chắn muốn xóa thương hiệu \'' + brandName + '\'? Hành động này không thể hoàn tác.');
+                // Nếu người dùng không đồng ý (nhấn Cancel), ngăn form submit
+                if (!confirmation) {
+                    event.preventDefault(); // Ngăn chặn việc gửi form đi
+                }
+                // Nếu người dùng đồng ý (nhấn OK), form sẽ được submit bình thường
+            });
+        });
+    </script>
+</th:block>
+
+</body>
+</html>

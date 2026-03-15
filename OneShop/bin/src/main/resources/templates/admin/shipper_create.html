@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+	xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+	layout:decorate="~{admin/layout/app}">
+<head>
+    <title>Tạo Tài khoản Shipper</title>
+</head>
+<body>
+	<div layout:fragment="content">
+		<div
+			class="d-sm-flex align-items-center justify-content-between mb-4 mt-4">
+			<h1 class="h3 mb-0">Tạo Tài khoản Shipper Mới</h1>
+			<a th:href="@{/admin/users}" class="btn btn-secondary shadow-sm"> <i
+				class="fas fa-arrow-left me-2"></i>Quay lại Quản lý Người dùng
+			</a>
+		</div>
+
+		<p class="lead mb-4">Tạo tài khoản giao hàng mới và gửi thông tin
+			đăng nhập tạm thời qua email.</p>
+
+		<div th:if="${successMessage}"
+			class="alert alert-success alert-dismissible fade show" role="alert">
+			<span th:text="${successMessage}"></span>
+			<button type="button" class="btn-close" data-bs-dismiss="alert"
+				aria-label="Close"></button>
+		</div>
+		<div th:if="${errorMessage}"
+			class="alert alert-danger alert-dismissible fade show" role="alert">
+			<span th:text="${errorMessage}"></span>
+			<button type="button" class="btn-close" data-bs-dismiss="alert"
+				aria-label="Close"></button>
+		</div>
+
+		<div class="card shadow" style="max-width: 600px;">
+			<div class="card-header py-3">
+				<h6 class="m-0 font-weight-bold">Thông tin Shipper</h6>
+			</div>
+			<div class="card-body p-4">
+				<form th:action="@{/admin/shipper/create}" method="post"
+					th:object="${shipperCreationDto}">
+
+					<div th:if="${#fields.hasAnyErrors()}"
+						class="alert alert-danger mb-3" role="alert">Lỗi: Vui lòng
+						kiểm tra lại các trường đã nhập.</div>
+
+					<p class="text-muted small mb-4">Mật khẩu sẽ được hệ thống tạo
+						ngẫu nhiên và gửi tới địa chỉ email này.</p>
+
+					<div class="mb-3">
+						<label for="shipperUsername" class="form-label">Tên đăng
+							nhập <span class="text-danger">*</span>
+						</label> <input type="text" class="form-control"
+							th:field="*{username}" required
+							placeholder="Không dấu, không ký tự đặc biệt"
+							th:classappend="${#fields.hasErrors('username')} ? 'is-invalid' : ''">
+						<div class="invalid-feedback"
+							th:if="${#fields.hasErrors('username')}" th:errors="*{username}"></div>
+					</div>
+					<div class="mb-3">
+						<label for="shipperFullName" class="form-label">Họ và tên
+							<span class="text-danger">*</span>
+						</label> <input type="text" class="form-control"
+							th:field="*{fullName}" required
+							th:classappend="${#fields.hasErrors('fullName')} ? 'is-invalid' : ''">
+						<div class="invalid-feedback"
+							th:if="${#fields.hasErrors('fullName')}" th:errors="*{fullName}"></div>
+					</div>
+					<div class="mb-3">
+						<label for="shipperEmail" class="form-label">Email (Nhận
+							thông tin ĐN) <span class="text-danger">*</span>
+						</label> <input type="email" class="form-control" th:field="*{email}"
+							required
+							th:classappend="${#fields.hasErrors('email')} ? 'is-invalid' : ''">
+						<div class="invalid-feedback" th:if="${#fields.hasErrors('email')}"
+							th:errors="*{email}"></div>
+					</div>
+					<div class="mb-4">
+						<label for="shipperPhone" class="form-label">Số điện thoại</label>
+						<input type="tel" class="form-control" th:field="*{phoneNumber}"
+							th:classappend="${#fields.hasErrors('phoneNumber')} ? 'is-invalid' : ''">
+						<div class="invalid-feedback"
+							th:if="${#fields.hasErrors('phoneNumber')}"
+							th:errors="*{phoneNumber}"></div>
+					</div>
+
+					<div class="mt-4 pt-3 border-top">
+						<button type="submit" class="btn btn-primary px-4">Tạo Tài
+							khoản Shipper</button>
+						<a th:href="@{/admin/users}" class="btn btn-secondary ms-2">Hủy
+							bỏ</a>
+					</div>
+				</form>
+			</div>
+		</div>
+	</div>
+
+	<th:block layout:fragment="js">
+        <script>
+            // Tự đóng alert
+            $(document).ready(function() {
+                $('.alert').each(function() {
+                    const alert = this;
+                    setTimeout(function() {
+                        try {
+                            var bsAlert = bootstrap.Alert.getInstance(alert);
+                            if (bsAlert) { bsAlert.close(); } else { $(alert).alert('close'); }
+                        } catch (e) { console.error("Error closing alert:", e); $(alert).hide(); }
+                    }, 5000);
+                });
+            });
+        </script>
+	</th:block>
+</body>
+</html>

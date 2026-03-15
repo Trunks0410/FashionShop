@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Chat</title>
+    <link th:href="@{/webjars/bootstrap/5.3.2/css/bootstrap.min.css}" rel="stylesheet">
+    <style>
+        .chat-container { max-width: 700px; margin: 30px auto; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .chat-header { background: #E85A70; color: white; padding: 16px; text-align: center; font-weight: 600; display: flex; align-items: center; justify-content: space-between; }
+        .chat-header a { color: white; text-decoration: none; font-size: 14px; }
+        .chat-header a:hover { text-decoration: underline; }
+        .chat-body { height: 500px; overflow-y: auto; padding: 20px; background: #f8f9fa; }
+        .msg { max-width: 75%; margin: 10px 0; padding: 10px 16px; border-radius: 20px; word-wrap: break-word; font-size: 14px; }
+        .sent { background: #E85A70; color: white; margin-left: auto; }
+        .received { background: #e0e0e0; color: #333; }
+        .chat-footer { display: flex; padding: 15px; background: white; border-top: 1px solid #eee; }
+        .chat-footer input { flex: 1; padding: 10px 16px; border: 1px solid #ddd; border-radius: 25px; font-size: 14px; }
+        .chat-footer button { background: #E85A70; color: white; border: none; border-radius: 25px; padding: 0 22px; margin-left: 10px; font-weight: 600; }
+    </style>
+</head>
+<body>
+<div class="chat-container">
+    <div class="chat-header">
+        <a href="/contact" class="back-link">Quay lại</a>
+        <h5>Trò chuyện với <span th:text="${vendor.fullName}">Người dùng</span></h5>
+        <span></span> <!-- Placeholder để căn giữa tiêu đề -->
+    </div>
+    <div class="chat-body" id="chatBody">
+        <div class="text-center text-muted">Đang kết nối...</div>
+    </div>
+    <div class="chat-footer">
+        <input type="text" id="messageInput" placeholder="Nhập tin nhắn..." autocomplete="off"
+               onkeypress="if(event.key==='Enter') sendMessage()">
+        <button onclick="sendMessage()">Gửi</button>
+    </div>
+</div>
+
+<script th:src="@{/webjars/sockjs-client/1.5.1/sockjs.min.js}"></script>
+<script th:src="@{/webjars/stomp-websocket/2.3.4/stomp.min.js}"></script>
+
+<!-- Bật inline JavaScript cho Thymeleaf -->
+<script th:inline="javascript">
+    let stompClient = null;
+    const currentUsername = /*[[${#authentication.principal.username}]]*/ '';
+    const targetUsername = /*[[${vendor.username}]]*/ '';
+    const isVendor = /*[[${#authentication.principal.authorities.?[authority == 'ROLE_VENDOR'].size() > 0}]]*/ false;
+
+    console.log("currentUsername =", currentUsername);
+    console.log("targetUsername =", targetUsername);
+
+    function connect() {
+        const socket = new SockJS('/ws');
+        stompClient = Stomp.over(socket);
+        stompClient.connect({}, () => {
+            document.querySelector('#chatBody').innerHTML = '';
+            loadHistory(); // tải lịch sử khi kết nối xong
+
+            stompClient.subscribe('/user/queue/private', msg => {
+                const message = JSON.parse(msg.body);
+                if (message.sender === targetUsername || message.sender === currentUsername) {
+                    displayMessage(message);
+                }
+            });
+        }, () => setTimeout(connect, 3000));
+    }
+
+    // Gửi tin nhắn
+    function sendMessage() {
+        const input = document.getElementById('messageInput');
+        const content = input.value.trim();
+        if (content && stompClient) {
+            const msg = { content, sender: currentUsername, receiver: targetUsername, type: 'CHAT' };
+            stompClient.send('/app/chat.send', {}, JSON.stringify(msg));
+            displayMessage(msg);
+            input.value = '';
+        }
+    }
+
+    // Hiển thị tin nhắn
+    function displayMessage(msg) {
+        const chat = document.getElementById('chatBody');
+        const div = document.createElement('div');
+        const isSent = msg.sender === currentUsername;
+        div.className = 'msg ' + (isSent ? 'sent' : 'received');
+        const label = isSent ? 'Bạn' : (isVendor ? 'Khách' : 'Chủ shop');
+        div.innerHTML = `<strong>${label}:</strong> ${msg.content}`;
+        chat.appendChild(div);
+        chat.scrollTop = chat.scrollHeight;
+    }
+
+    // Tải lịch sử tin nhắn
+    function loadHistory() {
+        fetch(`/api/chat/history?userA=${currentUsername}&userB=${targetUsername}`)
+            .then(r => r.json())
+            .then(history => {
+                const chatBody = document.getElementById('chatBody');
+                chatBody.innerHTML = '';
+                history.forEach(m => displayMessage(m));
+            });
+    }
+
+    connect();
+</script>
+</body>
+</html>

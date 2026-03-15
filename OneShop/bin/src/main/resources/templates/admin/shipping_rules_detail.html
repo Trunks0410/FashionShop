@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{admin/layout/app}">
+<head>
+<meta charset="UTF-8">
+<title th:text="'Quy tắc vận chuyển - ' + ${company.name}">Chi tiết Quy tắc</title>
+<th:block layout:fragment="css">
+    <style>
+        .table th, .table td { vertical-align: middle; }
+    </style>
+</th:block>
+</head>
+
+<body>
+	<div layout:fragment="content">
+		<div class="d-sm-flex align-items-center justify-content-between mb-4 mt-4">
+			 <h1 class="h3 mb-0" th:text="'Quy tắc Vận chuyển: ' + ${company.name}">Chi tiết Quy tắc</h1>
+             <a th:href="@{/admin/shipping_company}" class="btn btn-secondary shadow-sm">
+                 <i class="fas fa-arrow-left me-2"></i> Quay lại Danh sách NVC
+             </a>
+		</div>
+        <p class="lead mb-4" th:text="'Xem chi tiết các quy tắc tính phí vận chuyển của ' + ${company.name} + '.'"></p>
+
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                 <h6 class="m-0 font-weight-bold" th:text="'Danh sách Quy tắc cho ' + ${company.name}">Danh sách Quy tắc</h6>
+            </div>
+             <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover table-bordered align-middle">
+                        <thead class="table-light text-center">
+                            <tr>
+                                <th scope="col" style="width: 50px;">STT</th>
+                                <th scope="col" class="text-start">Tên Quy tắc</th> <th scope="col">Vùng Gửi</th>
+                                <th scope="col">Vùng Nhận</th>
+                                <th scope="col" style="width: 120px;">Phí (VNĐ)</th>
+                                <th scope="col" style="width: 150px;">TG Giao dự kiến</th>
+                                <th scope="col" class="text-center" style="width: 100px;">Hỏa tốc</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="rule, iStat : ${shippingRules}">
+                                <td th:text="${iStat.index + 1}" class="text-center"></td>
+                                <td th:text="${rule.ruleName}" class="text-start"></td> <td th:text="${rule.fromRegion}" class="text-center"></td>
+                                <td th:text="${rule.toRegion}" class="text-center"></td>
+                                <td th:text="${#numbers.formatDecimal(rule.baseFee, 0, 'COMMA', 0, 'POINT')}" class="text-end"></td> <td th:text="${rule.estimatedDeliveryTime}" class="text-center"></td>
+                                <td class="text-center">
+                                    <i th:if="${rule.isExpress}" class="fas fa-check-circle text-success"></i>
+                                    <i th:unless="${rule.isExpress}" class="fas fa-times-circle text-muted"></i> </td>
+                            </tr>
+                            <tr th:if="${#lists.isEmpty(shippingRules)}">
+                                <td colspan="7" class="text-center text-muted py-4">Nhà vận chuyển này chưa có quy tắc nào.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+	</div>
+
+	<th:block layout:fragment="js"></th:block>
+
+</body>
+</html>

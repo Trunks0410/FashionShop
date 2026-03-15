@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+	xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+    xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+	layout:decorate="~{layouts/guest}">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="${product.name} ?: 'Chi tiết sản phẩm'"></title>
+
+    <th:block layout:fragment="css">
+        <link rel="stylesheet" th:href="@{/assets/owlCarousel/assets/owl.carousel.min.css}">
+        <link rel="stylesheet" th:href="@{/assets/owlCarousel/assets/owl.theme.default.min.css}">
+        <link rel="stylesheet" href="https://netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.css">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+        <link rel="stylesheet" th:href="@{/assets/css/common.css}">
+        <style>
+            /* --- BIẾN MÀU & CHUNG (Nhắc lại từ common.css) --- */
+            :root {
+                --default-cl: #9e5bab;
+                --default-cl-darker: #8a4e9a;
+                --orange-cl: #d26e4b;
+                --black-cl-1: #444444;
+                --black-cl-2: #222222;
+                --white-cl-1: #fff;
+                --white-cl-3: #f8f7fd;
+                --shadow-light: 0 2px 8px rgba(0, 0, 0, 0.08);
+                --shadow-medium: 0 4px 15px rgba(0, 0, 0, 0.1);
+                --base-transition: all 0.3s ease;
+                --base-radius: 6px;
+            }
+            .main { margin-top: 30px; padding-bottom: 40px; } /* Thêm padding bottom */
+            .pl { padding-left: 25px; } /* Căn lại padding left cột phải */
+            @media (max-width: 1023px) { .pl { padding-left: 15px; } } /* Responsive padding */
+
+             /* --- BREADCRUMB --- */
+            .main__breadcrumb { margin-bottom: 15px; } /* Căn lại margin */
+            .breadcrumb__item a:hover { color: var(--default-cl); }
+
+            /* --- THÔNG TIN CHUNG SẢN PHẨM --- */
+            .productInfo__brand a { color: var(--default-cl); text-decoration: none; font-weight: 500;}
+            .productInfo__brand a:hover { text-decoration: underline; }
+            .productInfo__name { font-size: 2.4rem; font-weight: 600; color: var(--black-cl-2); margin-bottom: 15px; line-height: 1.3; }
+
+            .productInfo__meta { padding: 12px 0; border-top: 1px solid #eee; border-bottom: 1px solid #eee; margin-top: 15px; margin-bottom: 20px; display: flex; align-items: center; gap: 25px; flex-wrap: wrap; }
+            .product__rating { display: flex; align-items: center; gap: 8px; }
+            .rating-stars i { font-size: 1.4rem; color: #ffc107; } /* FontAwesome 6 */
+            .rating-stars i.far { color: #e4e5e9; } /* Sao rỗng */
+            .rating-count { font-size: 1.4rem; color: #666; }
+
+            .product__sold { font-size: 1.4rem; color: #666; display: flex; align-items: center; gap: 6px; }
+            .product__sold i { color: var(--default-cl); } /* Icon màu tím */
+
+            /* --- GIÁ SẢN PHẨM --- */
+            .productInfo__price { display: flex; align-items: baseline; margin-top: 10px; margin-bottom: 25px; color: var(--orange-cl); /* Giá màu cam */ font-size: 2.8rem; font-weight: 700; }
+            .price__old { text-decoration: line-through; color: #999; font-size: 1.6rem; margin-right: 12px; font-weight: 400; }
+            .priceInfo__unit { font-size: 2.2rem; margin-left: 3px; }
+            .product__sale-tag { background-color: var(--orange-cl); color: var(--white-cl-1); padding: 3px 10px; border-radius: 4px; font-size: 1.3rem; font-weight: 500; margin-left: 15px; }
+
+            /* --- CHỌN LOẠI (VARIANTS) --- */
+            .productInfo__variants h4 { font-size: 1.6rem; font-weight: 600; margin-bottom: 12px; color: var(--black-cl-2); }
+            .variant-options-grid { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 25px; } /* Dùng flexbox */
+            .variant-box {
+                border: 2px solid #eee; padding: 8px 12px; text-align: center; cursor: pointer; border-radius: var(--base-radius);
+                transition: var(--base-transition); position: relative; font-size: 1.4rem; line-height: 1.4;
+                background-color: var(--white-cl-1); color: #555; min-width: 70px; /* Độ rộng tối thiểu */
+            }
+            .variant-box:hover { border-color: #ccc; background-color: #f9f9f9; }
+            .variant-box.selected {
+                border-color: var(--default-cl); box-shadow: 0 0 5px rgba(158, 91, 171, 0.3);
+                background-color: #fcf8fd; color: var(--default-cl); font-weight: 500;
+            }
+            .variant-box input[type="radio"] { position: absolute; opacity: 0; width: 0; height: 0; }
+
+            /* --- NÚT BẤM & SỐ LƯỢNG --- */
+            .productInfo__actions { display: flex; align-items: center; gap: 15px; margin-bottom: 25px; }
+            /* Style nút +/-/input kế thừa từ common.css */
+            .productInfo__actions .btn {
+                 font-size: 1.5rem; padding: 12px 20px; text-transform: uppercase; font-weight: 600; flex-grow: 1; /* Nút chiếm không gian */
+                 transition: var(--base-transition); /* Kế thừa transition */
+            }
+            .productInfo__actions .btn i { margin-right: 8px; }
+
+             /* Nút 'Thêm vào giỏ' (Cam) */
+            .btn.orange { background-color: var(--orange-cl); border-color: var(--orange-cl); color: var(--white-cl-1); }
+            .btn.orange:hover:not(.disabled):not(.needs-action) { background-color: #c15e3a; border-color: #c15e3a; transform: translateY(-2px); box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+
+             /* Nút 'Mua ngay' (Tím) */
+            .btn:not(.orange) { background-color: var(--default-cl); border-color: var(--default-cl); color: var(--white-cl-1); }
+            .btn:not(.orange):hover:not(.disabled):not(.needs-action) { background-color: var(--default-cl-darker); border-color: var(--default-cl-darker); transform: translateY(-2px); box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+
+            /* Trạng thái disabled/needs-action */
+            .btn.disabled, .btn.needs-action { background-color: #ccc !important; border-color: #ccc !important; color: #888 !important; cursor: not-allowed; opacity: 0.7; transform: none; box-shadow: none; }
+            .btn.guest-active { cursor: pointer; opacity: 1; } /* Style khi chưa login nhưng đã chọn variant */
+            .btn.active-action { cursor: pointer; opacity: 1; } /* Style khi đã login và chọn variant */
+
+            /* --- DANH MỤC --- */
+            .productIndfo__category { font-size: 1.5rem; margin-top: 15px; color: #555; }
+            .productIndfo__category-link { color: var(--default-cl); font-weight: 500; text-decoration: none; }
+            .productIndfo__category-link:hover { text-decoration: underline; }
+
+            /* --- CAROUSEL ẢNH --- */
+            #product-image-carousel .item .product__avt {
+                height: 450px; /* Cao hơn chút */ background-size: contain; background-repeat: no-repeat;
+                background-position: center center; border: 1px solid #eee; border-radius: var(--base-radius);
+            }
+            #product-thumbnail-carousel .item { cursor: pointer; }
+            #product-thumbnail-carousel .item .product__avt {
+                height: 80px; background-size: contain; background-repeat: no-repeat; background-position: center center;
+                border: 2px solid #ddd; border-radius: var(--base-radius); opacity: 0.6; transition: var(--base-transition);
+            }
+            #product-thumbnail-carousel .owl-item.current .item .product__avt,
+            #product-thumbnail-carousel .item:hover .product__avt {
+                opacity: 1; border-color: var(--default-cl); box-shadow: 0 0 5px rgba(158, 91, 171, 0.3);
+            }
+            #product-image-carousel { position: relative; }
+            #product-image-carousel .owl-nav { position: static; margin: 0; }
+            #product-image-carousel .owl-prev, #product-image-carousel .owl-next {
+                position: absolute; top: 50%; transform: translateY(-50%); /* Căn giữa theo chiều dọc */
+                font-size: 2.5rem !important; width: 45px; height: 45px; line-height: 43px;
+                color: var(--default-cl) !important; background: rgba(255, 255, 255, 0.8) !important;
+                border-radius: 50%; padding: 0 !important; transition: var(--base-transition); z-index: 10;
+                box-shadow: var(--shadow-light); border: 1px solid #eee;
+            }
+            #product-image-carousel .owl-prev:hover, #product-image-carousel .owl-next:hover {
+                color: var(--white-cl-1) !important; background: var(--default-cl) !important; box-shadow: var(--shadow-medium);
+            }
+            #product-image-carousel .owl-prev { left: -20px; } /* Gần ảnh hơn */
+            #product-image-carousel .owl-next { right: -20px; }
+            .owl-nav button.disabled { opacity: 0.3; cursor: default; background: #eee !important; color: #aaa !important; box-shadow: none; }
+
+
+             /* --- TABS MÔ TẢ & ĐÁNH GIÁ --- */
+             .productDetail { margin-top: 40px; background: var(--white-cl-1); padding: 30px; border-radius: var(--base-radius); box-shadow: var(--shadow-light); }
+            .tabs { display: flex; position: relative; margin-bottom: 20px; border-bottom: 2px solid #eee; }
+            .tab-item {
+                padding: 12px 25px; cursor: pointer; font-size: 1.6rem; font-weight: 500; color: #555;
+                position: relative; transition: color 0.3s ease; border: none; background: none;
+            }
+            .tab-item.active { color: var(--default-cl); font-weight: 600; }
+            .line { position: absolute; left: 0; bottom: -2px; height: 2px; background: var(--default-cl); transition: all 0.3s ease; }
+            .tab-content { padding-top: 20px; }
+            .tab-pane { display: none; }
+            .tab-pane.active { display: block; animation: fadeIn 0.5s ease; }
+            @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+            .productDes__title, .productDes__ratting-title { font-size: 1.8rem; font-weight: 600; margin-bottom: 15px; color: var(--black-cl-2); }
+            .productDes__text { font-size: 1.5rem; line-height: 1.7; color: #444; }
+            .productDes__text p { margin-bottom: 1em; } /* Khoảng cách giữa các đoạn */
+
+            /* --- PHẦN ĐÁNH GIÁ --- */
+            .rate__list { list-style: none; padding: 0; }
+            .rate__item { margin-bottom: 25px; border-bottom: 1px dashed #eee; padding-bottom: 20px; }
+            .rate__item:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+            .rate__info { margin-bottom: 8px; display: flex; align-items: center; }
+            .rate__author { font-size: 1.5rem; font-weight: 600; color: var(--black-cl-2); margin-right: 10px; }
+            .rate__date { font-size: 1.3rem; color: #888; }
+            .productDes__ratting-star i { font-size: 1.4rem; } /* Căn lại size sao */
+            .rate__content { font-size: 1.5rem; line-height: 1.6; color: #555; margin-top: 10px; }
+            .review-media img { width: 70px; height: 70px; margin-right: 8px; object-fit: cover; border-radius: var(--base-radius); border: 1px solid #eee; cursor: pointer; transition: transform 0.2s; }
+            .review-media img:hover { transform: scale(1.1); }
+            .no-reviews-message { font-size: 1.5rem; color: #777; margin-top: 20px; text-align: center; padding: 20px; background: #f9f9f9; border-radius: var(--base-radius); }
+
+            /* --- SẢN PHẨM LIÊN QUAN --- */
+            .main__frame { margin-top: 40px; padding-top: 30px; border-top: 1px solid #eee; }
+            .main__frame .product { /* Kế thừa style từ common.css */ }
+            .main__frame .owl-carousel .product { margin-bottom: 10px; } /* Fix khoảng cách */
+
+            /* --- TOAST NOTIFICATION --- */
+            .add-to-cart-toast {
+                position: fixed; top: 20px; right: 20px; background-color: var(--default-cl); /* Màu tím */
+                color: white; padding: 15px 25px; border-radius: var(--base-radius); z-index: 1050;
+                font-size: 1.5rem; display: none; opacity: 0; transition: opacity 0.4s ease, transform 0.4s ease;
+                transform: translateX(100%); /* Bắt đầu bên ngoài màn hình */
+                box-shadow: var(--shadow-medium);
+            }
+            .add-to-cart-toast.show {
+                display: flex; /* Dùng flex để căn icon */ align-items: center; gap: 10px;
+                opacity: 1; transform: translateX(0); /* Trượt vào */
+            }
+
+        </style>
+    </th:block>
+</head>
+
+<body>
+	<div class="main" layout:fragment="content"> <div class="grid wide">
+			<div class="productInfo">
+                <div class="row">
+					<div class="col l-5 m-12 s-12">
+                        <div class="owl-carousel owl-theme" id="product-image-carousel">
+							<div class="item" th:each="imgUrl, iterStat : ${displayImages}"
+								th:data-hash="${'image-' + iterStat.index}">
+                                <div class="product__avt"
+									th:style="'background-image: url(' + @{${imgUrl}} + ')'"
+									th:if="${#strings.startsWith(imgUrl, '/')}"></div>
+                                <div class="product__avt"
+									th:style="'background-image: url(' + @{'/uploads/images/' + ${imgUrl}} + ')'"
+									th:unless="${#strings.startsWith(imgUrl, '/')}"></div>
+							</div>
+						</div>
+                        <div class="owl-carousel owl-theme mt-3"
+							id="product-thumbnail-carousel"
+							th:if="${!#lists.isEmpty(displayImages) and #lists.size(displayImages) > 1}">
+							<div class="item" th:each="imgUrl, iterStat : ${displayImages}">
+								<a th:href="${'#image-' + iterStat.index}">
+                                    <div class="product__avt" th:style="'background-image: url(' + @{${imgUrl}} + ')'" th:if="${#strings.startsWith(imgUrl, '/')}"></div>
+                                    <div class="product__avt" th:style="'background-image: url(' + @{'/uploads/images/' + ${imgUrl}} + ')'" th:unless="${#strings.startsWith(imgUrl, '/')}"></div>
+								</a>
+							</div>
+						</div>
+                    </div>
+                    <div class="col l-7 m-12 s-12 pl">
+                         <div class="main__breadcrumb">
+                            <div class="breadcrumb__item"><a th:href="@{/}" class="breadcrumb__link">Trang chủ</a></div>
+                            <div class="breadcrumb__item"><a th:href="@{/products}" class="breadcrumb__link">Sản phẩm</a></div>
+                            <div class="breadcrumb__item" th:if="${product.category}"><a th:href="@{/products(categories=${product.category.id})}" class="breadcrumb__link" th:text="${product.category.name}"></a></div>
+                            <div class="breadcrumb__item"><span class="breadcrumb__link" style="color: var(--black-cl-2); font-weight: 500;" th:text="${product.name}"></span></div>
+                         </div>
+                         <p class="productInfo__brand">
+                            Thương hiệu: <a th:if="${product.brand}" th:href="@{/products(brands=${product.brand.brandId})}" th:text="${product.brand.name}">Brand</a> <span th:unless="${product.brand}">Không rõ</span>
+                         </p>
+                         <h3 class="productInfo__name" th:text="${product.name}">Product Name</h3>
+                         <div class="productInfo__meta">
+                            <div class="product__rating">
+                                <div class="rating-stars">
+                                    <i th:each="i : ${#numbers.sequence(1, 5)}"
+                                       th:class="${i <= product.rating} ? 'fas fa-star' : 'far fa-star'"></i>
+                                </div>
+                                <span class="rating-count" th:text="'(' + ${product.reviewCount ?: 0} + ' đánh giá)'"></span>
+                            </div>
+                            <div class="product__sold">
+                                <i class="fas fa-check-circle"></i> <span th:text="'Đã bán ' + ${#numbers.formatDecimal(product.soldCount ?: 0, 0, 'POINT', 0, 'COMMA')}"></span>
+                            </div>
+                         </div>
+                         <div class="productInfo__price">
+                            <span class="price__old" style="display: none;"></span>
+                            <span class="price__current">Chọn loại</span> <span class="priceInfo__unit">đ</span>
+                            <span class="product__sale-tag" style="display: none;"></span>
+                         </div>
+                         <div class="productInfo__variants" th:if="${product.variants != null and !product.variants.isEmpty()}">
+                             <h4>Chọn loại:</h4>
+                             <div class="variant-options-grid">
+                                 <label th:each="variant : ${product.variants}"
+                                        th:for="${'variant-' + variant.variantId}" class="variant-box"
+                                        th:data-variant-id="${variant.variantId}"
+                                        th:data-price="${variant.price}"
+                                        th:data-original-price="${variant.originalPrice}"
+                                        th:data-variant-image-url="${variant.imageUrl}"> <input type="radio" name="selectedVariantId"
+                                            th:id="${'variant-' + variant.variantId}"
+                                            th:value="${variant.variantId}" required>
+                                     <span th:text="${variant.name}">Variant Name</span>
+                                 </label>
+                             </div>
+                        </div>
+                        <div th:if="${product.variants == null or product.variants.isEmpty()}">
+                             <p style="color: red; font-size: 1.6rem; font-weight: 500;">Sản phẩm này hiện chưa có sẵn hoặc đã hết hàng.</p>
+                        </div>
+                        <div class="productInfo__actions" th:if="${product.variants != null and !product.variants.isEmpty()}">
+                             <div class="buttons_added">
+                                 <input class="minus is-form" type="button" value="-">
+                                 <input aria-label="quantity" class="input-qty" min="1" name="quantity" type="number" value="1">
+                                 <input class="plus is-form" type="button" value="+">
+                             </div>
+                             <button type="button" class="btn btn--default orange needs-action" id="addToCartBtn" disabled>
+                                 <i class="fas fa-cart-plus"></i> Thêm vào giỏ
+                             </button>
+                             <button type="button" class="btn btn--default needs-action" id="buyNowBtn" disabled>
+                                 Mua ngay
+                             </button>
+                        </div>
+                        <div class="productIndfo__category">
+                            <p class="productIndfo__category-text">
+                                Danh mục : <a class="productIndfo__category-link" th:if="${product.category}" th:href="@{/products(categories=${product.category.id})}" th:text="${product.category.name}"></a>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="productDetail">
+                <div class="main__tabnine">
+                    <div class="grid wide"> <div class="tabs">
+                            <button class="tab-item active">Mô tả</button> <button class="tab-item">Đánh giá (<span th:text="${product.reviewCount ?: 0}"></span>)</button>
+                            <div class="line"></div>
+                        </div>
+                        <div class="tab-content">
+                            <div class="tab-pane active">
+                                <div class="productDes">
+                                    <div class="productDes__title">Mô tả chi tiết sản phẩm</div>
+                                    <div class="productDes__text" th:utext="${product.description}"></div>
+                                </div>
+                            </div>
+                            <div class="tab-pane">
+                                <div class="productDes__ratting">
+                                    <div class="productDes__ratting-title">Đánh giá của khách hàng</div>
+                                    <div th:if="${reviews == null or reviews.isEmpty()}" class="no-reviews-message">
+                                        <p><i class="far fa-comment-dots" style="margin-right: 5px;"></i> Chưa có đánh giá nào cho sản phẩm này.</p>
+                                    </div>
+                                    <ul class="rate__list" th:unless="${reviews == null or reviews.isEmpty()}">
+                                        <li th:each="review : ${reviews}" class="rate__item">
+                                            <div class="rate__info">
+                                                <strong class="rate__author" th:text="${review.user?.username ?: 'Ẩn danh'}"></strong>
+                                                <span class="rate__date" th:text="' - ' + ${#temporals.format(review.reviewDate, 'dd/MM/yyyy HH:mm')}"></span>
+                                            </div>
+                                            <div class="productDes__ratting-star mb-2 rating-stars"> <i th:each="i : ${#numbers.sequence(1, 5)}"
+                                                   th:class="${i <= review.rating} ? 'fas fa-star' : 'far fa-star'"></i>
+                                            </div>
+                                            <p class="rate__content" th:text="${review.comment}"></p>
+                                            <div class="review-media mt-2" th:if="${review.media != null and !review.media.isEmpty()}">
+                                                <img th:each="mediaItem : ${review.media}" th:src="@{'/uploads/images/' + ${mediaItem.mediaUrl}}" alt="Review Media" />
+                                            </div>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="main__frame" th:if="${relatedProducts != null and !relatedProducts.isEmpty()}">
+                <div class="grid wide">
+                    <h3 class="category__title">Có thể bạn cũng thích</h3>
+                    <h3 class="category__heading">Sản Phẩm Tương tự</h3>
+                    <div class="owl-carousel hight owl-theme">
+                        <div th:each="related : ${relatedProducts}" class="item"> <a th:href="@{/product/{id}(id=${related.productId})}" class="product">
+                                <div class="product__avt" th:style="'background-image: url(' + @{${related.primaryImageUrl}} + ')'"></div>
+                                <div class="product__info">
+                                     <h3 class="product__name" th:text="${related.name}"></h3>
+                                     <div class="product__rating" style="justify-content: center; margin-bottom: 5px;"> <div class="rating-stars">
+                                             <i class="fas fa-star" th:each="i : ${#numbers.sequence(1, 5)}" th:classappend="${i <= related.rating} ? '' : 'empty'"></i>
+                                         </div>
+                                     </div>
+                                     <div class="product__sold" style="justify-content: center;"> <i class="fas fa-check-circle"></i>
+                                         <span th:text="'Đã bán ' + ${#numbers.formatDecimal(related.soldCount ?: 0, 0, 'POINT', 0, 'COMMA')}"></span>
+                                     </div>
+                                    <div class="product__price">
+                                        <div class="price__old" th:if="${related.originalPrice != null and related.originalPrice > related.price}" th:text="${#numbers.formatDecimal(related.originalPrice, 0, 'COMMA', 0, 'POINT')} + ' đ'"></div>
+                                        <div class="price__new" th:text="${#numbers.formatDecimal(related.price, 0, 'COMMA', 0, 'POINT')} + ' đ'"></div>
+                                    </div>
+                                     <div class="product__sale"
+                                         th:if="${related.originalPrice != null and related.originalPrice > related.price and related.originalPrice > 0}">
+                                        <span class="product__sale-percent" th:text="${#numbers.formatInteger(100 * (related.originalPrice - related.price) / related.originalPrice, 1)} + '%'"></span>
+                                        <span class="product__sale-text">Giảm</span>
+                                    </div>
+                                </div>
+                                <div class="viewDetail">Xem chi tiết</div>
+                                <div class="addToCart">Chọn loại</div>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+		</div>
+        <div id="toast" class="add-to-cart-toast"><i class="fas fa-check-circle"></i> Đã thêm vào giỏ hàng!</div>
+	</div>
+
+	<th:block layout:fragment="js">
+		<script th:src="@{/assets/js/jquery-3.6.0.min.js}"></script>
+		<script th:src="@{/assets/owlCarousel/owl.carousel.min.js}"></script>
+		<script th:inline="javascript">
+        /*<![CDATA[*/
+        $(document).ready(function() {
+            // --- CÁC KHAI BÁO BIẾN VÀ HÀM HELPER (Giữ nguyên) ---
+            const isAuthenticated = /*[[${#authorization.expression('isAuthenticated()')}]]*/ false;
+            const loginUrl = /*[[@{/login}]]*/ '/login';
+            // ... (logger, formatCurrency, formatPrice, updateCartHeaderCount, buildHeaderCartContent, showToast) ...
+             function formatCurrency(number) { const n = parseFloat(number); return isNaN(n) ? '0 đ' : new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(n).replace('₫', 'đ'); }
+             function formatPrice(number) { if (typeof number === 'undefined' || number === null || isNaN(number)) return '0'; try { return new Intl.NumberFormat('vi-VN').format(parseFloat(number)); } catch (e) { console.error("Error formatting price:", number, e); return 'Lỗi'; } }
+             const logger = { debug: function(...args) { console.log("[DEBUG]", ...args); }, info: function(...args) { console.info("[INFO]", ...args); }, warn: function(...args) { console.warn("[WARN]", ...args); }, error: function(...args) { console.error("[ERROR]", ...args); } };
+             function updateCartHeaderCount(totalItems) { const $el = $('.header__cart-amount'); if ($el.length) { $el.text(totalItems || 0); $('.header__cart').toggleClass('have', totalItems > 0); } else { logger.warn("Không tìm thấy .header__cart-amount"); } }
+             function buildHeaderCartContent(cartData) { const items = cartData.items || {}; const cartBaseUrl = /*[[@{/cart}]]*/ '/cart'; const payBaseUrl = /*[[@{/pay}]]*/ '/pay'; const productBaseUrl = /*[[@{/product/}]]*/ '/product/'; const emptyCartImageUrl = /*[[@{/assets/img/cart-empty.png}]]*/ '/assets/img/cart-empty.png'; if (Object.keys(items).length === 0) { return `<div class="cart__empty"><img src="${emptyCartImageUrl}" alt="Empty Cart" class="cart__empty-img"><p class="cart__empty-text">Giỏ hàng của bạn trống</p></div>`; } let itemsHtml = '<ul class="order__list">'; for (const variantId in items) { if (items.hasOwnProperty(variantId)) { const item = items[variantId]; const imageUrl = item.imageUrl ? (item.imageUrl.startsWith('/') ? item.imageUrl : '/uploads/images/' + item.imageUrl) : '/assets/img/product/no-image.jpg'; itemsHtml += `<li class="item-order" data-variant-id="${item.productId}"><div class="order-wrap"><a href="${productBaseUrl}${item.productId}" class="order-img"><img src="${imageUrl}" alt="Product Image"></a><div class="order-main"><a href="${productBaseUrl}${item.productId}" class="order-main-name">${item.name || 'Tên sản phẩm'}</a><div class="order-main-price">${item.quantity || 0} x ${formatCurrency(item.price || 0)}</div></div><button type="button" class="order-close remove-item-header-btn" title="Xóa sản phẩm" data-variant-id="${item.productId}"><i class="far fa-times-circle"></i></button></div></li>`; } } itemsHtml += '</ul>'; const totalHtml = `<div class="total-money">Tổng cộng: ${formatCurrency(cartData.grandTotal || 0)}</div><a href="${cartBaseUrl}" class="btn btn--default cart-btn">Xem giỏ hàng</a><a href="${payBaseUrl}" class="btn btn--default cart-btn orange">Thanh toán</a>`; return itemsHtml + totalHtml; }
+             function showToast(message) { const $t = $('#toast'); $t.html('<i class="fas fa-check-circle"></i> ' + (message || 'Đã thêm vào giỏ hàng!')); $t.addClass('show'); setTimeout(() => { $t.removeClass('show'); }, 2500); }
+
+
+            // --- HÀM AJAX THÊM VÀO GIỎ ---
+            function addToCartAjax(variantId, quantity, successCallback, errorCallback) {
+                if (!isAuthenticated) { window.location.href = loginUrl; return; }
+                if (!variantId) { alert('Vui lòng chọn một loại sản phẩm!'); if (errorCallback) errorCallback(); return; }
+                $addToCartBtn.prop('disabled', true).addClass('disabled'); // Disable nút ngay
+                $buyNowBtn.prop('disabled', true).addClass('disabled');
+                $.ajax({
+                    type: 'POST', url: `/api/cart/add/${variantId}`, contentType: 'application/json', data: JSON.stringify({ quantity: quantity }),
+                    success: function(response) {
+                        logger.info('Added to cart:', response);
+                        showToast(response.message || 'Đã thêm vào giỏ!');
+                        // Cập nhật header cart
+                        if (typeof updateHeaderCart === 'function') { updateHeaderCart(response); }
+                        else { updateCartHeaderCount(response.totalItems); /* Fallback */ }
+                        if (successCallback) successCallback(response);
+                    },
+                    error: function(xhr) {
+                        logger.error('Add to cart error:', xhr);
+                        let m = 'Có lỗi xảy ra khi thêm vào giỏ.';
+                        if (xhr.status === 401) { m = 'Vui lòng đăng nhập.'; setTimeout(() => { window.location.href = loginUrl; }, 1000); }
+                        else if (xhr.responseJSON && xhr.responseJSON.message) { m = xhr.responseJSON.message; }
+                        alert(m);
+                        if (errorCallback) errorCallback();
+                    },
+                    complete: function() {
+                        // Kích hoạt lại nút sau khi hoàn tất (dù thành công hay lỗi)
+                        updateButtonState(); // Dùng hàm update để check lại trạng thái
+                    }
+                });
+            }
+
+            // --- KHỞI TẠO CAROUSEL (Cập nhật navText) ---
+            const mainCarousel = $("#product-image-carousel");
+            const thumbCarousel = $("#product-thumbnail-carousel");
+            var slidesPerPage = 5; // Số lượng thumbnail hiển thị
+
+            mainCarousel.owlCarousel({
+                items: 1, loop: false, margin: 10, nav: true, dots: false, URLhashListener: true, startPosition: 'URLHash',
+                navText: ["<i class='fas fa-chevron-left'></i>", "<i class='fas fa-chevron-right'></i>"] // Sử dụng FontAwesome icons
+            });
+
+            if (thumbCarousel.length && thumbCarousel.find('.item').length > 1) {
+                thumbCarousel.owlCarousel({
+                    items: slidesPerPage, loop: false, margin: 10, nav: false, dots: false,
+                    responsive: { 0: { items: 3 }, 600: { items: 4 }, 1000: { items: 5 } } // Responsive cho thumbnail
+                });
+
+                // Đồng bộ hóa khi main carousel thay đổi
+                mainCarousel.on('changed.owl.carousel', function(e) {
+                    if (!e.namespace) return; // Fix lỗi không cần thiết
+                    var currentItemIndex = e.item.index;
+                    // Bỏ class current ở tất cả thumbnail
+                    thumbCarousel.find(".owl-item").removeClass("current");
+                     // Thêm class current vào thumbnail tương ứng
+                    thumbCarousel.find(".owl-item").eq(currentItemIndex).addClass("current");
+                    // Tự động cuộn thumbnail đến vị trí nhìn thấy được (nếu cần)
+                    thumbCarousel.trigger('to.owl.carousel', [currentItemIndex, 300, true]);
+                });
+
+                 // Thêm class current cho thumbnail đầu tiên khi tải trang
+                 var initialHash = window.location.hash;
+                 var initialActiveIndex = 0;
+                 if (initialHash && initialHash.startsWith('#image-')) { try { initialActiveIndex = parseInt(initialHash.substring(7)); } catch(e) { initialActiveIndex = 0; } }
+                 thumbCarousel.find(".owl-item").eq(initialActiveIndex).addClass("current");
+                 thumbCarousel.trigger('to.owl.carousel', [initialActiveIndex, 0, true]); // Cuộn đến thumb đầu tiên
+
+            } else {
+                thumbCarousel.hide(); // Ẩn nếu chỉ có 1 ảnh
+            }
+
+             // Khởi tạo carousel sản phẩm liên quan (nếu có)
+            const $relatedCarousel = $('.owl-carousel.hight');
+            if ($relatedCarousel.length > 0 && $relatedCarousel.find('.item').length > 0) { // Check cả class item
+                $relatedCarousel.owlCarousel({
+                    loop: false, margin: 20, nav: true, dots: false,
+                    navText: ["<i class='fas fa-chevron-left'></i>", "<i class='fas fa-chevron-right'></i>"], // Thêm navText
+                    responsive: { 0: { items: 2 }, 740: { items: 3 }, 1024: { items: 5 } } // Điều chỉnh responsive points
+                });
+            } else if ($relatedCarousel.length > 0) {
+                $relatedCarousel.closest('.main__frame').hide(); // Ẩn cả section nếu không có sp liên quan
+            }
+
+
+            // --- XỬ LÝ NÚT +/- SỐ LƯỢNG (Giữ nguyên) ---
+            $(document).on('click', '.plus, .minus', function() { /* ... code cũ ... */ var $q=$(this).closest('.buttons_added').find('.input-qty'); var c=parseInt($q.val())||1; var max=parseInt($q.attr('max'))||999; var min=parseInt($q.attr('min'))||1; if ($(this).hasClass('plus')){if(c<max) $q.val(c+1).trigger('change');} else {if(c>min) $q.val(c-1).trigger('change');}});
+
+            // --- XỬ LÝ CHỌN VARIANT & CẬP NHẬT GIAO DIỆN ---
+            const $variantBoxes = $('.variant-box');
+            const $priceContainer = $('.productInfo__price');
+            const $currentPriceSpan = $priceContainer.find('.price__current');
+            const $oldPriceSpan = $priceContainer.find('.price__old');
+            const $saleTag = $priceContainer.find('.product__sale-tag');
+            const $addToCartBtn = $('#addToCartBtn');
+            const $buyNowBtn = $('#buyNowBtn');
+            let selectedVariantId = null;
+
+            // Hàm cập nhật trạng thái nút bấm
+            function updateButtonState() {
+                const hasVariantSelected = selectedVariantId !== null;
+                if (hasVariantSelected) {
+                    if (isAuthenticated) {
+                        $addToCartBtn.removeClass('needs-action guest-active disabled').addClass('active-action').prop('disabled', false);
+                        $buyNowBtn.removeClass('needs-action guest-active disabled').addClass('active-action').prop('disabled', false);
+                    } else {
+                        // Chưa đăng nhập: Nút vẫn click được để chuyển hướng login
+                        $addToCartBtn.removeClass('needs-action active-action disabled').addClass('guest-active').prop('disabled', false);
+                        $buyNowBtn.removeClass('needs-action active-action disabled').addClass('guest-active').prop('disabled', false);
+                    }
+                } else {
+                    // Chưa chọn variant: Luôn disable nút
+                    $addToCartBtn.removeClass('guest-active active-action').addClass('needs-action disabled').prop('disabled', true);
+                    $buyNowBtn.removeClass('guest-active active-action').addClass('needs-action disabled').prop('disabled', true);
+                }
+            }
+
+            // Sự kiện click chọn variant
+            $variantBoxes.on('click', function() {
+                const $selectedBox = $(this);
+                if ($selectedBox.hasClass('selected')) return; // Không làm gì nếu click lại variant đang chọn
+
+                selectedVariantId = $selectedBox.data('variant-id');
+                $variantBoxes.removeClass('selected'); // Bỏ chọn tất cả
+                $selectedBox.addClass('selected'); // Chọn box này
+                $selectedBox.find('input[type="radio"]').prop('checked', true); // Check radio tương ứng
+
+                // Lấy thông tin giá, ảnh từ data attributes
+                const newPrice = $selectedBox.data('price');
+                const originalPrice = $selectedBox.data('original-price');
+                const variantImageUrl = $selectedBox.data('variant-image-url');
+
+                // Cập nhật giá hiển thị
+                $currentPriceSpan.text(formatPrice(newPrice));
+                if (originalPrice && parseFloat(originalPrice) > parseFloat(newPrice)) {
+                    $oldPriceSpan.text(formatPrice(originalPrice) + ' đ').show();
+                     const discountPercent = Math.round(100 * (originalPrice - newPrice) / originalPrice);
+                     $saleTag.text('-' + discountPercent + '%').show();
+                } else {
+                    $oldPriceSpan.hide();
+                    $saleTag.hide();
+                }
+
+                // Cập nhật trạng thái nút bấm
+                updateButtonState();
+
+                // Cập nhật ảnh chính nếu variant có ảnh riêng
+                if (variantImageUrl) {
+                    let imageIndex = -1;
+                    // Tìm index của ảnh variant trong carousel chính
+                    mainCarousel.find('.owl-item:not(.cloned) .item').each(function(i) {
+                         const styleAttr = $(this).find('.product__avt').attr('style');
+                         const bgUrlMatch = styleAttr ? styleAttr.match(/url\(['"]?(.*?)['"]?\)/) : null;
+                         const bgImageUrl = bgUrlMatch ? bgUrlMatch[1] : null;
+                         // So sánh tên file ảnh (an toàn hơn so sánh cả đường dẫn)
+                         const variantFilename = variantImageUrl.substring(variantImageUrl.lastIndexOf('/') + 1);
+                         const bgFilename = bgImageUrl ? bgImageUrl.substring(bgImageUrl.lastIndexOf('/') + 1) : null;
+                         if (bgFilename && variantFilename && bgFilename === variantFilename) {
+                             imageIndex = i;
+                             return false; // Thoát vòng lặp khi tìm thấy
+                         }
+                    });
+                    // Nếu tìm thấy ảnh variant trong carousel, chuyển đến đó
+                    if (imageIndex !== -1) {
+                         mainCarousel.trigger('to.owl.carousel', [imageIndex, 300, true]);
+                         logger.debug(`Variant image found, switching main carousel to index ${imageIndex}`);
+                    } else {
+                         // Nếu không tìm thấy (có thể ảnh variant không nằm trong ảnh chung ban đầu)
+                         // -> Chuyển về ảnh đầu tiên hoặc giữ nguyên ảnh hiện tại
+                         mainCarousel.trigger('to.owl.carousel', [0, 300, true]); // Ví dụ: về ảnh đầu
+                         logger.warn(`Variant image URL "${variantImageUrl}" not found in main carousel. Resetting to index 0.`);
+                    }
+                } else {
+                     // Nếu variant không có ảnh riêng, chuyển về ảnh đầu tiên
+                     mainCarousel.trigger('to.owl.carousel', [0, 300, true]);
+                     logger.debug("Variant has no image, resetting main carousel to index 0.");
+                }
+            });
+
+            // Gọi updateButtonState lần đầu để set trạng thái ban đầu
+             if ($variantBoxes.length === 0) { // Trường hợp không có variant nào
+                 $addToCartBtn.addClass('needs-action disabled').prop('disabled', true);
+                 $buyNowBtn.addClass('needs-action disabled').prop('disabled', true);
+                 $currentPriceSpan.text(formatPrice(/*[[${product.price}]]*/ 0)); // Hiển thị giá gốc nếu có
+                 const origP = /*[[${product.originalPrice}]]*/ null;
+                 const currP = /*[[${product.price}]]*/ 0;
+                 if(origP && origP > currP) $oldPriceSpan.text(formatPrice(origP) + ' đ').show();
+                 if(origP && origP > currP && origP > 0) $saleTag.text('-' + Math.round(100 * (origP - currP) / origP) + '%').show();
+
+             } else {
+                 updateButtonState(); // Gọi nếu có variant
+             }
+
+            // --- SỰ KIỆN CLICK NÚT THÊM VÀO GIỎ / MUA NGAY ---
+            $addToCartBtn.on('click', function(e) {
+                e.preventDefault();
+                if ($(this).hasClass('disabled') || $(this).hasClass('needs-action')) return; // Bỏ qua nếu đang disabled/chưa chọn
+                if (!isAuthenticated) { window.location.href = loginUrl; return; }
+                const quantity = parseInt($('.input-qty').val()) || 1;
+                addToCartAjax(selectedVariantId, quantity);
+            });
+
+            $buyNowBtn.on('click', function(e) {
+                e.preventDefault();
+                if ($(this).hasClass('disabled') || $(this).hasClass('needs-action')) return;
+                if (!isAuthenticated) { window.location.href = loginUrl; return; }
+                const quantity = parseInt($('.input-qty').val()) || 1;
+                addToCartAjax(selectedVariantId, quantity,
+                    // Success callback: Chuyển hướng đến trang thanh toán
+                    function(response) {
+                        // Chuyển hướng đến trang /pay với ID của variant vừa thêm
+                        window.location.href = `/pay?variantIds=${selectedVariantId}`;
+                    },
+                    // Error callback (không cần làm gì thêm ở đây)
+                    function() {}
+                );
+            });
+
+            // --- XỬ LÝ TABS MÔ TẢ / ĐÁNH GIÁ ---
+            $('.tabs .tab-item').on('click', function() {
+                const $thisTab = $(this);
+                if ($thisTab.hasClass('active')) return;
+
+                const $tabsContainer = $thisTab.closest('.tabs');
+                const $tabContentContainer = $thisTab.closest('.main__tabnine').find('.tab-content');
+                const $line = $tabsContainer.find('.line');
+                const tabIndex = $thisTab.index();
+
+                // Bỏ active ở tab và pane cũ
+                $tabsContainer.find('.tab-item.active').removeClass('active');
+                $tabContentContainer.find('.tab-pane.active').removeClass('active');
+
+                // Thêm active cho tab và pane mới
+                $thisTab.addClass('active');
+                $tabContentContainer.find('.tab-pane').eq(tabIndex).addClass('active');
+
+                // Di chuyển line
+                if ($line.length) {
+                    try {
+                        const tabPosition = $thisTab.position();
+                        $line.css({
+                            left: tabPosition.left + 'px',
+                            width: $thisTab.outerWidth() + 'px'
+                        });
+                    } catch (e) {
+                        console.error("Tab line error:", e);
+                    }
+                }
+            });
+
+            // Khởi tạo vị trí line cho tab active ban đầu
+            const $initialActiveTab = $('.tabs .tab-item.active');
+            if ($initialActiveTab.length) {
+                const $line = $('.tabs .line');
+                if ($line.length) {
+                    // Dùng setTimeout để đảm bảo element đã render xong
+                    setTimeout(function() {
+                        try {
+                            const tabPosition = $initialActiveTab.position();
+                            if(tabPosition){ // Kiểm tra position có tồn tại
+                                $line.css({
+                                    left: tabPosition.left + 'px',
+                                    width: $initialActiveTab.outerWidth() + 'px'
+                                });
+                            } else {
+                                logger.warn("Could not get position for initial active tab.");
+                            }
+                        } catch (e) {
+                            console.error("Tab line init error:", e);
+                        }
+                    }, 150); // Tăng nhẹ timeout
+                }
+            }
+
+            logger.info("Product detail page initialized."); // Log thông báo tải xong
+
+        }); // Kết thúc document ready
+        /*]]>*/
+        </script>
+	</th:block>
+</body>
+</html>

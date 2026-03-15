@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/guest}">
+
+<head>
+    <title>Đánh giá sản phẩm</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <link rel="stylesheet" href="/assets/css/library.css">
+    <link rel="stylesheet" href="/assets/css/common.css">
+    <link rel="stylesheet" type="text/css" href="/assets/css/product.css">
+    <link rel="stylesheet" href="https://pro.fontawesome.com/releases/v5.10.0/css/all.css"
+          integrity="sha384-AYmEC3Yw5cVb3ZcuHtOA93w35dYTsvhLPVnYs9eStHfGJvOvKxVfELGroGkvsg+p" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.css">
+
+    <style>
+        /* CSS không thay đổi */
+        .product__avt {
+            background-size: cover;
+            background-position: center;
+            height: 250px;
+            width: 100%;
+            border-radius: 10px;
+        }
+
+        .product__info {
+            padding: 20px;
+        }
+
+        .product__name {
+    font-size: 3rem;
+    margin-bottom: 30px;
+    overflow: visible;   /* Hiển thị toàn bộ nội dung */
+    text-overflow: clip; /* Không cắt chữ */
+    word-wrap: break-word; /* Tự xuống dòng nếu từ quá dài */
+}
+        .product__rating {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+
+        .rating-stars {
+            display: flex;
+            gap: 3px;
+        }
+
+        .rating-stars i {
+            font-size: 16px;
+            color: #ddd;
+        }
+
+        .rating-stars i.filled {
+            color: #ffa500;
+        }
+
+        .rating-count {
+            font-size: 14px;
+            color: #666;
+            font-weight: 400;
+        }
+
+        .product__sold {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .product__sold i {
+            font-size: 14px;
+            color: #999;
+        }
+
+        .review-item {
+            border: 1px solid #f0f0f0;
+            border-radius: 10px;
+            padding: 25px;
+            margin-bottom: 25px;
+        }
+
+        .review-item .row {
+            align-items: flex-start;
+        }
+
+        /* ⭐ Hiển thị sao từ trái sang phải */
+        .star-rating {
+            display: flex;
+            flex-direction: row-reverse;
+            gap: 8px;
+            justify-content: flex-start;
+        }
+
+        .star-rating input[type="radio"] {
+            display: none;
+        }
+
+        .star-rating label {
+            font-size: 24px;
+            color: #ddd;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+
+        .star-rating input[type="radio"]:checked ~ label {
+            color: #ffa500;
+        }
+
+        .star-rating label:hover,
+        .star-rating label:hover ~ label {
+            color: #ffa500;
+        }
+
+        /* 🔹 Căn hàng sao với dòng "Đánh giá (1-5 sao)" */
+        .rating-row {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .rating-row .form-label {
+            margin: 0;
+            font-size: 16px;
+            font-weight: 500;
+        }
+
+        .form-control {
+            font-size: 16px;
+            padding: 12px;
+        }
+
+        .btn {
+            font-size: 16px;
+            padding: 12px 24px;
+        }
+
+        .btn-secondary {
+            background-color: #6c757d;
+            border: none;
+        }
+
+        .btn-secondary:hover {
+            background-color: #5a6268;
+        }
+    </style>
+</head>
+
+<body>
+<div layout:fragment="content">
+    <div class="container mt-5 mb-5">
+        <h1 style="font-size: 32px;">Đánh giá đơn hàng #<span th:text="${order.id}"></span></h1>
+
+        <div class="mt-2 mb-4">
+            <a th:href="@{/user/orders}" class="btn btn-secondary px-4">
+                <i class="fas fa-arrow-left"></i> Quay lại
+            </a>
+        </div>
+
+        <div th:if="${successMessage}" class="alert alert-success" role="alert" style="font-size: 16px;">
+            <span th:text="${successMessage}"></span>
+        </div>
+        <div th:if="${errorMessage}" class="alert alert-danger" role="alert" style="font-size: 16px;">
+            <span th:text="${errorMessage}"></span>
+        </div>
+
+        <div th:each="reviewInfo : ${productReviews}" class="review-item">
+            <div class="row">
+                <div class="col-md-3">
+                    <div class="product__avt"
+                         th:style="'background-image: url(' + @{${reviewInfo.product.primaryImageUrl}} + ');'"></div>
+                </div>
+
+                <div class="col-md-9">
+                    <h3 class="product__name" th:text="${reviewInfo.product.name}"></h3>
+
+                  <div th:if="${reviewInfo.reviewed}">
+                        <p class="text-success" style="font-size: 16px;">Đã đánh giá sản phẩm này.</p>
+                    </div>
+
+                    <form th:unless="${reviewInfo.reviewed}"
+                          th:action="@{/user/orders/{orderId}/review/{productId}(orderId=${order.id}, productId=${reviewInfo.product.productId})}"
+                          method="post"
+                          enctype="multipart/form-data"> <div th:if="${__${'errorMessage_' + reviewInfo.product.productId}__}" 
+                             class="alert alert-danger p-2 mb-2" style="font-size: 14px;">
+                            <span th:text="${__${'errorMessage_' + reviewInfo.product.productId}__}"></span>
+                        </div>
+                        
+                        <div class="mb-3 rating-row">
+                            <label class="form-label">Đánh giá (1-5 sao)</label>
+                            <div class="star-rating">
+                                <input type="radio" id="star5_${reviewInfo.product.productId}" name="rating" value="5" required>
+                                <label for="star5_${reviewInfo.product.productId}" class="fas fa-star"></label>
+                                <input type="radio" id="star4_${reviewInfo.product.productId}" name="rating" value="4">
+                                <label for="star4_${reviewInfo.product.productId}" class="fas fa-star"></label>
+                                <input type="radio" id="star3_${reviewInfo.product.productId}" name="rating" value="3">
+                                <label for="star3_${reviewInfo.product.productId}" class="fas fa-star"></label>
+                                <input type="radio" id="star2_${reviewInfo.product.productId}" name="rating" value="2">
+                                <label for="star2_${reviewInfo.product.productId}" class="fas fa-star"></label>
+                                <input type="radio" id="star1_${reviewInfo.product.productId}" name="rating" value="1">
+                                <label for="star1_${reviewInfo.product.productId}" class="fas fa-star"></label>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Bình luận</label>
+                            <textarea class="form-control" name="comment" rows="4"></textarea> </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Thêm ảnh (Tùy chọn)</label>
+                            <input type="file" class="form-control" name="mediaFiles" multiple 
+                                   accept="image/*,video/*"> </div>
+
+                        <button type="submit" class="btn btn--default">Gửi đánh giá</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

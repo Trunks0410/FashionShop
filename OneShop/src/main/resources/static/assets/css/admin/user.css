@@ -1,0 +1,248 @@
+.admin-container {
+	padding-top: 50px;
+	padding-bottom: 50px;
+	min-height: 80vh;
+}
+
+.table th, .table td {
+	vertical-align: middle;
+}
+
+.status-active {
+	color: green;
+	font-weight: 500;
+}
+
+.status-inactive {
+	color: orange;
+	font-weight: 500;
+}
+
+/* === BỔ SUNG ĐIỀU CHỈNH CÂN ĐỐI VÀ CHỮ TRÊN HEADER === */
+/* Giảm kích thước chữ trên thanh điều hướng admin */
+.header__nav-link {
+	font-size: 14px;
+	padding: 8px 12px;
+}
+
+.table th:nth-child(6), /* Cột Khóa/Mở khóa */ .table th:nth-child(7) {
+	width: 150px;
+	min-width: 120px;
+}
+
+.table thead th {
+	font-size: 14px;
+	font-weight: 700;
+	color: #333;
+	white-space: nowrap;
+}
+
+.header__admin-info {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+
+.header__admin-info i {
+	font-size: 30px;
+	color: #9e5bab;
+}
+
+.header__admin-info span {
+	font-size: 18px;
+	font-weight: 600;
+	color: var(--black-cl-2);
+}
+
+.header__account-logout {
+	font-size: 16px;
+	color: #007bff !important;
+	text-decoration: underline;
+	transition: color 0.2s;
+	white-space: nowrap;
+}
+
+.header__account-logout:hover {
+	color: var(--default-cl) !important;
+}
+
+.header__top .header__account {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 4px;
+	padding-left: 15px;
+}
+
+.admin-container {
+	padding-top: 15px;
+	padding-bottom: 50px;
+	min-height: 80vh;
+}
+
+.breadcrumb-admin-static {
+	font-size: 16px;
+	color: #444;
+	margin-bottom: 10px;
+}
+
+.table thead th {
+	font-size: 16px;
+	font-weight: 700;
+	color: #333;
+	white-space: nowrap;
+}
+
+.table tbody td {
+	font-size: 15px;
+}
+
+.table-bordered th, .table-bordered td {
+	border: 1px solid #dee2e6 !important;
+}
+
+/* .table tbody td:nth-child(3) {
+	Cột Email có thể cần kích thước nhỏ hơn nếu tên cửa hàng dài
+	font-size: 14px;
+	
+}
+ */
+.table tbody .text-center a i.fas.fa-eye {
+	font-size: 18px;
+}
+
+.table th, .table td {
+	vertical-align: middle;
+	font-size: 14px;
+}
+
+.table thead th {
+	font-weight: 700;
+	white-space: nowrap;
+}
+
+.action-btns .btn {
+	padding: 5px 8px;
+	margin: 0 2px;
+}
+
+.product-status-checkbox {
+	transform: scale(1.2);
+}
+
+.form-control, .form-select {
+	font-size: 14px;
+}
+
+.filter-controls {
+	margin-bottom: 20px;
+}
+
+.filter-controls .row>div {
+	padding-right: 5px;
+	padding-left: 5px;
+}
+
+.table-dark th {
+	color: #ffffff !important;
+	font-weight: bold;
+}
+
+.btn-success i, .btn-danger i {
+	color: #000000 !important;
+}
+
+.btn-warning i {
+	color: #000000 !important;
+}
+
+.table td.action-btns .btn {
+	padding: 5px 8px;
+	font-size: 13px;
+}
+
+.btn-success, .btn-danger {
+	background-color: var(--bs-btn-bg) !important;
+	border-color: var(--bs-btn-border-color) !important;
+}
+
+.table td a.btn-success {
+	background-color: #198754 !important;
+	color: #FFFFFF !important;
+}
+
+.table td a.btn-danger {
+	background-color: #dc3545 !important;
+	color: #FFFFFF !important;
+}
+
+.table td a.btn-success i, .table td a.btn-danger i {
+	color: #FFFFFF !important;
+}
+
+.modal-footer .btn-secondary {
+	background-color: #6c757d !important;
+	color: #fff !important;
+	border: 1px solid #6c757d !important;
+}
+
+.modal-footer .btn-primary {
+	background-color: #0d6efd !important;
+	color: #fff !important;
+}
+/* TÙY CHỈNH KÍCH THƯỚC VÀ KIỂU NÚT TRONG MODAL FOOTER */
+.modal-footer button.btn {
+	padding: 9px 19px;
+	font-size: 1.4rem;
+	font-weight: 500;
+	min-width: 120px;
+	border-radius: 5px;
+}
+
+.modal-header {
+	background-color: #f0f8ff;
+	border-bottom: 2px solid var(--default-cl);
+	padding: 15px 20px;
+}
+
+.modal-header .modal-title {
+	font-size: 2rem;
+	font-weight: 700;
+	color: var(--default-cl);
+	text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.filter-controls .btn-secondary {
+	background-color: #6c757d !important;
+	color: #fff !important;
+	border: 1px solid #6c757d !important;
+}
+
+.filter-controls .btn-secondary i {
+	color: #fff !important;
+}
+/* Giữ lại style scale switch nếu cần */
+.custom-switch-container {
+	transform: scale(0.9); /* Thu nhỏ nhẹ switch để vừa cột */
+	display: inline-block;
+	vertical-align: middle;
+}
+
+/* === CSS GHI ĐÈ ĐỂ KHẮC PHỤC LỖI CHECKBOX KÉP TỪ common.css === */
+
+/* Sử dụng selector có độ ưu tiên cao hơn (dùng class mới) để ghi đè CSS xung đột */
+.shipping-status-switch .form-check-input:before {
+	content: none !important;
+	/* Vô hiệu hóa hộp vuông tùy chỉnh từ common.css */
+}
+
+.shipping-status-switch .form-check-input:checked:after {
+	content: none !important;
+	/* Vô hiệu hóa dấu tích tùy chỉnh từ common.css */
+}
+
+/* Đảm bảo Switch hiện thị đúng vị trí */
+.shipping-status-switch .form-check-input {
+	margin-right: 0;
+	/* Loại bỏ margin-right nếu có, để switch căn chỉnh tốt hơn */
+}

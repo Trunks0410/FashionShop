@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{admin/layout/app}">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="'Sản phẩm - ' + (${currentShopName} ?: 'Admin')">Quản lý Sản phẩm</title>
+
+    <th:block layout:fragment="css">
+        <style>
+            .table th, .table td { vertical-align: middle; }
+            .action-btns { 
+                display: flex; 
+                align-items: center; 
+                justify-content: center; 
+                gap: 3px; 
+            }
+            .action-btns a, .action-btns button { margin: 0; }
+            .filter-controls .form-label { font-size: 0.9rem; margin-bottom: 0.25rem; }
+            .filter-controls .form-control, .filter-controls .form-select { font-size: 0.9rem; padding: 0.4rem 0.75rem; }
+            .product-description-short {
+                max-width: 250px;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                cursor: help;
+            }
+            .status-badge { font-size: 0.8em; padding: .3em .6em; }
+            .bg-warning { background-color: #f6c23e !important; color: #5a5c69 !important; }
+            .bg-success { background-color: #1cc88a !important; }
+            .bg-danger { background-color: #e74a3b !important; }
+        </style>
+    </th:block>
+</head>
+
+<body>
+<div layout:fragment="content">
+    <div class="d-sm-flex align-items-center justify-content-between mb-4 mt-4">
+        <h1 class="h3 mb-0" th:text="'Quản lý Sản phẩm' + (${currentShopName} ? ' - Shop: ' + ${currentShopName} : '')">
+            Quản lý Sản phẩm
+        </h1>
+        <a th:href="@{/admin/shops}" class="btn btn-secondary shadow-sm">
+            <i class="fas fa-arrow-left me-2"></i> Quay lại Danh sách Shop
+        </a>
+    </div>
+
+    <p class="lead mb-4">Xem, duyệt, chỉnh sửa hoặc xóa sản phẩm của gian hàng đã chọn.</p>
+
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold">Bộ lọc Sản phẩm</h6>
+        </div>
+        <div class="card-body">
+            <form th:action="@{/admin/shops/__${currentShopId}__/products}" method="get" class="filter-controls">
+                <div class="row g-2 align-items-end">
+                    <div class="col-md-3">
+                        <label for="productCode" class="form-label">Mã Sản phẩm</label>
+                        <input type="text" class="form-control form-control-sm" id="productCode"
+                               name="productCode" placeholder="Nhập mã..." th:value="${selectedProductCode}">
+                    </div>
+                    <div class="col-md-2">
+                        <label for="statusFilter" class="form-label">Trạng thái</label>
+                        <select class="form-select form-select-sm" id="statusFilter" name="status">
+                            <option value="" th:selected="${selectedStatusValue == null or selectedStatusValue == ''}">-- Tất cả --</option>
+                            <option th:each="st : ${T(com.oneshop.enums.ProductStatus).values()}"
+                                    th:value="${st.name()}" th:text="${st.displayName}"
+                                    th:selected="${selectedStatusValue != null and st.name().equals(selectedStatusValue)}"></option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="categoryFilter" class="form-label">Danh mục</label>
+                        <select class="form-select form-select-sm" id="categoryFilter" name="categoryId">
+                            <option value="" th:selected="${selectedCategoryId == null}">-- Tất cả --</option>
+                            <option th:each="cat : ${categories}"
+                                    th:value="${cat.id}" th:text="${cat.name}"
+                                    th:selected="${selectedCategoryId != null and cat.id.equals(selectedCategoryId)}"></option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label for="brandFilter" class="form-label">Thương hiệu</label>
+                        <select class="form-select form-select-sm" id="brandFilter" name="brand">
+                            <option value="" th:selected="${selectedBrand == null or selectedBrand == ''}">-- Tất cả --</option>
+                            <option th:each="brName : ${brands}" th:value="${brName}" th:text="${brName}"
+                                    th:selected="${selectedBrand != null and brName.equals(selectedBrand)}"></option>
+                        </select>
+                    </div>
+                    <div class="col-md-2 d-flex">
+                        <button type="submit" class="btn btn-primary btn-sm w-50 me-1" title="Lọc">
+                            <i class="fas fa-filter"></i> Lọc
+                        </button>
+                        <a th:href="@{/admin/shops/__${currentShopId}__/products}"
+                           class="btn btn-outline-secondary btn-sm w-50" title="Đặt lại">
+                            <i class="fas fa-undo"></i>
+                        </a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold">Danh sách Sản phẩm</h6>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover table-bordered align-middle">
+                    <thead class="table-light text-center">
+                    <tr>
+                        <th scope="col" style="width: 80px;">Mã SP</th>
+                        <th scope="col" class="text-start">Tên Sản phẩm</th>
+                        <th scope="col">Thương hiệu</th>
+                        <th scope="col">Danh mục</th>
+                        <th scope="col" class="text-start">Mô tả</th>
+                        <th scope="col" class="text-center">Trạng thái</th>
+                        <th scope="col" class="text-center" style="width: 120px;">Thao tác</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="product : ${products}">
+                        <td th:text="${product.productId}" class="text-center"></td>
+                        <td th:text="${product.name}" class="text-start"></td>
+                        <td th:text="${product.brand?.name ?: 'N/A'}" class="text-center"></td>
+                        <td th:text="${product.category?.name ?: 'N/A'}" class="text-center"></td>
+                        <td>
+                            <div class="product-description-short"
+                                 th:title="${product.description}"
+                                 th:text="${#strings.abbreviate(product.description, 50)}"
+                                 data-bs-toggle="tooltip"
+                                 data-bs-placement="top"></div>
+                        </td>
+                        <td class="text-center">
+                            <span th:switch="${product.status?.name()}" class="badge status-badge"
+                                  th:classappend="${product.status?.name() == 'PENDING'} ? 'bg-warning' :
+                                                  (${product.status?.name() == 'SELLING'} ? 'bg-success' :
+                                                  (${product.status?.name() == 'REJECTED'} ? 'bg-danger' : 'bg-secondary'))">
+                                <span th:case="'PENDING'">Chờ Duyệt</span>
+                                <span th:case="'SELLING'">Đang Bán</span>
+                                <span th:case="'REJECTED'">Từ Chối</span> <span th:case="*">Không xác định</span>
+                            </span>
+                            </td>
+                        <td class="text-center action-btns">
+                            <th:block th:if="${product.status?.name() == 'PENDING'}">
+                                <a th:href="@{/admin/products/updateStatus(productId=${product.productId}, newStatus='SELLING', shopId=${currentShopId})}"
+                                   class="btn btn-sm btn-outline-success" title="Duyệt">
+                                    <i class="fas fa-check"></i>
+                                </a>
+                                <a th:href="@{/admin/products/updateStatus(productId=${product.productId}, newStatus='REJECTED', shopId=${currentShopId})}"
+                                   class="btn btn-sm btn-outline-danger" title="Từ chối">
+                                    <i class="fas fa-times"></i>
+                                </a>
+                            </th:block>
+
+                            <th:block th:if="${product.status?.name() == 'SELLING' or product.status?.name() == 'REJECTED'}">
+                                <a th:href="@{/admin/products/updateStatus(productId=${product.productId}, newStatus='PENDING', shopId=${currentShopId})}"
+                                   class="btn btn-sm btn-outline-warning text-dark" title="Chuyển về Chờ Duyệt">
+                                    <i class="fas fa-undo"></i>
+                                </a>
+                            </th:block>
+
+                            <button type="button" class="btn btn-sm btn-info text-white edit-product-btn"
+                                    th:data-product-id="${product.productId}"
+                                    th:data-product-name="${product.name}"
+                                    th:data-product-category="${product.category?.id}"
+                                    th:data-product-description="${product.description}"
+                                    title="Chỉnh sửa">
+                                <i class="fas fa-pencil-alt"></i>
+                            </button>
+
+                            <a th:href="@{/admin/products/delete/{id}(id=${product.productId}, shopId=${currentShopId})}"
+                               class="btn btn-sm btn-danger"
+                               onclick="return confirm('Bạn có chắc chắn muốn xóa sản phẩm này?')"
+                               title="Xóa sản phẩm">
+                                <i class="fas fa-trash"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    <tr th:if="${#lists.isEmpty(products)}">
+                        <td colspan="7" class="text-center text-muted py-4">Không tìm thấy sản phẩm nào phù hợp.</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="editProductModal" tabindex="-1" aria-labelledby="editProductModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editProductModalLabel">Chỉnh Sửa Sản Phẩm</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form th:action="@{/admin/products/update}" method="post">
+                    <div class="modal-body">
+                        <input type="hidden" id="modalProductId" name="productId">
+                        <input type="hidden" name="shopId" th:value="${currentShopId}">
+
+                        <div class="mb-3">
+                            <label for="modalProductName" class="form-label">Tên Sản Phẩm <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="modalProductName" name="name" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="modalProductCategory" class="form-label">Danh Mục <span class="text-danger">*</span></label>
+                            <select class="form-select" id="modalProductCategory" name="category.id" required>
+                                <option value="" disabled>-- Chọn danh mục --</option>
+                                <option th:each="cat : ${categories}"
+                                        th:value="${cat.id}" th:text="${cat.name}"></option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="modalProductDescription" class="form-label">Mô Tả</label>
+                            <textarea class="form-control" id="modalProductDescription" name="description" rows="5"></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                        <button type="submit" class="btn btn-primary">Lưu Thay Đổi</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<th:block layout:fragment="js">
+<script>
+$(document).ready(function () {
+    console.log('DOM ready');
+
+    // KIỂM TRA MODAL
+    const $modal = $('#editProductModal');
+    if ($modal.length === 0) {
+        console.error('LỖI: Modal #editProductModal không tồn tại! Kiểm tra vị trí trong layout:fragment="content"');
+        return;
+    }
+
+    console.log('Modal tồn tại:', $modal[0]);
+
+    // GẮN SỰ KIỆN CHO NÚT CHỈNH SỬA
+    $(document).on('click', '.edit-product-btn', function () {
+        const $btn = $(this);
+
+        $('#modalProductId').val($btn.data('product-id'));
+        $('#modalProductName').val($btn.data('product-name') || '');
+        $('#modalProductCategory').val($btn.data('product-category') || '');
+        $('#modalProductDescription').val($btn.data('product-description') || '');
+
+        const modal = new bootstrap.Modal($modal[0]);
+        modal.show();
+    });
+
+    // Tooltip
+    document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(el => new bootstrap.Tooltip(el));
+
+    // Alert tự đóng
+    $('.alert').each(function () {
+        setTimeout(() => {
+            const bsAlert = bootstrap.Alert.getInstance(this);
+            if (bsAlert) bsAlert.close();
+        }, 5000);
+    });
+});
+</script>
+</th:block>
+
+</body>
+</html>

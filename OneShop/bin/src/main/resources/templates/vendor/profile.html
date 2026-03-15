@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{vendor/layout/app}">
+<head>
+    <title>Hồ sơ của tôi</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <h1 class="h3 mt-4 mb-3">Hồ sơ của tôi</h1>
+    <p class="lead mb-4">Cập nhật thông tin cá nhân của bạn.</p>
+
+    <div th:if="${successMessage}" class="alert alert-success" role="alert" th:text="${successMessage}"></div>
+    <div th:if="${errorMessage}" class="alert alert-danger" role="alert" th:text="${errorMessage}"></div>
+
+    <div class="card shadow">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold">Thông tin cá nhân</h6>
+        </div>
+        <div class="card-body p-4">
+            <form th:action="@{/vendor/profile/update}" th:object="${profileUpdateDto}" method="post">
+                
+                 <div th:if="${#fields.hasAnyErrors()}" class="alert alert-danger mb-3" role="alert">
+                    Vui lòng kiểm tra lại thông tin.
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="fullName" class="form-label fw-bold">Họ và tên</label>
+                        <input type="text" class="form-control" th:field="*{fullName}" required>
+                        <div class="text-danger mt-1 small" th:if="${#fields.hasErrors('fullName')}" th:errors="*{fullName}"></div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="email" class="form-label fw-bold">Email</label>
+                        <input type="email" class="form-control" th:field="*{email}" required>
+                         <div class="text-danger mt-1 small" th:if="${#fields.hasErrors('email')}" th:errors="*{email}"></div>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label for="address" class="form-label fw-bold">Địa chỉ</label>
+                    <input type="text" class="form-control" th:field="*{address}" placeholder="Số nhà, đường, phường/xã, quận/huyện, tỉnh/thành phố">
+                </div>
+
+                <div class="mb-3">
+                    <label for="phoneNumber" class="form-label fw-bold">Số điện thoại</label>
+                    <input type="tel" class="form-control" th:field="*{phoneNumber}">
+                </div>
+
+                <div class="mt-4 pt-2 border-top">
+                    <button type="submit" class="btn btn-primary px-4">Lưu thay đổi</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+</body>
+</html>

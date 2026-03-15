@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{vendor/layout/app}">
+<head>
+    <title>Quản lý Đơn hàng</title>
+    <style>
+        .nav-tabs { border-bottom: 1px solid #dee2e6; }
+        .nav-tabs .nav-link {
+            color: var(--text-muted); font-weight: 500;
+            border: 1px solid transparent; border-bottom: none;
+            padding: 0.75rem 1rem; /* Tăng padding */
+            font-size: 0.9rem; /* Chỉnh size chữ */
+        }
+        .nav-tabs .nav-link.active, .nav-tabs .nav-item.show .nav-link {
+            color: #fff; background-color: var(--primary-color);
+            border-color: #dee2e6 #dee2e6 #fff;
+            font-weight: 600;
+            border-top-left-radius: 0.375rem;
+            border-top-right-radius: 0.375rem;
+        }
+        .nav-tabs .nav-link:hover:not(.active) {
+            border-color: #e9ecef #e9ecef #dee2e6;
+            background-color: #f8f9fa;
+        }
+         /* Style cho pagination */
+        .pagination .page-link {
+            color: var(--primary-color);
+        }
+        .pagination .page-item.active .page-link {
+             background-color: var(--primary-color);
+             border-color: var(--primary-color);
+             color: white;
+        }
+        .pagination .page-item.disabled .page-link {
+            color: #6c757d;
+        }
+    </style>
+</head>
+<body>
+<div layout:fragment="content">
+    <h1 class="h3 mt-4">Quản lý Đơn hàng</h1>
+    <p class="lead mb-4">Theo dõi và quản lý tất cả đơn hàng cho gian hàng của bạn.</p>
+
+     <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show" role="alert">
+        <span th:text="${successMessage}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show" role="alert">
+        <span th:text="${errorMessage}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+
+    <div class="card shadow">
+        <div class="card-header p-0 bg-white border-bottom-0">
+             <ul class="nav nav-tabs nav-fill" id="orderStatusTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <a class="nav-link" th:href="@{/vendor/orders}"
+                       th:classappend="${#strings.isEmpty(currentStatus)} ? 'active' : ''">Tất cả</a>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <a class="nav-link" th:href="@{/vendor/orders(status='PENDING')}"
+                       th:classappend="${#strings.equals(currentStatus, 'PENDING')} ? 'active' : ''">Chờ xác nhận</a>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <a class="nav-link" th:href="@{/vendor/orders(status='CONFIRMED')}"
+                       th:classappend="${#strings.equals(currentStatus, 'CONFIRMED')} ? 'active' : ''">Đã xác nhận</a>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <a class="nav-link" th:href="@{/vendor/orders(status='DELIVERING')}"
+                       th:classappend="${#strings.equals(currentStatus, 'DELIVERING')} ? 'active' : ''">Đang giao</a>
+                </li>
+                 <li class="nav-item" role="presentation">
+                    <a class="nav-link" th:href="@{/vendor/orders(status='DELIVERED')}"
+                       th:classappend="${#strings.equals(currentStatus, 'DELIVERED')} ? 'active' : ''">Đã giao</a>
+                </li>
+                 <li class="nav-item" role="presentation">
+                    <a class="nav-link" th:href="@{/vendor/orders(status='CANCELLED')}"
+                       th:classappend="${#strings.equals(currentStatus, 'CANCELLED')} ? 'active' : ''">Đã hủy</a>
+                </li>
+                 <li class="nav-item" role="presentation">
+                    <a class="nav-link" th:href="@{/vendor/orders(status='RETURNED')}"
+                       th:classappend="${#strings.equals(currentStatus, 'RETURNED')} ? 'active' : ''">Trả hàng</a>
+                </li>
+            </ul>
+        </div>
+
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle" width="100%" cellspacing="0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Mã ĐH</th>
+                            <th>Người nhận</th>
+                            <th>Ngày đặt</th>
+                            <th>Tổng tiền</th>
+                            <th>Trạng thái</th>
+                            <th class="text-center">Hành động</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="order : ${orderPage.content}">
+                            <td th:text="${'#' + order.id}">#12348</td>
+                             <td th:text="${order.recipientName}">Phạm Minh Dũng</td>
+                             <td th:text="${#temporals.format(order.createdAt, 'dd/MM/yyyy HH:mm')}">15/10/2025 10:30</td>
+                             <td th:text="${#numbers.formatCurrency(order.total)}">502.000₫</td>
+                            <td>
+                                <span th:switch="${order.orderStatus?.name()}">
+                                    <span th:case="'PENDING'" class="badge bg-secondary">Chờ xác nhận</span>
+                                    <span th:case="'CONFIRMED'" class="badge bg-primary">Đã xác nhận</span>
+                                    <span th:case="'DELIVERING'" class="badge bg-warning text-dark">Đang giao</span>
+                                    <span th:case="'DELIVERED'" class="badge bg-success">Đã giao</span>
+                                    <span th:case="'CANCELLED'" class="badge bg-danger">Đã hủy</span>
+                                    <span th:case="'RETURNED'" class="badge bg-dark">Trả hàng</span>
+                                     <span th:case="*" class="badge bg-light text-dark">Không xác định</span>
+                                </span>
+                            </td>
+                            <td class="text-center">
+                                <a th:href="@{/vendor/orders/details/{id}(id=${order.id})}" class="btn btn-sm btn-outline-primary">Xem chi tiết</a>
+                            </td>
+                        </tr>
+                         <tr th:if="${orderPage.empty}">
+                            <td colspan="6" class="text-center text-muted py-4">Không tìm thấy đơn hàng nào phù hợp.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+             <nav aria-label="Page navigation" class="d-flex justify-content-center mt-4" th:if="${orderPage.totalPages > 1}">
+                <ul class="pagination">
+                    <li class="page-item" th:classappend="${orderPage.first} ? 'disabled' : ''">
+                        <a class="page-link" th:href="@{/vendor/orders(status=${currentStatus}, page=${orderPage.number - 1}, size=${orderPage.size})}">&laquo;</a>
+                    </li>
+
+                    <th:block th:each="pageNumber : ${#numbers.sequence(0, orderPage.totalPages - 1)}">
+                          <li class="page-item" th:classappend="${pageNumber == orderPage.number} ? 'active' : ''">
+                              <a class="page-link" th:href="@{/vendor/orders(status=${currentStatus}, page=${pageNumber}, size=${orderPage.size})}" th:text="${pageNumber + 1}">1</a>
+                          </li>
+                    </th:block>
+
+                    <li class="page-item" th:classappend="${orderPage.last} ? 'disabled' : ''">
+                        <a class="page-link" th:href="@{/vendor/orders(status=${currentStatus}, page=${orderPage.number + 1}, size=${orderPage.size})}">&raquo;</a>
+                    </li>
+                </ul>
+            </nav>
+
+        </div>
+    </div>
+</div>
+</body>
+</html>

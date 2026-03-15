@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/guest}">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Danh sách sản phẩm</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Slab:wght@100..900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://pro.fontawesome.com/releases/v5.10.0/css/all.css">
+    <link rel="stylesheet" th:href="@{/webjars/bootstrap/5.3.2/css/bootstrap.min.css}" />
+    <link rel="stylesheet" th:href="@{/assets/css/library.css}">
+    <link rel="stylesheet" th:href="@{/assets/css/common.css}">
+
+    <th:block layout:fragment="css">
+         <link rel="stylesheet" th:href="@{/assets/css/listProduct.css}">
+         <style>
+            :root {
+                --default-cl: #9e5bab;
+                --black-cl-1: #444444;
+                --black-cl-2: #222222;
+                --white-cl-1: #fff;
+                --white-cl-3: #f8f7fd;
+                --orange-cl: #d26e4b;
+            }
+            .main {
+                margin-top: 20px;
+                background: #f5f5f5;
+                padding: 20px 0;
+            }
+            .product-container {
+                max-width: 1200px;
+                margin: 0 auto;
+                padding: 0 15px;
+            }
+            .filter-bar {
+                background: white; padding: 15px 20px; border-radius: 8px; margin-bottom: 20px;
+                display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;
+            }
+            .breadcrumb-custom { display: flex; align-items: center; gap: 8px; font-size: 14px; flex-wrap: wrap; }
+            .breadcrumb-custom a { color: #666; text-decoration: none; }
+            .breadcrumb-custom a:hover { color: var(--default-cl); }
+            .breadcrumb-custom .active { color: var(--black-cl-2); font-weight: 500; }
+            .filter-controls { display: flex; gap: 10px; align-items: center; }
+            .filter-btn { padding: 8px 16px; border: 1px solid #ddd; background: white; border-radius: 4px; font-size: 14px; cursor: pointer; transition: all 0.3s; text-decoration: none; color: #333; }
+            .filter-btn:hover { border-color: var(--default-cl); color: var(--default-cl); }
+            .filter-btn.active { background: var(--default-cl); color: white; border-color: var(--default-cl); }
+            .content-layout { display: grid; grid-template-columns: 260px 1fr; gap: 20px; }
+            .sidebar-filter { background: white; border-radius: 8px; padding: 20px; height: fit-content; position: sticky; top: 20px; }
+            .filter-section { margin-bottom: 25px; padding-bottom: 20px; border-bottom: 1px solid #f0f0f0; }
+            .filter-section:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+            .filter-title { font-size: 16px; font-weight: 600; color: var(--black-cl-2); margin-bottom: 15px; }
+            .filter-option { display: flex; align-items: center; padding: 8px 0; cursor: pointer; }
+            .filter-option input[type="checkbox"], .filter-option input[type="radio"] { margin-right: 10px; cursor: pointer; }
+            .filter-option label { font-size: 14px; color: #666; cursor: pointer; flex: 1; }
+            .filter-option:hover label { color: var(--default-cl); }
+            .price-range { display: flex; gap: 10px; align-items: center; margin-top: 10px; }
+            .price-input { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 13px; }
+            .price-range span { color: #999; }
+            .apply-filter-btn { width: 100%; padding: 10px; background: var(--default-cl); color: white; border: none; border-radius: 4px; font-size: 14px; cursor: pointer; margin-top: 15px; }
+            .apply-filter-btn:hover { opacity: 0.9; }
+            .clear-filter-btn { display: block; text-align: center; margin-top: 10px; color: #666; text-decoration: none; font-size: 14px; transition: all 0.3s; }
+            .clear-filter-btn:hover { color: var(--default-cl); text-decoration: underline; }
+            .product-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; }
+            .product-card { background: white; border-radius: 8px; overflow: hidden; transition: all 0.3s; position: relative; display: flex; flex-direction: column; }
+            .product-card:hover { box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15); transform: translateY(-2px); }
+            .product-image { width: 100%; padding-top: 100%; background-size: cover; background-position: center; position: relative; }
+            .product-badge { position: absolute; top: 8px; right: 8px; background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%); color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: 700; z-index: 2; }
+            .product-info { padding: 12px; flex: 1; display: flex; flex-direction: column; }
+            .product-brand { font-size: 12px; color: #999; text-transform: uppercase; margin-bottom: 4px; }
+            .product-name { font-size: 14px; line-height: 1.4; color: #333; margin-bottom: 8px; height: 40px; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+            .product-rating { display: flex; align-items: center; gap: 6px; margin-bottom: 8px; height: 18px; }
+            .rating-stars { display: flex; gap: 2px; }
+            .rating-stars i { font-size: 11px; color: #ffa500; }
+            .rating-stars i.empty { color: #ddd; }
+            .rating-count { font-size: 12px; color: #999; }
+            .product-sold { font-size: 12px; color: #666; margin-bottom: 10px; }
+            .product-price { display: flex; align-items: center; gap: 8px; margin-top: auto; }
+            .price-current { font-size: 16px; font-weight: 700; color: #ff4d4d; }
+            .price-original { font-size: 13px; color: #999; text-decoration: line-through; }
+            .product-actions { display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 90%; gap: 8px; z-index: 3; }
+            .product-card:hover .product-actions { display: flex; }
+            .action-btn { flex: 1; padding: 10px; border: none; border-radius: 4px; font-size: 13px; cursor: pointer; transition: all 0.3s; background: rgba(255, 255, 255, 0.95); color: #333; text-decoration: none; text-align: center; }
+            .action-btn:hover { background: var(--default-cl); color: white; }
+            .result-info { background: white; padding: 15px 20px; border-radius: 8px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }
+            .result-text { font-size: 16px; color: #333; }
+            .result-count { font-weight: 600; color: var(--default-cl); }
+            .pagination-wrapper { display: flex; justify-content: center; margin-top: 30px; padding: 20px 0; }
+            .pagination { display: flex; list-style: none; padding: 0; }
+            .page-item { margin: 0 4px; }
+            .page-link { padding: 8px 14px; border: 1px solid #ddd; border-radius: 4px; cursor: pointer; transition: all 0.3s; background: white; color: #333; font-size: 14px; text-decoration: none; display: block; }
+            .page-item:not(.disabled) .page-link:hover { border-color: var(--default-cl); color: var(--default-cl); }
+            .page-item.active .page-link { background: var(--default-cl); color: white; border-color: var(--default-cl); }
+            .page-item.disabled .page-link { color: #ccc; pointer-events: none; border-color: #ddd; }
+            #product-content-area.loading { opacity: 0.6; pointer-events: none; }
+            @media (max-width: 1024px) { .content-layout { grid-template-columns: 1fr; } .sidebar-filter { display: none; } .product-grid { grid-template-columns: repeat(3, 1fr); } }
+            @media (max-width: 768px) { .product-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; } .filter-bar { flex-direction: column; align-items: flex-start; } }
+         </style>
+    </th:block>
+</head>
+<body>
+    <div class="main" layout:fragment="content">
+        <div class="product-container">
+            <div class="filter-bar">
+                <div class="breadcrumb-custom">
+                    <a th:href="@{/}">Trang chủ</a> <i class="fas fa-chevron-right" style="font-size: 10px; color: #999;"></i>
+                    <span class="active">Tất cả sản phẩm</span>
+                </div>
+                <div class="filter-controls">
+                    <a th:href="@{/products(sort='salesCount,desc', categories=${selectedCategories}, brands=${selectedBrands}, minPrice=${minPrice}, maxPrice=${maxPrice}, keyword=${param.keyword}, rating=${rating})}"
+                       class="filter-btn"
+                       th:classappend="${sort != null and #strings.equals(sort, 'salesCount,desc')} ? 'active' : ''">Bán chạy</a>
+                    <a th:href="@{/products(sort='productId,desc', categories=${selectedCategories}, brands=${selectedBrands}, minPrice=${minPrice}, maxPrice=${maxPrice}, keyword=${param.keyword}, rating=${rating})}"
+                       class="filter-btn"
+                       th:classappend="${sort != null and #strings.equals(sort, 'productId,desc')} ? 'active' : ''">Mới nhất</a>
+                    <a th:href="@{/products(sort='price,asc', categories=${selectedCategories}, brands=${selectedBrands}, minPrice=${minPrice}, maxPrice=${maxPrice}, keyword=${param.keyword}, rating=${rating})}"
+                       class="filter-btn"
+                       th:classappend="${sort != null and #strings.equals(sort, 'price,asc')} ? 'active' : ''">Giá thấp</a>
+                    <a th:href="@{/products(sort='price,desc', categories=${selectedCategories}, brands=${selectedBrands}, minPrice=${minPrice}, maxPrice=${maxPrice}, keyword=${param.keyword}, rating=${rating})}"
+                       class="filter-btn"
+                       th:classappend="${sort != null and #strings.equals(sort, 'price,desc')} ? 'active' : ''">Giá cao</a>
+                </div>
+            </div>
+
+            <div class="content-layout">
+                <aside class="sidebar-filter">
+                   <form id="filter-form" th:action="@{/products}" method="GET">
+                       <input type="hidden" name="sort" th:value="${sort}">
+                       <input type="hidden" name="keyword" th:value="${param.keyword}">
+
+                       <div class="filter-section">
+                           <h3 class="filter-title">Danh mục</h3>
+                           <div class="filter-option" th:each="category : ${categories}">
+                               <input type="checkbox" name="categories"
+                                      th:value="${category.id}"
+                                      th:id="'cat-' + ${category.id}"
+                                      th:checked="${selectedCategories != null and #lists.contains(selectedCategories, category.id)}">
+                               <label th:for="'cat-' + ${category.id}" th:text="${category.name}">Category Name</label>
+                           </div>
+                       </div>
+
+                       <div class="filter-section">
+                           <h3 class="filter-title">Thương hiệu</h3>
+                           <div class="filter-option" th:each="brand : ${brands}">
+                               <input type="checkbox" name="brands" th:value="${brand.brandId}"
+                                      th:id="'brand-' + ${brand.brandId}"
+                                      th:checked="${selectedBrands != null and #lists.contains(selectedBrands, brand.brandId)}">
+                               <label th:for="'brand-' + ${brand.brandId}" th:text="${brand.name}">Brand Name</label>
+                           </div>
+                       </div>
+                       
+                       <div class="filter-section">
+                           <h3 class="filter-title">Đánh giá</h3>
+                           <div class="filter-option">
+                               <input type="radio" name="rating" value="5" id="rating-5" th:checked="${rating != null and rating == 5}">
+                               <label for="rating-5" class="rating-stars" style="display: flex; align-items: center; margin-bottom: 0;">
+                                   <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
+                               </label>
+                           </div>
+                           <div class="filter-option">
+                               <input type="radio" name="rating" value="4" id="rating-4" th:checked="${rating != null and rating == 4}">
+                               <label for="rating-4" class="rating-stars" style="display: flex; align-items: center; margin-bottom: 0;">
+                                   <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star empty"></i>
+                                   <span style="margin-left: 8px; font-size: 14px; color: #666; font-weight: normal;">trở lên</span>
+                               </label>
+                           </div>
+                           <div class="filter-option">
+                               <input type="radio" name="rating" value="3" id="rating-3" th:checked="${rating != null and rating == 3}">
+                               <label for="rating-3" class="rating-stars" style="display: flex; align-items: center; margin-bottom: 0;">
+                                   <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star empty"></i><i class="fas fa-star empty"></i>
+                                   <span style="margin-left: 8px; font-size: 14px; color: #666; font-weight: normal;">trở lên</span>
+                               </label>
+                           </div>
+                           <div class="filter-option">
+                               <input type="radio" name="rating" value="2" id="rating-2" th:checked="${rating != null and rating == 2}">
+                               <label for="rating-2" class="rating-stars" style="display: flex; align-items: center; margin-bottom: 0;">
+                                   <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star empty"></i><i class="fas fa-star empty"></i><i class="fas fa-star empty"></i>
+                                   <span style="margin-left: 8px; font-size: 14px; color: #666; font-weight: normal;">trở lên</span>
+                               </label>
+                           </div>
+                           <div class="filter-option">
+                               <input type="radio" name="rating" value="1" id="rating-1" th:checked="${rating != null and rating == 1}">
+                               <label for="rating-1" class="rating-stars" style="display: flex; align-items: center; margin-bottom: 0;">
+                                   <i class="fas fa-star"></i><i class="fas fa-star empty"></i><i class="fas fa-star empty"></i><i class="fas fa-star empty"></i><i class="fas fa-star empty"></i>
+                                   <span style="margin-left: 8px; font-size: 14px; color: #666; font-weight: normal;">trở lên</span>
+                               </label>
+                           </div>
+                       </div>
+
+                       <div class="filter-section">
+                           <h3 class="filter-title">Khoảng giá</h3>
+                           <div class="price-range">
+                               <input type="number" name="minPrice" class="price-input" placeholder="Từ" th:value="${minPrice}">
+                               <span>-</span>
+                               <input type="number" name="maxPrice" class="price-input" placeholder="Đến" th:value="${maxPrice}">
+                           </div>
+                           <button type="submit" class="apply-filter-btn">Áp dụng</button>
+                           <a th:href="@{/products(sort='productId,desc')}" class="clear-filter-btn"> <i class="fas fa-undo"></i> Xóa bộ lọc </a>
+                       </div>
+                   </form>
+                </aside>
+
+                <main id="product-content-area">
+                    <div th:fragment="product_list_fragment"> <div class="result-info">
+                            <div class="result-text" th:if="${productPage != null}">
+                                Hiển thị <span class="result-count" th:text="${productPage.numberOfElements}"></span>
+                                trên tổng số <span class="result-count" th:text="${productPage.totalElements}"></span> sản phẩm
+                            </div>
+                             <div class="result-text" th:unless="${productPage != null and productPage.totalElements > 0}">
+                                Không có sản phẩm nào
+                             </div>
+                        </div>
+
+                        <div class="product-grid" th:if="${productPage != null and !productPage.empty}">
+                            <div class="product-card" th:each="product : ${productPage.content}">
+                                <div class="product-image"
+                                     th:style="'background-image: url(\'' + @{${product.primaryImageUrl ?: '/assets/img/product/no-image.jpg'}} + '\');'">
+                                     <div class="product-badge"
+                                         th:if="${product.originalPrice != null and product.originalPrice > product.price and product.originalPrice > 0}"
+                                         th:text="'-' + ${#numbers.formatInteger(100 * (product.originalPrice - product.price) / product.originalPrice, 0)} + '%'">-10%</div>
+                                </div>
+                                <div class="product-info">
+                                    <div class="product-brand"
+                                         th:text="${product.brand != null ? product.brand.name : 'N/A'}">Brand</div>
+                                    <h3 class="product-name" th:text="${product.name}">Product Name</h3>
+
+                                    <div class="product-rating">
+                                         <th:block th:if="${product.reviewCount != null and product.reviewCount > 0}">
+                                            <div class="rating-stars">
+                                                <i class="fas fa-star" th:each="i : ${#numbers.sequence(1, 5)}" th:classappend="${i <= product.rating} ? '' : 'empty'"></i>
+                                            </div>
+                                            <span class="rating-count" th:text="'(' + ${product.reviewCount} + ')'"></span>
+                                        </th:block>
+                                         <th:block th:unless="${product.reviewCount != null and product.reviewCount > 0}">
+                                            <span class="rating-count">Chưa có đánh giá</span>
+                                        </th:block>
+                                    </div>
+
+                                    <div class="product-sold"
+                                         th:text="'Đã bán ' + ${#numbers.formatDecimal(product.soldCount ?: 0, 0, 'POINT', 0, 'COMMA')}">Đã bán 0</div>
+
+                                    <div class="product-price">
+                                        <div class="price-current"
+                                             th:text="${#numbers.formatDecimal(product.price ?: 0, 0, 'COMMA', 0, 'POINT')} + ' đ'">0 đ</div>
+                                        <div class="price-original"
+                                             th:if="${product.originalPrice != null and product.originalPrice > product.price}"
+                                             th:text="${#numbers.formatDecimal(product.originalPrice, 0, 'COMMA', 0, 'POINT')} + ' đ'">0 đ</div>
+                                    </div>
+                                </div>
+                                <div class="product-actions">
+                                    <a th:href="@{'/product/' + ${product.productId}}" class="action-btn">Xem</a>
+                                    <a th:href="@{'/product/' + ${product.productId}}" class="action-btn">Chọn loại</a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="alert alert-info text-center mt-3" th:if="${productPage == null or productPage.empty}">
+                            <p>Không tìm thấy sản phẩm nào phù hợp.</p>
+                        </div>
+
+                         <div class="pagination-wrapper" th:if="${productPage != null and productPage.totalPages > 1}">
+                            <nav aria-label="Page navigation">
+                                <ul class="pagination">
+                                    <li class="page-item" th:classappend="${productPage.first} ? 'disabled' : ''">
+                                        <a class="page-link"
+                                           th:href="@{/products(page=${currentPage - 1}, size=${productPage.size}, sort=${sort}, categories=${selectedCategories}, brands=${selectedBrands}, minPrice=${minPrice}, maxPrice=${maxPrice}, keyword=${param.keyword}, rating=${rating})}"
+                                           aria-label="Previous" th:data-page="${currentPage - 1}">
+                                            <span aria-hidden="true">&laquo;</span>
+                                        </a>
+                                    </li>
+                                    <th:block th:each="i : ${#numbers.sequence(1, totalPages)}">
+                                        <li class="page-item" th:classappend="${i == currentPage} ? 'active' : ''">
+                                            <a class="page-link"
+                                               th:href="@{/products(page=${i}, size=${productPage.size}, sort=${sort}, categories=${selectedCategories}, brands=${selectedBrands}, minPrice=${minPrice}, maxPrice=${maxPrice}, keyword=${param.keyword}, rating=${rating})}"
+                                               th:text="${i}"
+                                               th:data-page="${i}">
+                                            </a>
+                                        </li>
+                                    </th:block>
+                                    <li class="page-item" th:classappend="${productPage.last} ? 'disabled' : ''">
+                                        <a class="page-link"
+                                           th:href="@{/products(page=${currentPage + 1}, size=${productPage.size}, sort=${sort}, categories=${selectedCategories}, brands=${selectedBrands}, minPrice=${minPrice}, maxPrice=${maxPrice}, keyword=${param.keyword}, rating=${rating})}"
+                                           aria-label="Next" th:data-page="${currentPage + 1}">
+                                            <span aria-hidden="true">&raquo;</span>
+                                        </a>
+                                    </li>
+                                </ul>
+                            </nav>
+                        </div>
+                    </div>
+                </main>
+            </div>
+        </div>
+    </div>
+
+    <th:block layout:fragment="js">
+        <script th:src="@{/webjars/bootstrap/5.3.2/js/bootstrap.bundle.min.js}"></script>
+        <script th:src="@{/assets/js/commonscript.js}"></script>
+        <script>
+            $(document).ready(function() {
+
+                function fetchProducts(url) {
+                    $('#product-content-area').addClass('loading'); 
+                    $.ajax({
+                        type: 'GET', url: url,
+                        headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                        success: function(fragment) {
+                            $('#product-content-area').html(fragment); 
+                            history.pushState(null, '', url); 
+                            $('#product-content-area').removeClass('loading'); 
+                        },
+                        error: function() {
+                            alert('Lỗi khi tải sản phẩm!');
+                            $('#product-content-area').removeClass('loading'); 
+                        }
+                    });
+                }
+
+                function buildUrl() {
+                    const params = new URLSearchParams(); 
+                    const formParams = $('#filter-form').serializeArray();
+
+                    let currentSort = $('input[name="sort"]').val() || 'productId,desc';
+                    params.set('sort', currentSort);
+
+                    params.delete('categories');
+                    params.delete('brands');
+                    params.delete('rating'); // Thêm dòng này để xử lý reset rating an toàn
+
+                    formParams.forEach(item => {
+                        if (item.value && item.name !== 'sort') {
+                             if (item.name === 'categories' || item.name === 'brands') {
+                                params.append(item.name, item.value);
+                             } else {
+                                params.set(item.name, item.value); 
+                             }
+                        }
+                    });
+                    params.set('page', '1'); 
+                    return '/products?' + params.toString();
+                }
+
+                function buildUrlWithParam(paramName, paramValue) {
+                    const params = new URLSearchParams(window.location.search);
+                    params.set(paramName, paramValue);
+                    if (paramName !== 'page') {
+                        params.set('page', '1');
+                    }
+                    return '/products?' + params.toString();
+                }
+
+                $('#filter-form').on('submit', function(e) {
+                    e.preventDefault();
+                    const url = buildUrl();
+                    fetchProducts(url);
+                });
+
+                $('.filter-controls .filter-btn').on('click', function(e) {
+                    e.preventDefault();
+                    const sortValue = new URL($(this).attr('href'), window.location.origin).searchParams.get('sort');
+                    $('input[name="sort"]').val(sortValue);
+                    const url = buildUrlWithParam('sort', sortValue);
+                    fetchProducts(url);
+                     $('.filter-controls .filter-btn').removeClass('active');
+                     $(this).addClass('active');
+                });
+
+                $('#product-content-area').on('click', '.pagination .page-link', function(e) {
+                    e.preventDefault();
+                    const pageNumber = $(this).data('page');
+                    if (pageNumber !== undefined && pageNumber !== null && !$(this).closest('.page-item').hasClass('disabled')) {
+                       const url = buildUrlWithParam('page', pageNumber);
+                       fetchProducts(url);
+                    }
+                });
+
+                $('.clear-filter-btn').on('click', function(e) {
+                    e.preventDefault();
+                    $('#filter-form').trigger('reset');
+                    // Reset thêm radio button của Đánh giá
+                    $('#filter-form input[type="radio"]').prop('checked', false); 
+                    $('input[name="keyword"]').val(''); 
+                    $('input[name="sort"]').val('productId,desc');
+                     $('.filter-controls .filter-btn').removeClass('active');
+                     $('.filter-controls .filter-btn[href*="sort=productId,desc"]').addClass('active');
+                    fetchProducts('/products?sort=productId,desc&page=1'); 
+                });
+
+                window.onpopstate = function(event) {
+                    fetchProducts(window.location.pathname + window.location.search);
+                     const params = new URLSearchParams(window.location.search);
+                     
+                     // Phục hồi trạng thái checkbox categories/brands
+                     $('#filter-form input[type="checkbox"]').each(function() {
+                        $(this).prop('checked', params.getAll($(this).attr('name')).includes($(this).val()));
+                     });
+                     
+                     // Phục hồi trạng thái radio button rating
+                     const ratingVal = params.get('rating');
+                     if(ratingVal) {
+                         $('#filter-form input[name="rating"][value="' + ratingVal + '"]').prop('checked', true);
+                     } else {
+                         $('#filter-form input[name="rating"]').prop('checked', false);
+                     }
+                     
+                     $('#filter-form input[name="minPrice"]').val(params.get('minPrice') || '');
+                     $('#filter-form input[name="maxPrice"]').val(params.get('maxPrice') || '');
+                     $('#filter-form input[name="keyword"]').val(params.get('keyword') || '');
+                     
+                     let currentSort = params.get('sort') || 'productId,desc';
+                     $('input[name="sort"]').val(currentSort);
+                     $('.filter-controls .filter-btn').removeClass('active');
+                     $('.filter-controls .filter-btn[href*="sort=' + currentSort + '"]').addClass('active');
+                };
+
+            });
+        </script>
+    </th:block>
+</body>
+</html>

@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{admin/layout/app}">
+<head>
+<meta charset="UTF-8">
+<title>Quản lý Shops</title>
+<th:block layout:fragment="css">
+    <style>
+        .table th, .table td { vertical-align: middle; }
+        /* Bỏ margin cũ của action-btns nếu dùng gap */
+        /* .action-btns a, .action-btns button { margin: 0 3px; } */
+        .action-btns .btn { white-space: nowrap; } /* Đảm bảo nút không bị xuống dòng chữ */
+        /* Style cho các trạng thái shop */
+        .status-badge { font-size: 0.85em; padding: .3em .6em; }
+        .bg-warning { background-color: #f6c23e !important; color: #5a5c69 !important; } /* Pending */
+        .bg-success { background-color: #1cc88a !important; } /* Approved */
+        .bg-danger { background-color: #e74a3b !important; } /* Rejected */
+        .bg-secondary { background-color: #858796 !important; } /* Inactive */
+    </style>
+</th:block>
+</head>
+
+<body>
+	<div layout:fragment="content">
+		<div class="d-sm-flex align-items-center justify-content-between mb-4 mt-4">
+			 <h1 class="h3 mb-0">Quản lý Gian Hàng (Shops)</h1>
+             </div>
+        <p class="lead mb-4">Xem xét, duyệt hoặc quản lý các gian hàng trên hệ thống.</p>
+
+        <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show" role="alert">
+            <span th:text="${successMessage}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show" role="alert">
+            <span th:text="${errorMessage}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                 <h6 class="m-0 font-weight-bold">Danh sách Gian Hàng</h6>
+            </div>
+             <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover table-bordered align-middle">
+                        <thead class="table-light text-center">
+                            <tr>
+                                <th scope="col" style="width: 50px;">STT</th>
+                                <th scope="col" class="text-start">Tên Cửa Hàng</th>
+                                <th scope="col" class="text-start">Chủ Shop (Username)</th>
+                                <th scope="col">Trạng thái</th>
+                                <th scope="col" style="width: 150px;">Hành động</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="shop, iterStat : ${shops}">
+                                <td th:text="${iterStat.index + 1}" class="text-center"></td>
+                                <td th:text="${shop.name}" class="text-start"></td>
+                                <td th:text="${shop.user?.username ?: 'N/A'}" class="text-start"></td>
+                                <td class="text-center">
+                                    <span th:switch="${shop.status?.name()}" class="badge status-badge"
+                                          th:classappend="${shop.status?.name() == 'PENDING'} ? 'bg-warning' :
+                                                          (${shop.status?.name() == 'APPROVED'} ? 'bg-success' :
+                                                          (${shop.status?.name() == 'REJECTED'} ? 'bg-danger' : 'bg-secondary'))">
+                                        <span th:case="'PENDING'">Chờ duyệt</span>
+                                        <span th:case="'APPROVED'">Đã duyệt</span>
+                                        <span th:case="'REJECTED'">Bị từ chối</span>
+                                        <span th:case="'INACTIVE'">Tạm ngưng</span>
+                                        <span th:case="*">Không xác định</span>
+                                    </span>
+                                </td>
+                                <td class="text-center action-btns">
+                                    <div class="d-inline-flex gap-1"> <a th:href="@{/admin/shops/{Id}/products(Id=${shop.id})}"
+                                           class="btn btn-sm btn-outline-primary" title="Xem sản phẩm">
+                                            <i class="fas fa-eye"></i> Xem
+                                        </a>
+
+                                        <th:block th:if="${shop.status?.name() == 'PENDING'}">
+                                             <a th:href="@{/admin/shops/{id}/approve(id=${shop.id})}"
+                                                class="btn btn-sm btn-success" title="Duyệt Shop"
+                                                onclick="return confirm('Bạn có chắc muốn DUYỆT shop \'' + [[$shop.name]] + '\'?');">
+                                                 <i class="fas fa-check"></i>
+                                             </a>
+                                             <a th:href="@{/admin/shops/{id}/reject(id=${shop.id})}"
+                                                class="btn btn-sm btn-danger" title="Từ chối Shop"
+                                                onclick="return confirm('Bạn có chắc muốn TỪ CHỐI shop \'' + [[$shop.name]] + '\'?');">
+                                                 <i class="fas fa-times"></i>
+                                             </a>
+                                        </th:block>
+
+                                        <th:block th:if="${shop.status?.name() == 'APPROVED'}">
+                                            <a th:href="@{/admin/shops/{id}/deactivate(id=${shop.id})}"
+                                               class="btn btn-sm btn-warning text-dark" title="Tạm ngưng Shop"
+                                               onclick="return confirm('Bạn có chắc muốn TẠM NGƯNG shop \'' + [[$shop.name]] + '\'?');">
+                                                <i class="fas fa-pause"></i>
+                                            </a>
+                                        </th:block>
+
+                                         <th:block th:if="${shop.status?.name() == 'INACTIVE' or shop.status?.name() == 'REJECTED'}">
+                                            <a th:href="@{/admin/shops/{id}/reactivate(id=${shop.id})}"
+                                               class="btn btn-sm btn-success" title="Kích hoạt lại Shop"
+                                               onclick="return confirm('Bạn có chắc muốn KÍCH HOẠT LẠI shop \'' + [[$shop.name]] + '\'?');">
+                                                <i class="fas fa-play"></i>
+                                            </a>
+                                        </th:block>
+                                    </div> </td>
+                                </tr>
+                            <tr th:if="${#lists.isEmpty(shops)}">
+                                <td colspan="5" class="text-center text-muted py-4">Không có gian hàng nào.</td>
+                             </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+	</div>
+
+	<th:block layout:fragment="js">
+        <script>
+            $(document).ready(function() {
+                 // Tự đóng alert sau 5 giây (nếu có)
+                var alert = $('.alert');
+                if (alert.length) {
+                    setTimeout(function() {
+                        alert.alert('close');
+                    }, 5000);
+                }
+             });
+         </script>
+	</th:block>
+
+</body>
+</html>

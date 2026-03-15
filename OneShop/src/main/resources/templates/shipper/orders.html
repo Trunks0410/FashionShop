@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+	xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+	xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+	layout:decorate="~{layouts/guest}">
+
+<head>
+<title>Đơn hàng Shipper</title>
+<th:block layout:fragment="css">
+	<link
+		href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+		rel="stylesheet">
+	<link rel="stylesheet" th:href="@{/assets/css/common.css}">
+	<style>
+/* ===== Cấu trúc tổng thể ===== */
+:root {
+	--primary-color: #E85A70; /* Màu Theme */
+	--secondary-color: #f07b8d;
+	--text-dark: #333;
+	--bg-light: #f8f9fa;
+	--base-radius: 8px;
+	--shadow-medium: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.container {
+	margin-top: 40px;
+	margin-bottom: 100px;
+	background-color: white;
+	border-radius: var(--base-radius);
+	box-shadow: var(--shadow-medium);
+	padding: 30px;
+}
+
+h1.text-primary {
+	font-size: 2.2rem;
+	font-weight: 700;
+	color: var(--primary-color) !important;
+	border-bottom: 2px solid #eee;
+	padding-bottom: 15px;
+}
+
+/* ===== Bảng: Tăng KÍCH THƯỚC CHỮ VÀ PADDING ===== */
+.table {
+	margin-top: 20px;
+	border-radius: var(--base-radius);
+	overflow: hidden; 
+	border: 1px solid #dee2e6;
+}
+
+.table thead th {
+	font-size: 1rem; /* Kích thước chữ tiêu đề */
+	font-weight: 600;
+	background-color: var(--primary-color);
+	color: white;
+	text-align: center;
+	vertical-align: middle;
+	padding: 14px;
+}
+
+.table tbody td {
+	font-size: 1.1rem; /* <<< TĂNG KÍCH THƯỚC CHỮ DỮ LIỆU >>> */
+	text-align: center;
+	vertical-align: middle;
+	padding: 15px 12px; /* <<< TĂNG PADDING DỌC >>> */
+	transition: background-color 0.2s ease;
+}
+
+.table tbody tr:hover {
+	background-color: #fff3f5;
+}
+
+/* ===== Nút hành động và Select: Tăng KÍCH THƯỚC NÚT ===== */
+.form-select-sm {
+    /* Đảm bảo select cùng kích thước với nút */
+	font-size: 1.0rem !important; 
+    padding: 0.5rem 1rem !important;
+	border-color: #ccc;
+	transition: border-color 0.2s;
+}
+
+.btn-sm {
+    /* Tăng kích thước nút hành động */
+    font-size: 1rem !important; 
+    padding: 0.6rem 1.2rem !important;
+}
+
+.btn-success {
+	background-color: #1cc88a;
+	border-color: #1cc88a;
+	transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.btn-success:hover {
+	background-color: #17a673;
+	border-color: #17a673;
+	transform: translateY(-1px);
+	box-shadow: 0 2px 5px rgba(28, 200, 138, 0.4);
+}
+
+/* ===== Thống kê (Giữ nguyên) ===== */
+.stats-grid {
+	display: grid;
+	grid-template-columns: repeat(4, 1fr);
+	gap: 20px;
+	margin-top: 30px;
+}
+
+.stat-card {
+	background-color: var(--bg-light);
+	border-radius: var(--base-radius);
+	padding: 15px;
+	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+	border-left: 5px solid var(--primary-color);
+	transition: all 0.3s ease;
+}
+
+.stat-card:hover {
+	transform: translateY(-3px);
+	box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+.stat-title {
+	font-size: 0.9rem;
+	font-weight: 600;
+	color: var(--text-dark);
+	margin-bottom: 5px;
+}
+
+.stat-value {
+	font-size: 1.5rem;
+	font-weight: 700;
+	color: var(--primary-color);
+}
+
+.stat-card[data-status="DELIVERING"] {
+	border-left-color: #f6c23e;
+} 
+.stat-card[data-status="CONFIRMED"] {
+	border-left-color: #0d6efd;
+} 
+.stat-card[data-status="DELIVERED"] {
+	border-left-color: #1cc88a;
+} 
+.stat-card[data-status="OTHERS"] {
+	border-left-color: #dc3545;
+} 
+</style>
+</th:block>
+</head>
+
+<body sec:authorize="hasRole('ROLE_SHIPPER')">
+	<div layout:fragment="content">
+		<div class="container">
+			<header class="mb-4">
+				<h1 class="text-primary">Đơn hàng được giao</h1>
+				<div th:if="${successMessage}" class="alert alert-success mt-3"
+					role="alert" th:text="${successMessage}"></div>
+				<div th:if="${errorMessage}" class="alert alert-danger mt-3"
+					role="alert" th:text="${errorMessage}"></div>
+			</header>
+
+			<table class="table table-bordered table-hover shadow-sm">
+				<thead>
+					<tr>
+						<th>ID</th>
+						<th>Người mua</th>
+						<th>Tổng tiền</th>
+						<th>Trạng thái</th>
+						<th>Ngày tạo</th>
+						<th>Hành động</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr th:each="order : ${orders}">
+						<td th:text="${order.id}"></td>
+						<td th:text="${order.user.username}"></td>
+						<td th:text="${#numbers.formatCurrency(order.total)}"></td>
+						<td th:text="${order.orderStatus}"></td>
+						<td
+							th:text="${#temporals.format(order.createdAt, 'dd/MM/yyyy HH:mm')}"></td>
+						<td>
+							<div th:switch="${order.orderStatus.name()}"
+								class="d-flex justify-content-center">
+
+								<div th:case="'DELIVERING'">
+									<form
+										th:action="@{/shipper/orders/{id}/update-status(id=${order.id})}"
+										method="post"
+										class="d-flex justify-content-center align-items-center">
+										<select name="newStatus"
+											class="form-select form-select-sm me-2"
+											style="max-width: 150px;">
+											<option value="DELIVERED">Đã giao thành công</option>
+											<option value="RETURNED">Hoàn hàng</option>
+											<option value="CANCELLED">Hủy đơn</option>
+										</select>
+
+										<button type="submit" class="btn btn-success btn-sm"
+											onclick="return confirm('Xác nhận cập nhật trạng thái đơn hàng #' + [[$order.id]] + '?')">
+											<i class="fas fa-check-circle"></i> Cập nhật
+										</button>
+									</form>
+								</div>
+
+								<div th:case="'CONFIRMED'">
+									<span class="text-primary fw-bold">Chờ lấy hàng</span>
+								</div>
+								<div th:case="'DELIVERED'">
+									<span class="text-success fw-bold">Đã giao</span>
+								</div>
+								<div th:case="'RETURNED'">
+									<span class="text-danger fw-bold">Đã hoàn hàng</span>
+								</div>
+								<div th:case="'CANCELLED'">
+									<span class="text-secondary fw-bold">Đã hủy</span>
+								</div>
+							</div>
+
+						</td>
+					</tr>
+					<tr th:if="${#lists.isEmpty(orders)}">
+						<td colspan="6">Không có đơn hàng nào được gán cho bạn trong
+							trạng thái Chờ lấy/Đang giao.</td>
+					</tr>
+				</tbody>
+			</table>
+
+			<section class="mt-5">
+				<h2>Thống kê</h2>
+				<ul class="list-group">
+					<li class="list-group-item">Đang giao: <span class="fw-bold"
+						th:text="${stats.get('DELIVERING') ?: 0}"></span></li>
+					<li class="list-group-item">Chờ lấy hàng: <span
+						class="fw-bold" th:text="${stats.get('CONFIRMED') ?: 0}"></span></li>
+					<li class="list-group-item">Đã giao thành công: <span
+						class="fw-bold" th:text="${stats.get('DELIVERED') ?: 0}"></span></li>
+					<li class="list-group-item">Đã hoàn hàng/Hủy: <span
+						class="fw-bold"
+						th:text="${(stats.get('RETURNED') ?: 0) + (stats.get('CANCELLED') ?: 0)}"></span></li>
+				</ul>
+			</section>
+		</div>
+
+		<a th:href="@{/}" class="btn btn-secondary btn-back"> <i
+			class="fas fa-arrow-left"></i> Quay lại
+		</a>
+	</div>
+
+	<!-- FontAwesome icons -->
+	<script src="https://kit.fontawesome.com/a2e0e6ad1d.js"
+		crossorigin="anonymous"></script>
+</body>
+</html>

@@ -1,0 +1,192 @@
+/* --- BIẾN MÀU VÀ BIẾN CHUNG --- */
+:root {
+    --orange-color: #ee4d2d;
+    --primary-text: #333;
+    --secondary-text: #666;
+    --border-color: #ddd;
+    --border-color-light: #eee;
+}
+
+/* --- CÁC LỚP TIỆN ÍCH (UTILITY CLASSES) --- */
+.text-primary { color: var(--orange-color); }
+.icon-primary { color: var(--orange-color); margin-right: 10px; }
+.text-bold { font-weight: 700; }
+.text-large { font-size: 1.2rem; }
+.w-100 { width: 100%; }
+.mt-15 { margin-top: 15px; }
+.mt-20 { margin-top: 20px; }
+.mb-10 { margin-bottom: 10px; }
+.pb-10 { padding-bottom: 10px; }
+.border-bottom { border-bottom: 1px solid var(--border-color-light); }
+.divider { margin: 20px 0; border: 0; border-top: 1px solid var(--border-color-light); }
+.divider-light { margin: 10px 0; border: 0; border-top: 1px solid var(--border-color-light); }
+
+/* --- STYLE CHUNG CHO TRANG THANH TOÁN --- */
+.pay-information, .pay-order {
+    padding: 20px;
+    background-color: #fff;
+    border-radius: 4px;
+    box-shadow: 0 1px 1px rgba(0,0,0,.05);
+}
+
+/* --- TĂNG CỠ CHỮ KHU VỰC THÔNG TIN THANH TOÁN THEO YÊU CẦU --- */
+.pay-information {
+    font-size: 1.25rem; /* Tăng cỡ chữ cơ bản cho toàn khu vực */
+}
+
+.pay-information .pay__heading,
+.pay-information .pay__heading-sub,
+.pay-information .shipping-address-title {
+    font-size: 1.5rem;  /* Tăng cỡ chữ cho các tiêu đề để nổi bật hơn */
+}
+/* ----------------------------------------------------------------- */
+
+.shipping-address-title {
+    margin-bottom: 20px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+}
+
+.selected-address-summary {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 15px;
+    border-bottom: 1px dashed var(--border-color);
+}
+
+.btn-outline-primary {
+    color: var(--orange-color);
+    border: 1px solid var(--orange-color);
+    background: none;
+    padding: 5px 10px;
+}
+.btn-outline-primary:hover {
+    background-color: rgba(238, 77, 45, 0.05);
+}
+
+.pay__heading-sub {
+    font-weight: 700;
+    margin-bottom: 10px;
+}
+
+/* --- STYLE CHO MODAL CHỌN ĐỊA CHỈ --- */
+.address-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background-color: rgba(0, 0, 0, 0.4);
+    z-index: 1000;
+    display: none; /* Mặc định ẩn */
+    justify-content: center;
+    align-items: center;
+}
+.address-modal-overlay.is-active {
+    display: flex; /* Hiện khi có class is-active */
+}
+
+.address-modal-content {
+    background-color: #fff;
+    width: 500px;
+    max-height: 80vh;
+    border-radius: 4px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+    display: flex;
+    flex-direction: column;
+}
+
+.modal-header {
+    padding: 15px 20px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    border-bottom: 1px solid var(--border-color-light);
+}
+
+.modal-body {
+    padding: 15px 20px;
+    overflow-y: auto;
+    flex-grow: 1;
+}
+
+.modal-footer {
+    padding: 10px 20px;
+    border-top: 1px solid var(--border-color-light);
+    text-align: right;
+    background-color: #f5f5f5;
+}
+
+/* --- STYLE CHO DANH SÁCH ĐỊA CHỈ TRONG MODAL --- */
+.address-item {
+    display: flex;
+    align-items: flex-start;
+    padding: 12px 5px;
+    border-bottom: 1px dashed var(--border-color-light);
+    cursor: pointer;
+}
+.address-item:last-child {
+    border-bottom: none;
+}
+.address-item input[type="radio"] {
+    margin-right: 15px;
+    margin-top: 5px;
+}
+.address-info { flex-grow: 1; }
+.recipient-info { font-weight: 600; font-size: 0.95rem; color: var(--primary-text); }
+.address-text { color: var(--secondary-text); font-size: 0.9rem; margin-top: 3px; }
+
+.default-tag {
+    background-color: transparent;
+    color: var(--orange-color);
+    font-size: 0.7rem;
+    padding: 1px 5px;
+    border-radius: 2px;
+    margin-left: 8px;
+    border: 1px solid var(--orange-color);
+    font-weight: normal;
+}
+
+.btn-update-address {
+    background: none; border: none; color: #05a; font-size: 0.9rem;
+    cursor: pointer; margin-left: 10px; text-decoration: none; padding: 5px;
+}
+
+.modal-body-actions {
+    padding: 15px 20px;
+    border-top: 1px solid var(--border-color-light);
+}
+.btn-add-new-address {
+    background: none; border: none; font-size: 1rem; color: var(--primary-text);
+    cursor: pointer;
+}
+.btn-add-new-address i { margin-right: 5px; }
+
+/* --- STYLE CHO FORM THÊM/SỬA ĐỊA CHỈ --- */
+.address-form-container {
+    padding: 20px;
+    overflow-y: auto;
+}
+.back-to-list-btn {
+    color: var(--primary-text); margin-bottom: 15px; display: inline-block;
+    cursor: pointer; font-weight: 600; text-decoration: none;
+}
+.back-to-list-btn:hover { color: var(--orange-color); }
+
+.address-form-container h4 { margin-bottom: 15px; font-weight: 600; }
+.form-group { margin-bottom: 15px; }
+.form-label { display: block; font-size: 0.9rem; margin-bottom: 5px; }
+.form-control { width: 100%; padding: 8px 10px; border: 1px solid var(--border-color); border-radius: 3px; }
+.checkbox-group { display: flex; align-items: center; }
+.checkbox-group input { margin-right: 8px; }
+.form-actions { text-align: right; margin-top: 20px; }
+
+/* --- LOGIC ẨN/HIỆN VIEW BẰNG CLASS --- */
+.address-form-container { display: none; } /* Mặc định, form sẽ bị ẩn */
+
+/* Khi modal có class .view-form */
+.address-modal-content.view-form .address-list-container,
+.address-modal-content.view-form .modal-footer {
+    display: none;
+}
+.address-modal-content.view-form .address-form-container {
+    display: block;
+}

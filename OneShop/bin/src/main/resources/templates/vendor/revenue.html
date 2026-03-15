@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+	xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+	layout:decorate="~{vendor/layout/app}">
+<head>
+<title>Quản lý Doanh thu</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+/* --- CSS Giữ nguyên như trước --- */
+.border-start {
+	border-left-width: 0.25rem !important;
+}
+
+.border-primary {
+	border-color: #E85A70 !important;
+}
+
+.text-primary {
+	color: #E85A70 !important;
+}
+
+.border-success {
+	border-color: #1cc88a !important;
+}
+.text-success {
+    color: #1cc88a !important;
+}
+
+.border-info {
+	border-color: #36b9cc !important;
+}
+.text-info {
+    color: #36b9cc !important;
+}
+/* --- CSS MỚI CHO CHART AREA --- */
+.chart-area {
+    position: relative;
+    height: 320px; /* Chiều cao mặc định */
+    width: 100%;
+}
+.chart-container-wrapper {
+     padding-bottom: 20px; /* Khoảng cách giữa các chart */
+}
+</style>
+</head>
+<body>
+	<div layout:fragment="content">
+		<div
+			class="d-sm-flex align-items-center justify-content-between mb-4 mt-4">
+			<h1 class="h3 mb-0">Phân tích Bán hàng</h1>
+			<a th:href="@{/vendor/reports/sales/download}"
+				class="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm">
+				<i class="fas fa-download fa-sm text-white-50"></i> Tải báo cáo
+			</a>
+		</div>
+		<p class="lead mb-4">Thống kê và báo cáo về hiệu suất kinh doanh
+			của gian hàng.</p>
+
+        <div th:if="${errorMessage}" class="alert alert-danger" role="alert" th:text="${errorMessage}"></div>
+
+
+		<div class="row">
+            <div class="col-xl-3 col-md-6 mb-4">
+				<div class="card border-start border-success shadow h-100 py-2">
+					<div class="card-body">
+						<div class="row no-gutters align-items-center">
+							<div class="col me-2">
+								<div class="text-xs fw-bold text-success text-uppercase mb-1">Tổng
+									doanh thu (Đã giao)</div>
+								<div class="h5 mb-0 fw-bold" th:text="${#numbers.formatCurrency(totalRevenue)}">0₫</div>
+							</div>
+							<div class="col-auto">
+								<i class="fas fa-dollar-sign fa-2x text-muted"></i>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+            <div class="col-xl-3 col-md-6 mb-4">
+				<div class="card border-start border-primary shadow h-100 py-2">
+					<div class="card-body">
+						<div class="row no-gutters align-items-center">
+							<div class="col me-2">
+								<div class="text-xs fw-bold text-primary text-uppercase mb-1">Doanh
+									thu (Tháng này)</div>
+								<div class="h5 mb-0 fw-bold" th:text="${#numbers.formatCurrency(currentMonthRevenue)}">0₫</div>
+							</div>
+							<div class="col-auto">
+								<i class="fas fa-calendar-alt fa-2x text-muted"></i>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+            <div class="col-xl-3 col-md-6 mb-4">
+				<div class="card border-start border-info shadow h-100 py-2">
+					<div class="card-body">
+						<div class="row no-gutters align-items-center">
+							<div class="col me-2">
+								<div class="text-xs fw-bold text-info text-uppercase mb-1">Tổng
+									số đơn đã giao</div>
+								<div class="h5 mb-0 fw-bold" th:text="${totalDeliveredOrders}">0</div>
+							</div>
+							<div class="col-auto">
+								<i class="fas fa-receipt fa-2x text-muted"></i>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+             </div>
+
+        <div class="card shadow mb-4">
+			<div class="card-header py-3">
+				<h6 class="m-0 font-weight-bold">Tổng quan doanh thu (6 tháng
+					gần nhất)</h6>
+			</div>
+			<div class="card-body">
+				<div class="chart-area">
+					<canvas id="revenueChart"></canvas>
+				</div>
+                 <div th:if="${#lists.isEmpty(chartLabels)}" class="text-center text-muted mt-3">
+                    Chưa có đủ dữ liệu doanh thu để vẽ biểu đồ.
+                </div>
+			</div>
+		</div>
+
+        <div class="row">
+            <div class="col-lg-6 chart-container-wrapper">
+                <div class="card shadow mb-4 h-100">
+                    <div class="card-header py-3">
+                        <h6 class="m-0 font-weight-bold">Top Sản phẩm Doanh thu cao</h6>
+                    </div>
+                    <div class="card-body d-flex flex-column">
+                        <div class="chart-area flex-grow-1">
+                            <canvas id="productRevenueChart"></canvas>
+                        </div>
+                        <div id="productChartMsg" class="text-center text-muted mt-3" style="display: none;">
+                            Chưa có dữ liệu sản phẩm.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-6 chart-container-wrapper">
+                <div class="card shadow mb-4 h-100">
+                    <div class="card-header py-3">
+                         <h6 class="m-0 font-weight-bold">Tỉ lệ Doanh thu theo Danh mục</h6>
+                    </div>
+                    <div class="card-body d-flex flex-column">
+                        <div class="chart-area flex-grow-1">
+                            <canvas id="categoryRevenueChart"></canvas>
+                        </div>
+                         <div id="categoryChartMsg" class="text-center text-muted mt-3" style="display: none;">
+                            Chưa có dữ liệu danh mục.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        </div>
+
+    <th:block layout:fragment="js">
+        <script th:inline="javascript">
+        document.addEventListener("DOMContentLoaded", function() {
+            // === Dữ liệu từ Controller (Line Chart) ===
+            /*<![CDATA[*/
+            var lineChartLabels = /*[[${chartLabels}]]*/ [];
+            var lineChartData = /*[[${chartData}]]*/ [];
+            /*]]>*/
+
+            // === Dữ liệu THỰC TẾ cho Bar Chart (Lấy từ Controller) ===
+            /*<![CDATA[*/
+            var barChartLabels = /*[[${topProductLabels ?: T(java.util.List).of()}]]*/ []; // Lấy từ Controller, fallback về list rỗng
+            var barChartData = /*[[${topProductData ?: T(java.util.List).of()}]]*/ [];    // Lấy từ Controller, fallback về list rỗng
+            /*]]>*/
+
+            // === Dữ liệu THỰC TẾ cho Pie Chart (Lấy từ Controller) ===
+             /*<![CDATA[*/
+            var pieChartLabels = /*[[${categoryLabels ?: T(java.util.List).of()}]]*/ []; // Lấy từ Controller, fallback về list rỗng
+            var pieChartData = /*[[${categoryData ?: T(java.util.List).of()}]]*/ [];     // Lấy từ Controller, fallback về list rỗng
+             /*]]>*/
+
+            // Hàm định dạng tiền tệ
+             function formatVND(value) {
+                // Kiểm tra nếu value không phải là số hợp lệ thì trả về '' hoặc '0 đ'
+                const numValue = parseFloat(value);
+                if (isNaN(numValue)) {
+                    return ''; // Hoặc '0 đ' tùy theo logic hiển thị bạn muốn
+                }
+                return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(numValue);
+             }
+
+            // === Vẽ Line Chart (Giữ nguyên) ===
+            const lineCtx = document.getElementById("revenueChart");
+            if (lineCtx && lineChartLabels && lineChartData && lineChartLabels.length > 0 && lineChartData.length > 0 && lineChartLabels.length === lineChartData.length) {
+                new Chart(lineCtx.getContext('2d'), {
+                    type: 'line', data: { labels: lineChartLabels, datasets: [{ label: "Doanh thu", lineTension: 0.3, backgroundColor: "rgba(232, 90, 112, 0.05)", borderColor: "rgba(232, 90, 112, 1)", pointRadius: 4, pointBackgroundColor: "rgba(232, 90, 112, 1)", pointBorderColor: "#fff", pointHoverRadius: 5, pointHoverBackgroundColor: "rgba(232, 90, 112, 1)", pointHitRadius: 10, pointBorderWidth: 2, data: lineChartData, }], },
+                    options: { maintainAspectRatio: false, scales: { y: { beginAtZero: true, ticks: { callback: formatVND } } }, plugins: { legend: { display: false }, tooltip: { callbacks: { label: function(context) { let label = context.dataset.label || ''; if (label) { label += ': '; } if (context.parsed.y !== null) { label += formatVND(context.parsed.y); } return label; } } } } }
+                });
+            } else { console.log("Không có dữ liệu cho biểu đồ doanh thu theo tháng."); }
+
+            // === Vẽ Bar Chart (Dùng dữ liệu thật) ===
+            const barCtx = document.getElementById("productRevenueChart");
+            const productChartMsg = document.getElementById("productChartMsg");
+            // *** BỎ DỮ LIỆU MẪU, CHỈ DÙNG DỮ LIỆU THẬT ***
+            if (barCtx && barChartLabels && barChartData && barChartLabels.length > 0 && barChartData.length > 0 && barChartLabels.length === barChartData.length) {
+                new Chart(barCtx.getContext('2d'), {
+                    type: 'bar', data: { labels: barChartLabels, datasets: [{ label: 'Doanh thu', data: barChartData, backgroundColor: 'rgba(54, 162, 235, 0.6)', borderColor: 'rgba(54, 162, 235, 1)', borderWidth: 1 }] },
+                    options: { indexAxis: 'y', // Sản phẩm nằm trên trục Y
+                        maintainAspectRatio: false, scales: { x: { beginAtZero: true, ticks: { callback: formatVND } } }, plugins: { legend: { display: false }, tooltip: { callbacks: { label: function(context) { let label = context.dataset.label || ''; if (label) { label += ': '; } if (context.parsed.x !== null) { label += formatVND(context.parsed.x); } return label; } } } } }
+                });
+                 if (productChartMsg) productChartMsg.style.display = 'none';
+            } else {
+                 console.log("Không có dữ liệu cho biểu đồ doanh thu sản phẩm.");
+                 if (productChartMsg) productChartMsg.style.display = 'block';
+                 if (barCtx) barCtx.style.display = 'none'; // Ẩn canvas
+            }
+
+            // === Vẽ Pie Chart (Dùng dữ liệu thật) ===
+            const pieCtx = document.getElementById("categoryRevenueChart");
+            const categoryChartMsg = document.getElementById("categoryChartMsg");
+             // Hàm tạo màu ngẫu nhiên (hoặc bạn có thể định nghĩa màu cố định)
+            function getRandomColor() { const r = Math.floor(Math.random() * 200); const g = Math.floor(Math.random() * 200); const b = Math.floor(Math.random() * 200); return `rgba(${r}, ${g}, ${b}, 0.7)`; }
+            const pieBackgroundColors = pieChartLabels.map(() => getRandomColor()); // Tạo màu cho từng danh mục
+
+            // *** BỎ DỮ LIỆU MẪU, CHỈ DÙNG DỮ LIỆU THẬT ***
+            if (pieCtx && pieChartLabels && pieChartData && pieChartLabels.length > 0 && pieChartData.length > 0 && pieChartLabels.length === pieChartData.length) {
+                new Chart(pieCtx.getContext('2d'), {
+                    type: 'pie', data: { labels: pieChartLabels, datasets: [{ label: 'Tỉ lệ doanh thu', data: pieChartData, backgroundColor: pieBackgroundColors, hoverOffset: 4 }] },
+                    options: { maintainAspectRatio: false, plugins: { legend: { position: 'bottom' }, tooltip: { callbacks: { // Giả sử dữ liệu là Doanh thu, không phải %
+                          label: function(context) {
+                            let label = context.label || '';
+                            if (label) { label += ': '; }
+                            if (context.parsed !== null) {
+                                // Kiểm tra nếu dữ liệu là số, định dạng thành tiền
+                                if (typeof context.parsed === 'number') {
+                                    label += formatVND(context.parsed);
+                                } else {
+                                    label += context.parsed; // Nếu không phải số, hiển thị trực tiếp
+                                }
+                            }
+                            return label;
+                        } } } } }
+                });
+                 if (categoryChartMsg) categoryChartMsg.style.display = 'none';
+            } else {
+                 console.log("Không có dữ liệu cho biểu đồ tỉ lệ doanh thu danh mục.");
+                 if (categoryChartMsg) categoryChartMsg.style.display = 'block';
+                 if (pieCtx) pieCtx.style.display = 'none'; // Ẩn canvas
+            }
+        });
+        </script>
+    </th:block>
+</body>
+</html>

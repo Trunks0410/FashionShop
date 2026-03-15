@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+	xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+	layout:decorate="~{layouts/guest}">
+
+<head>
+<meta charset="UTF-8">
+<title>Thanh Toán</title>
+<th:block layout:fragment="css">
+	<link rel="stylesheet" type="text/css" th:href="@{/assets/css/pay.css}">
+	<link rel="stylesheet" th:href="@{/assets/css/common.css}">
+	<style>
+        .shipping-cost-info {
+             font-size: 0.9em;
+             color: #6c757d;
+             font-style: italic;
+        }
+        .shipping-note {
+             text-align: right;
+             font-size: 0.8em;
+             color: #6c757d;
+             margin-top: -10px; /* Điều chỉnh để gần dòng VC hơn */
+             margin-bottom: 10px;
+        }
+         /* CSS cho label Tổng cộng */
+        .total-summary .main__pay-text {
+            /* font-weight: normal; /* Bỏ in đậm nếu cần */
+        }
+    </style>
+</th:block>
+</head>
+
+<body>
+	<div class="main" layout:fragment="content">
+		<div class="grid wide">
+			<div class="row">
+				<div class="col l-5 m-12 s-12">
+					<div class="pay-information">
+						<div class="pay__heading">Thông tin thanh toán</div>
+						<p class="shipping-address-title">
+							<i class="fas fa-map-marker-alt icon-primary"></i> Địa chỉ giao
+							hàng
+						</p>
+						<div class="selected-address-summary"
+							th:if="${defaultAddress != null}">
+							<div>
+								<span class="recipient-info" id="currentRecipient"> <span
+									th:text="${defaultAddress.fullName}">Tên người nhận</span> <span
+									class="default-tag" th:if="${defaultAddress.isDefault}">Mặc
+										định</span>
+								</span>
+								<div class="address-text" id="currentAddressDetail"
+									th:text="${defaultAddress.phone} + ' | ' + ${defaultAddress.address}">
+									Địa chỉ chi tiết</div>
+							</div>
+							<button class="btn-change-address" id="btnChangeAddress">Thay
+								Đổi</button>
+						</div>
+						<div class="selected-address-summary"
+							th:unless="${defaultAddress != null}">
+							<p>Bạn chưa có địa chỉ nào. Vui lòng thêm địa chỉ.</p>
+							<button class="btn-change-address" id="btnChangeAddress">Thêm
+								Địa Chỉ</button>
+						</div>
+						<div class="payment-method-area">
+							<h3 class="pay__heading-sub">Phương thức Thanh toán</h3>
+							<div class="payment-item">
+								<input type="radio" id="pay-cod" name="payment-method"
+									value="cod"
+									th:checked="${#strings.defaultString(paymentMethod, 'cod') == 'cod'}">
+								<label for="pay-cod"><i class="fas fa-truck"></i> <span>Thanh
+										toán khi nhận hàng (COD)</span></label>
+							</div>
+							<div class="payment-item">
+								<input type="radio" id="pay-bank" name="payment-method"
+									value="bank_transfer"
+									th:checked="${paymentMethod == 'bank_transfer'}"> <label
+									for="pay-bank"><i class="fas fa-credit-card"></i> <span>Thanh
+										toán online (Thẻ/Chuyển khoản)</span></label>
+							</div>
+						</div>
+						<hr class="divider">
+					</div>
+				</div>
+
+				<div class="col l-7 m-12 s-12">
+					<div class="pay-order">
+						<div class="pay__heading">Đơn hàng của bạn</div>
+						<div class="order-items-list"
+							th:if="${selectedItems != null and !selectedItems.isEmpty()}">
+							<div class="order-item" th:each="item : ${selectedItems}">
+								<img th:src="@{${item.imageUrl}}" alt="Product"
+									class="order-item-img">
+								<div class="order-item-info">
+									<p class="order-item-name" th:text="${item.name}">Product
+										Name</p>
+									<p class="order-item-qty"
+										th:text="'Số lượng: ' + ${item.quantity}">Số lượng: 1</p>
+								</div>
+								<p class="order-item-price"
+									th:text="${#numbers.formatDecimal(item.subtotal, 0, 'COMMA', 0, 'POINT')} + ' ₫'">
+									0 ₫</p>
+							</div>
+						</div>
+						<div
+							th:unless="${selectedItems != null and !selectedItems.isEmpty()}">
+							<p>Không có sản phẩm nào được chọn.</p>
+						</div>
+
+						<hr class="divider-light">
+
+						<div class="pay-info">
+							<div class="main__pay-text">Tạm tính</div>
+							<div class="main__pay-price"
+								th:text="${#numbers.formatDecimal(subtotal ?: 0, 0, 'COMMA', 0, 'POINT')} + ' ₫'">0
+								₫</div>
+						</div>
+
+						<div class="pay-info"
+							th:if="${discountAmount != null and discountAmount.compareTo(T(java.math.BigDecimal).ZERO) > 0}"
+							style="color: #28a745; font-weight: bold;">
+							<div class="main__pay-text">Giảm giá voucher</div>
+							<div class="main__pay-price"
+								th:text="'-' + ${#numbers.formatDecimal(discountAmount, 0, 'COMMA', 0, 'POINT')} + ' ₫'">-0 ₫</div>
+						</div>
+
+                        <div class="pay-info">
+							<div class="main__pay-text">Phí vận chuyển</div>
+							<div class="main__pay-price shipping-cost-info" id="pay-shipping-cost">
+                                <span th:if="${isFreeShipping != null and isFreeShipping}" style="color: #28a745; font-style: normal; font-weight: bold;">Được miễn phí</span>
+                                <span th:unless="${isFreeShipping != null and isFreeShipping}">(Tùy khu vực & ĐVVC)</span>
+                            </div>
+						</div>
+                        <div class="shipping-note" th:unless="${isFreeShipping != null and isFreeShipping}">
+                            Phí chính xác sẽ được người bán cập nhật.
+                        </div>
+                        <div class="pay-info"
+							th:if="${appliedVoucherCode != null}" style="font-size: 14px; margin-top: 5px;">
+							<div class="main__pay-text">Mã áp dụng:</div>
+							<div class="main__pay-price" style="font-weight: bold; color: #17a2b8;"
+								th:text="${appliedVoucherCode}">VoucherCode</div>
+						</div>
+
+						<hr class="divider-light">
+
+						<div class="pay-info total-summary">
+                            <div class="main__pay-text">Tổng cộng (Tạm tính)</div>
+                            <div class="main__pay-price final-price" id="pay-grand-total"
+								th:text="${#numbers.formatDecimal(grandTotal ?: 0, 0, 'COMMA', 0, 'POINT')} + ' ₫'">0
+								₫</div>
+						</div>
+                        <form th:action="@{/placeOrder}" method="post" id="orderForm">
+							<input type="hidden" name="selectedAddressId"
+								id="selectedAddressIdInput"
+								th:value="${defaultAddress?.addressId}" /> <input type="hidden"
+								name="paymentMethod" value="cod" id="paymentMethodInput" /> <input
+								type="hidden" name="variantIds"
+								th:value="${selectedVariantIds != null ? #strings.listJoin(selectedVariantIds, ',') : ''}" /> <button type="submit" class="btn btn--default orange w-100 mt-20">ĐẶT
+								HÀNG</button>
+						</form>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<div class="address-modal-overlay" id="addressModalOverlay">
+			<div class="address-modal-content">
+				<div class="modal-header">
+					<h3 id="modalTitle">Địa Chỉ Của Tôi</h3>
+					<button class="close-modal-btn" id="closeModalBtn">&times;</button>
+				</div>
+				<div class="address-list-container">
+					<div class="modal-body" id="addressListContent">
+                        <div th:if="${addresses == null or #lists.isEmpty(addresses)}" class="text-center p-3">Bạn chưa có địa chỉ nào.</div>
+						<div class="address-item" th:each="addr : ${addresses}"
+							th:data-id="${addr.addressId}"
+							th:classappend="${defaultAddress != null and addr.addressId == defaultAddress.addressId} ? 'selected' : ''">
+							<input type="radio" name="modal-shipping-address"
+								th:value="${addr.addressId}"
+								th:checked="${defaultAddress != null and addr.addressId == defaultAddress.addressId}">
+							<div class="address-info">
+								<span class="recipient-info"> <span
+									th:text="${addr.fullName}"></span> <span class="default-tag"
+									th:if="${addr.isDefault}">Mặc định</span>
+								</span>
+								<div class="address-text" th:text="${addr.phone}"></div>
+								<div class="address-text" th:text="${addr.address}"></div>
+							</div>
+							<button type="button" class="btn-update-address"
+								th:data-id="${addr.addressId}">Cập nhật</button>
+						</div>
+					</div>
+					<div class="modal-body-actions">
+						<button type="button" class="btn-add-new-address"
+							id="btnAddAddressInModal">
+							<i class="fas fa-plus"></i> Thêm Địa Chỉ Mới
+						</button>
+					</div>
+				</div>
+				<div class="address-form-container">
+					<form id="addressFormModal">
+						<input type="hidden" name="addressId" id="modal_address_id">
+						<div class="form-group">
+							<input name="fullName" id="modal_full_name" type="text"
+								class="form-control" placeholder="Họ và tên" required>
+						</div>
+						<div class="form-group">
+							<input name="phone" id="modal_phone" type="text"
+								class="form-control" placeholder="Số điện thoại" required>
+						</div>
+						<div class="form-group">
+							<input name="address" id="modal_address" type="text"
+								class="form-control"
+								placeholder="Địa chỉ nhà (Số nhà, tên đường...)" required>
+						</div>
+						<div class="form-group checkbox-group">
+							<input name="isDefault" type="checkbox" id="modal_set_default">
+							<label for="modal_set_default">Đặt làm địa chỉ mặc định</label>
+						</div>
+						<div class="form-group form-actions">
+							<button type="button" class="btn btn--default" id="btnCancelForm">Hủy</button>
+							<button type="submit" class="btn btn--default orange">Hoàn
+								thành</button>
+						</div>
+						<div class="error-message" id="formErrorMessage"></div>
+					</form>
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn--default" id="btnModalCancel">Hủy</button>
+					<button type="button" class="btn btn--default orange"
+						id="btnModalConfirm">Xác nhận</button>
+				</div>
+			</div>
+		</div>
+		<th:block layout:fragment="js">
+			<script th:src="@{/assets/js/commonscript.js}"></script>
+			<script>
+            $(document).ready(function() {
+                let selectedAddressId = parseInt($('#selectedAddressIdInput').val());
+                const $modalOverlay = $('#addressModalOverlay');
+                const $modalContent = $('.address-modal-content');
+                const $modalTitle = $('#modalTitle');
+                const $addressListContainer = $('.address-list-container');
+                const $addressFormContainer = $('.address-form-container');
+                const $addressListDiv = $('#addressListContent');
+                const $addressForm = $('#addressFormModal');
+                const $errorMessage = $('#formErrorMessage');
+                const $paymentMethodInputs = $('input[name="payment-method"]');
+                const $paymentMethodInputHidden = $('#paymentMethodInput');
+                
+                // 1: Danh sách, 2: Form
+                let modalState = 1; 
+                
+                const initialPaymentMethod = $paymentMethodInputs.filter(':checked').val() || 'cod'; // Mặc định là 'cod' nếu không có gì được check
+                $paymentMethodInputHidden.val(initialPaymentMethod);
+
+
+                // === HELPER FUNCTIONS ===
+
+                function updateMainAddressDisplay() {
+                    const $selectedItem = $addressListDiv.find(`.address-item[data-id="${selectedAddressId}"]`);
+                    
+                    if (!$selectedItem.length) {
+                        $('#currentRecipient').html('Vui lòng chọn địa chỉ');
+                        $('#currentAddressDetail').text('');
+                        $('#selectedAddressIdInput').val('');
+                        $('#btnChangeAddress').text('Thêm Địa Chỉ');
+                        return;
+                    }
+                    
+                    const $recipientInfo = $selectedItem.find('.recipient-info');
+                    const recipient = $recipientInfo.find('span:first').text().trim();
+                    const isDefault = $recipientInfo.find('.default-tag').length > 0;
+                    const phone = $selectedItem.find('.address-text:nth-of-type(1)').text();
+                    const address = $selectedItem.find('.address-text:nth-of-type(2)').text();
+                    
+                    const defaultTagHTML = isDefault ? ' <span class="default-tag">Mặc định</span>' : '';
+                    
+                    $('#currentRecipient').html(`${recipient} ${defaultTagHTML}`);
+                    $('#currentAddressDetail').text(`${phone} | ${address}`);
+                    $('#selectedAddressIdInput').val(selectedAddressId);
+                    $('#btnChangeAddress').text('Thay Đổi');
+                }
+
+                function openModal() {
+                    if(selectedAddressId) {
+                        $addressListDiv.find(`input[value="${selectedAddressId}"]`).prop('checked', true);
+                        $addressListDiv.find('.address-item').removeClass('selected');
+                        $addressListDiv.find(`.address-item[data-id="${selectedAddressId}"]`).addClass('selected');
+                    }
+                    showAddressList();
+                    $modalOverlay.addClass('is-active');
+                }
+
+                function closeModal() {
+                    $modalOverlay.removeClass('is-active');
+                    $errorMessage.hide().text('');
+                    showAddressList(); 
+                }
+
+                function showAddressList() {
+                    modalState = 1;
+                    $modalTitle.text('Địa Chỉ Của Tôi');
+                    $modalContent.removeClass('view-form');
+                    $('.modal-footer').show();
+                }
+
+                function showAddressForm(isEdit = false, addressData = null) {
+                    modalState = 2;
+                    $addressForm[0].reset();
+                    $('#modal_address_id').val('');
+                    $errorMessage.hide().text('');
+                    
+                    if (isEdit && addressData) {
+                        $modalTitle.text('Cập nhật Địa Chỉ');
+                        $('#modal_address_id').val(addressData.addressId);
+                        $('#modal_full_name').val(addressData.fullName);
+                        $('#modal_phone').val(addressData.phone);
+                        $('#modal_address').val(addressData.address);
+                        $('#modal_set_default').prop('checked', addressData.isDefault);
+                    } else {
+                        $modalTitle.text('Thêm Địa Chỉ Mới');
+                    }
+                    
+                    $modalContent.addClass('view-form');
+                    $('.modal-footer').hide(); 
+                }
+                
+                function reloadAddressList(newlyAddedId = null) {
+                    $.get('/api/addresses/user', function(data) {
+                        $addressListDiv.empty();
+                        
+                        let defaultAddr = data.find(addr => addr.isDefault);
+                        if (defaultAddr) {
+                            selectedAddressId = defaultAddr.addressId;
+                        } else if (newlyAddedId) {
+                            selectedAddressId = newlyAddedId; 
+                        }
+                        
+                        data.forEach(addr => {
+                            const isChecked = selectedAddressId === addr.addressId;
+                            const defaultTagHtml = addr.isDefault ? '<span class="default-tag">Mặc định</span>' : '';
+                            
+                            $addressListDiv.append(`
+                                <div class="address-item ${isChecked ? 'selected' : ''}" data-id="${addr.addressId}">
+                                    <input type="radio" name="modal-shipping-address" value="${addr.addressId}" ${isChecked ? 'checked' : ''}>
+                                    <div class="address-info">
+                                        <span class="recipient-info">
+                                            <span>${addr.fullName}</span>
+                                            ${defaultTagHtml}
+                                        </span>
+                                        <div class="address-text">${addr.phone}</div>
+                                        <div class="address-text">${addr.address}</div>
+                                    </div>
+                                    <button type="button" class="btn-update-address" data-id="${addr.addressId}">Cập nhật</button>
+                                </div>
+                            `);
+                        });
+                        showAddressList();
+                        updateMainAddressDisplay();
+                        
+                        if (data.length === 0) {
+                             selectedAddressId = 0;
+                             showAddressForm(false); 
+                        }
+                    });
+                }
+
+                function saveAddress(formData) {
+                    const addressId = formData.get('addressId');
+                    const isUpdate = !!addressId;
+                    
+                    const url = isUpdate ? `/api/addresses/${addressId}` : '/api/addresses';
+                    const method = isUpdate ? 'PUT' : 'POST';
+                    
+                    const addressData = {
+                        addressId: isUpdate ? parseInt(addressId) : null,
+                        fullName: formData.get('fullName'),
+                        phone: formData.get('phone'),
+                        address: formData.get('address'),
+                        isDefault: formData.get('isDefault') === 'on' 
+                    };
+
+                    $.ajax({
+                        url: url,
+                        type: method,
+                        data: JSON.stringify(addressData),
+                        contentType: 'application/json',
+                        success: function(response) {
+                            const newId = response.addressId;
+                            reloadAddressList(newId); 
+                            showAddressList(); 
+                            if (addressData.isDefault || !isUpdate) {
+                                selectedAddressId = newId; 
+                                updateMainAddressDisplay();
+                                closeModal();
+                            }
+                        },
+                        error: function(xhr, status, error) {
+                            $errorMessage.text('Lỗi khi lưu địa chỉ: ' + (xhr.responseJSON?.message || 'Vui lòng thử lại')).show();
+                        }
+                    });
+                }
+
+
+                // === EVENT LISTENERS ===
+                
+                $('#btnChangeAddress').on('click', openModal);
+                $('#closeModalBtn, #btnModalCancel').on('click', closeModal);
+                
+                $modalOverlay.on('click', e => { 
+                    if (e.target.id === 'addressModalOverlay' && modalState === 1) closeModal(); 
+                });
+                
+                $('#btnAddAddressInModal').on('click', () => showAddressForm(false));
+                $('#btnCancelForm').on('click', e => { 
+                    e.preventDefault(); 
+                    showAddressList(); 
+                });
+
+                $addressListDiv.on('click', '.address-item', function() {
+                    $addressListDiv.find('.address-item').removeClass('selected');
+                    $(this).addClass('selected').find('input[type="radio"]').prop('checked', true);
+                    selectedAddressId = parseInt($(this).data('id'));
+                });
+
+                $addressListDiv.on('click', '.btn-update-address', function(e) {
+                    e.stopPropagation();
+                    const addressId = $(this).data('id');
+                    $.get(`/api/addresses/${addressId}`, function(data) {
+                        showAddressForm(true, data);
+                    }).fail(function() {
+                        alert('Không thể tải thông tin địa chỉ.');
+                    });
+                });
+
+                $('#btnModalConfirm').on('click', function() {
+                    const checkedId = $addressListDiv.find('input[name="modal-shipping-address"]:checked').val();
+                    if (checkedId) {
+                        selectedAddressId = parseInt(checkedId);
+                        updateMainAddressDisplay();
+                    } else if (!selectedAddressId) {
+                        alert('Vui lòng chọn một địa chỉ hoặc thêm địa chỉ mới.');
+                        return;
+                    }
+                    closeModal();
+                });
+
+                $('#addressFormModal').on('submit', function(e) {
+                    e.preventDefault();
+                    const formData = new FormData(this);
+                    saveAddress(formData);
+                });
+
+                $paymentMethodInputs.on('change', function() {
+                    $('#paymentMethodInput').val($(this).val());
+                });
+                
+                $('#orderForm').on('submit', function(e) {
+        			e.preventDefault();
+        	
+        			const paymentMethod = $paymentMethodInputs.filter(':checked').val();
+        			const currentSelectedId = $('#selectedAddressIdInput').val();
+        			const variantIds = $('input[name="variantIds"]').val();
+        	
+        			if (!currentSelectedId || currentSelectedId === 'NaN' || currentSelectedId === '') {
+        				alert('Vui lòng chọn hoặc thêm mới địa chỉ giao hàng.');
+        				openModal();
+        				return;
+        			}
+        	
+        			const formData = {
+        				selectedAddressId: parseInt(currentSelectedId),
+        				paymentMethod: paymentMethod,
+        				variantIds: variantIds
+        			};
+        			
+                    const $submitBtn = $(this).find('button[type="submit"]');
+                    const originalText = $submitBtn.text();
+                    $submitBtn.prop('disabled', true).text('Đang xử lý...');
+
+        			$.ajax({
+        				type: "POST",
+        				url: $(this).attr('action'), 
+        				data: JSON.stringify(formData),
+        				contentType: "application/json",
+        				success: function(response) {
+        					if (response.paymentUrl) {
+        						window.location.href = response.paymentUrl;
+        					} else if (response.redirectUrl) {
+        						window.location.href = response.redirectUrl;
+        					} else {
+        						alert('Có lỗi xảy ra, vui lòng thử lại.');
+        						$submitBtn.prop('disabled', false).text(originalText);
+        					}
+        				},
+        				error: function(xhr, status, error) {
+        					alert('Lỗi khi đặt hàng: ' + (xhr.responseJSON?.message || 'Vui lòng thử lại'));
+        					$submitBtn.prop('disabled', false).text(originalText);
+        				}
+        			});
+        		});
+
+                updateMainAddressDisplay(); 
+            });
+        </script>
+		</th:block>
+	</div>
+</body>
+</html>

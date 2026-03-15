@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/guest}">
+<head>
+    <title>Sổ Địa Chỉ</title>
+    <th:block layout:fragment="css">
+        <link rel="stylesheet" th:href="@{/assets/css/common.css}">
+        <style>
+            .address-container {
+                max-width: 900px;
+                margin: 40px auto;
+            }
+            .address-list .address-item {
+                border: 1px solid #eee;
+                border-radius: 8px;
+                padding: 20px;
+                margin-bottom: 20px;
+                display: flex;
+                justify-content: space-between;
+                align-items: flex-start;
+            }
+            .address-item .info {
+                flex-grow: 1;
+                margin-right: 15px;
+            }
+            .address-item .actions {
+                flex-shrink: 0;
+                display: flex;
+                flex-direction: column;
+                gap: 8px;
+                align-items: flex-end;
+            }
+            .address-item .actions form,
+            .address-item .actions a {
+                margin: 0;
+            }
+            .recipient-name {
+                font-weight: 600;
+                margin-right: 10px;
+                font-size: 1.15rem;
+            }
+            .default-tag {
+                background-color: #dc3545;
+                color: white;
+                padding: 3px 10px;
+                font-size: 0.85rem;
+                border-radius: 4px;
+            }
+            .address-details span {
+                display: block;
+                color: #555;
+                margin-top: 5px;
+                font-size: 1rem;
+            }
+            .btn-action {
+                font-size: 0.95rem;
+                padding: 6px 12px;
+            }
+            .btn-edit {
+                color: #0d6efd;
+                background: none;
+                border: none;
+                padding: 0;
+                font-size: 0.95rem;
+            }
+            .btn-delete {
+                color: #dc3545;
+                background: none;
+                border: none;
+                padding: 0;
+                margin-left: 10px;
+                font-size: 0.95rem;
+            }
+            .form-add-address {
+                margin-top: 30px;
+                padding-top: 20px;
+                border-top: 1px solid #eee;
+            }
+            .card-header h6 {
+                font-size: 1.25rem;
+                font-weight: 600;
+            }
+            .form-label {
+                font-size: 1rem;
+                margin-bottom: 0.5rem;
+            }
+            .form-control {
+                font-size: 1rem;
+                padding: 0.6rem 0.75rem;
+            }
+            h1.h3 {
+                font-size: 1.75rem;
+                font-weight: 600;
+            }
+            .btn {
+                font-size: 1rem;
+                padding: 0.5rem 1.5rem;
+            }
+            .alert {
+                font-size: 1rem;
+            }
+            .form-check-label {
+                font-size: 1rem;
+            }
+
+            /* ==================================================== */
+            /* === CSS NÂNG CẤP CHO TRANG ĐỊA CHỈ (addresses.html) === */
+            /* ==================================================== */
+
+            /* --- 1. Tiêu đề & Nút chung --- */
+            h1.h3 {
+                color: var(--black-cl-2, #222);
+                font-weight: 600;
+                font-size: 2.4rem;
+            }
+            .btn {
+                font-size: 1.4rem;
+                padding: 10px 24px;
+                text-transform: uppercase;
+                font-weight: 600;
+                transition: all 0.3s ease;
+            }
+            .btn:hover {
+                transform: translateY(-2px) scale(1.02);
+                box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            }
+            .btn-secondary { /* 'Quay lại' */
+                background-color: #6c757d;
+                border-color: #6c757d;
+            }
+            .btn-secondary:hover {
+                background-color: #5a6268;
+                border-color: #545b62;
+            }
+            
+            /* --- 2. Alerts (Thông báo) --- */
+            .alert {
+                display: flex;
+                align-items: center;
+                padding: 15px 20px;
+                font-size: 1.5rem;
+                border-radius: var(--base-radius, 6px);
+                border-width: 0 0 0 5px; /* Chỉ giữ viền trái */
+                box-shadow: var(--shadow-light, 0 2px 8px rgba(0,0,0,0.08));
+                background-color: var(--white-cl-1, #fff);
+            }
+            .alert .btn-close {
+                margin-left: auto;
+            }
+            .alert::before {
+                font-family: "Font Awesome 5 Free"; /* Cần FontAwesome */
+                font-weight: 900;
+                font-size: 1.8rem;
+                margin-right: 15px;
+            }
+            .alert-success {
+                border-left-color: #198754;
+                color: #146c43;
+            }
+            .alert-success::before {
+                content: "\f058"; /* Icon check-circle */
+                color: #198754;
+            }
+            .alert-danger {
+                border-left-color: #dc3545;
+                color: #b02a37;
+            }
+            .alert-danger::before {
+                content: "\f071"; /* Icon exclamation-triangle */
+                color: #dc3545;
+            }
+            .alert-info {
+                border-left-color: #0dcaf0;
+                color: #0a58ca;
+            }
+            .alert-info::before {
+                content: "\f05a"; /* Icon info-circle */
+                color: #0dcaf0;
+            }
+
+            /* --- 3. Danh sách địa chỉ (Sống động) --- */
+            .address-item {
+                background-color: var(--white-cl-1, #fff);
+                border-radius: var(--base-radius, 6px);
+                box-shadow: var(--shadow-light, 0 2px 8px rgba(0,0,0,0.08));
+                border: 1px solid #f0f0f0;
+                transition: all 0.3s ease;
+            }
+            .address-item:hover {
+                transform: translateY(-5px);
+                box-shadow: var(--shadow-medium, 0 4px 15px rgba(0,0,0,0.15));
+            }
+            .recipient-name {
+                font-weight: 600;
+                font-size: 1.6rem;
+                color: var(--black-cl-2, #222);
+            }
+            /* Thẻ "Mặc định" theo theme */
+            .default-tag {
+                background-color: var(--default-cl, #9e5bab); /* Theme color */
+                padding: 4px 10px;
+                font-size: 0.9rem;
+                border-radius: 4px;
+                font-weight: 500;
+            }
+            .address-details span {
+                font-size: 1.4rem;
+                color: #555;
+            }
+
+            /* --- 4. Nút bấm trong card địa chỉ --- */
+            .btn-action {
+                font-size: 1.4rem;
+                font-weight: 500;
+                transition: all 0.2s ease;
+            }
+            /* Nút 'Thiết lập mặc định' */
+            .btn.btn-outline-success {
+                color: var(--default-cl, #9e5bab);
+                border-color: var(--default-cl, #9e5bab);
+                background-color: transparent;
+            }
+            .btn.btn-outline-success:hover {
+                background-color: var(--default-cl, #9e5bab);
+                border-color: var(--default-cl, #9e5bab);
+                color: var(--white-cl-1, #fff);
+                transform: scale(1.05);
+            }
+            /* Nút 'Chỉnh sửa' */
+            .btn-edit {
+                color: var(--default-cl, #9e5bab);
+                text-decoration: none;
+            }
+            .btn-edit:hover {
+                color: var(--default-cl-darker, #8a4e9a);
+                text-decoration: underline;
+            }
+            /* Nút 'Xóa' */
+            .btn-delete {
+                color: #dc3545;
+            }
+            .btn-delete:hover {
+                color: #b02a37; /* Đỏ đậm hơn */
+                transform: scale(1.1);
+            }
+
+            /* --- 5. Form Thêm/Sửa Địa chỉ --- */
+            .form-add-address.card {
+                border-radius: var(--base-radius, 6px) !important;
+                box-shadow: var(--shadow-medium, 0 4px 15px rgba(0,0,0,0.15)) !important;
+                border: none;
+                overflow: hidden;
+            }
+            .form-add-address .card-header {
+                background-color: var(--default-cl, #9e5bab) !important;
+                color: var(--white-cl-1, #fff);
+            }
+            .form-add-address .card-header h6 {
+                font-size: 1.8rem;
+                font-weight: 600;
+                color: var(--white-cl-1, #fff);
+            }
+
+            .form-add-address .form-label {
+                font-size: 1.4rem;
+                font-weight: 600 !important;
+                color: var(--black-cl-2, #222);
+            }
+            .form-add-address .form-control {
+                font-size: 1.4rem;
+                padding: 10px 12px;
+                height: auto;
+                border: 1px solid #ddd;
+                border-radius: 4px;
+                transition: border-color 0.3s, box-shadow 0.3s;
+            }
+            .form-add-address .form-control:focus {
+                outline: none;
+                border-color: var(--default-cl, #9e5bab);
+                box-shadow: 0 0 0 3px rgba(158, 91, 171, 0.2);
+            }
+            .form-check-label {
+                font-size: 1.4rem;
+                color: #444;
+            }
+            .form-check-input:checked {
+                background-color: var(--default-cl, #9e5bab);
+                border-color: var(--default-cl, #9e5bab);
+            }
+             .form-check-input:focus {
+                 box-shadow: 0 0 0 3px rgba(158, 91, 171, 0.2);
+             }
+            
+            /* Nút 'Lưu Địa Chỉ' */
+            .btn-primary {
+                background-color: var(--default-cl, #9e5bab);
+                border-color: var(--default-cl, #9e5bab);
+            }
+            .btn-primary:hover {
+                background-color: var(--default-cl-darker, #8a4e9a);
+                border-color: var(--default-cl-darker, #8a4e9a);
+            }
+
+        </style>
+    </th:block>
+</head>
+<body>
+<div layout:fragment="content">
+    <div class="container address-container">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="h3">Sổ Địa Chỉ Của Tôi</h1>
+            <a th:href="@{/user/profile}" class="btn btn-secondary">Quay lại Hồ sơ</a>
+        </div>
+
+        <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show" role="alert">
+            <span th:text="${successMessage}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show" role="alert">
+            <span th:text="${errorMessage}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+
+        <div class="address-list mb-4">
+            <div th:if="${#lists.isEmpty(addresses)}" class="alert alert-info">Bạn chưa có địa chỉ nào.</div>
+            <div class="address-item" th:each="addr : ${addresses}">
+                <div class="info">
+                    <div>
+                        <span class="recipient-name" th:text="${addr.fullName}">Tên Người Nhận</span>
+                        <span class="default-tag" th:if="${addr.isDefault}">Mặc định</span>
+                    </div>
+                    <div class="address-details">
+                        <span>Địa chỉ: <span th:text="${addr.address}"></span></span>
+                        <span>Điện thoại: <span th:text="${addr.phone}"></span></span>
+                    </div>
+                </div>
+                <div class="actions">
+                    <form th:action="@{/user/addresses/set-default/{id}(id=${addr.addressId})}" method="post" th:if="${!addr.isDefault}">
+                        <button type="submit" class="btn btn-outline-success btn-sm btn-action">Thiết lập mặc định</button>
+                    </form>
+                    <div>
+                        <button type="button" class="btn-edit btn-action" th:data-address-id="${addr.addressId}" onclick="openEditModal(this)">Chỉnh sửa</button>
+                        <form th:action="@{/user/addresses/delete/{id}(id=${addr.addressId})}" method="post" class="d-inline" onsubmit="return confirm('Bạn chắc chắn muốn xóa địa chỉ này?');">
+                            <button type="submit" class="btn-delete btn-action"><i class="fas fa-trash"></i> Xóa</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-add-address card shadow">
+            <div class="card-header py-3">
+                <h6 class="m-0" id="address-form-title">Thêm Địa Chỉ Mới</h6>
+            </div>
+            <div class="card-body">
+                <form id="addressForm" th:action="@{/api/addresses}" method="post" th:object="${addressDto}">
+                    <input type="hidden" id="addressId" name="addressId">
+                    <div th:if="${#fields.hasAnyErrors()}" class="alert alert-danger">Lỗi validation!</div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="fullName" class="form-label">Họ và tên <span class="text-danger">*</span></label>
+                            <input type="text" id="fullName" name="fullName" class="form-control" th:field="*{fullName}" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="phone" class="form-label">Số điện thoại <span class="text-danger">*</span></label>
+                            <input type="tel" id="phone" name="phone" class="form-control" th:field="*{phone}" required>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="addressDetail" class="form-label">Địa chỉ chi tiết <span class="text-danger">*</span></label>
+                        <input type="text" id="addressDetail" name="address" class="form-control" th:field="*{address}" required placeholder="Số nhà, tên đường, phường/xã, quận/huyện, tỉnh/thành phố">
+                    </div>
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" id="isDefault" name="isDefault" th:field="*{isDefault}">
+                        <label class="form-check-label" for="isDefault">Đặt làm địa chỉ mặc định</label>
+                    </div>
+                    <button type="submit" class="btn btn-primary" id="saveAddressBtn">Lưu Địa Chỉ</button>
+                    <button type="button" class="btn btn-secondary ms-2" id="cancelEditBtn" style="display: none;">Hủy Sửa</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<th:block layout:fragment="js">
+<script>
+    // Hàm để mở modal sửa hoặc điền form sửa (ví dụ điền form)
+    function openEditModal(button) {
+        const addressId = $(button).data('address-id');
+        // Gọi API để lấy chi tiết địa chỉ
+        $.get(`/api/addresses/${addressId}`, function(data) {
+            $('#address-form-title').text('Cập nhật Địa Chỉ');
+            $('#addressId').val(data.addressId); // Đặt ID vào hidden field
+            $('#fullName').val(data.fullName);
+            $('#phone').val(data.phone);
+            $('#addressDetail').val(data.address);
+            $('#isDefault').prop('checked', data.isDefault);
+            $('#saveAddressBtn').text('Cập nhật');
+            $('#cancelEditBtn').show(); // Hiện nút Hủy sửa
+            // Đổi action và method của form
+            $('#addressForm').attr('action', `/api/addresses/${addressId}`);
+            // $('#addressForm').attr('method', 'put'); // Cần xử lý PUT bằng AJAX
+            // Cuộn xuống form
+            $('html, body').animate({ scrollTop: $('#addressForm').offset().top - 100 }, 500);
+        }).fail(function() {
+            alert('Không thể tải thông tin địa chỉ để sửa.');
+        });
+    }
+
+    $(document).ready(function() {
+        // Xử lý submit form thêm/sửa bằng AJAX
+        $('#addressForm').on('submit', function(e) {
+            e.preventDefault();
+            const form = $(this);
+            const addressId = $('#addressId').val();
+            const url = form.attr('action'); // Lấy URL từ action
+            const method = addressId ? 'PUT' : 'POST'; // Xác định method
+
+            const data = {
+                addressId: addressId ? parseInt(addressId) : null,
+                fullName: $('#fullName').val(),
+                phone: $('#phone').val(),
+                address: $('#addressDetail').val(),
+                isDefault: $('#isDefault').is(':checked')
+            };
+
+            $.ajax({
+                url: url,
+                method: method,
+                contentType: 'application/json',
+                data: JSON.stringify(data),
+                success: function(response) {
+                    // Load lại trang để cập nhật danh sách
+                    window.location.reload();
+                },
+                error: function(xhr) {
+                    alert('Lỗi: ' + (xhr.responseJSON?.message || 'Không thể lưu địa chỉ.'));
+                }
+            });
+        });
+
+        // Xử lý nút Hủy sửa
+        $('#cancelEditBtn').on('click', function() {
+            $('#address-form-title').text('Thêm Địa Chỉ Mới');
+            $('#addressForm')[0].reset(); // Xóa dữ liệu form
+            $('#addressId').val(''); // Xóa ID ẩn
+            $('#saveAddressBtn').text('Lưu Địa Chỉ');
+            $('#cancelEditBtn').hide(); // Ẩn nút Hủy
+            // Reset action và method về mặc định (thêm mới)
+            $('#addressForm').attr('action', '/api/addresses');
+            // $('#addressForm').attr('method', 'post');
+        });
+    });
+</script>
+</th:block>
+
+</body>
+</html>

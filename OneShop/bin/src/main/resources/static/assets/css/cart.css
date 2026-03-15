@@ -1,0 +1,219 @@
+.main__notify {
+    display: flex;
+    padding-top: 8px;
+}
+
+.main__notify-text {
+    font-size: 1.6rem;
+    color: rgb(27, 211, 27);
+}
+
+.main__notify-icon i {
+    font-size: 1.6rem;
+    color: rgb(27, 211, 27);
+    font-weight: 400;
+    margin-right: 8px;
+}
+
+.main__cart {
+    margin: 20px 0;
+    padding-right: 20px;
+    border-right: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+/* === CSS CHO BẢNG GIỎ HÀNG === */
+.shop_table {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed; /* Rất quan trọng: Giúp bảng tuân thủ chiều rộng đã định */
+}
+
+.shop_table th,
+.shop_table td {
+    padding: 15px 5px;
+    text-align: center;
+    vertical-align: middle;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+    word-wrap: break-word;
+}
+
+/* --- Ấn định chiều rộng cho các cột --- */
+.shop_table .product-select,
+.shop_table .product-remove {
+    width: 8%;
+}
+.shop_table .product-thumbnail {
+    width: 15%;
+}
+.shop_table .product-price,
+.shop_table .product-subtotal {
+    width: 17%;
+}
+.shop_table .product-quantity {
+    width: 15%;
+}
+/* Cột "Sản phẩm" sẽ tự động chiếm phần còn lại */
+
+.shop_table thead th {
+    font-size: 1.6rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    border-bottom: 3px solid rgba(0, 0, 0, 0.1);
+}
+
+.shop_table .product-name {
+    text-align: left;
+    padding-left: 10px;
+}
+
+/* Căn giữa cho tiêu đề "Sản phẩm" đã được gộp */
+.shop_table th.product-name[colspan="2"] {
+    text-align: center;
+}
+
+.shop_table .product-name .name {
+    font-size: 1.5rem;
+    color: var(--black-cl-2);
+    line-height: 2rem;
+}
+
+/* --- Giới hạn kích thước ảnh sản phẩm --- */
+.shop_table .product-thumbnail img {
+    width: 80px;
+    height: 80px;
+    object-fit: cover; /* Đảm bảo ảnh không bị méo */
+    display: block;
+    margin: 0 auto;
+}
+
+.buttons_added .is-form {
+    width: 25px;
+    height: 30px;
+}
+
+.buttons_added .input-qty {
+    height: 30px;
+    width: 40px;
+    font-size: 1.4rem;
+    text-align: center;
+}
+
+.main__cart-price {
+    font-size: 1.6rem;
+    font-weight: 400;
+    color: var(--default-cl);
+}
+
+.main__cart-icon i {
+    font-size: 2.4rem;
+    color: var(--black-cl-1);
+    cursor: pointer;
+}
+
+.main__cart-icon:hover {
+    opacity: 0.7;
+    transition: all 0.3s;
+}
+
+.main__cart .btn {
+    margin-top: 20px;
+}
+
+/* === CSS CHO KHUNG THANH TOÁN === */
+.main__pay {
+    margin: 20px 0;
+    padding-left: 20px;
+}
+
+.main__pay-title {
+    font-size: 1.6rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    padding-bottom: 10px;
+    border-bottom: 3px solid rgba(0, 0, 0, 0.1);
+}
+
+/* Tạo khoảng cách phía trên cho tiêu đề "Phiếu ưu đãi" */
+.btn.orange + .main__pay-title {
+    margin-top: 30px; 
+}
+
+.main__pay .btn {
+    margin-top: 20px;
+    width: 100%;
+}
+
+.pay-info {
+    display: flex;
+    justify-content: space-between;
+    padding: 12px 0;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.main__pay-text {
+    font-size: 1.6rem;
+    color: var(--black-cl-2);
+    line-height: 2.4rem;
+}
+
+.main__pay-price {
+    font-size: 1.6rem;
+    color: var(--default-cl)
+}
+
+
+/* === Reponsive cho di động === */
+@media (max-width: 1023px) {
+    .main__cart {
+        border-right: none;
+        padding-right: 0;
+    }
+    .main__pay {
+        padding-left: 0;
+    }
+}
+
+@media (max-width: 767px) {
+    .main {
+        padding: 0 8px;
+    }
+    .shop_table thead {
+        display: none;
+    }
+    .shop_table tr {
+        display: block;
+        margin-bottom: 20px;
+        border-bottom: 2px solid var(--default-cl);
+        padding-bottom: 10px;
+    }
+    .shop_table td {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        text-align: right;
+        padding: 10px 0;
+        border-bottom: 1px dotted #ccc;
+    }
+    .shop_table td:last-child {
+        border-bottom: none;
+    }
+    .shop_table td::before {
+        content: attr(data-label);
+        font-weight: bold;
+        text-align: left;
+        padding-right: 10px;
+    }
+    .shop_table td.product-thumbnail {
+        justify-content: center;
+    }
+    .shop_table td.product-thumbnail::before {
+        display: none;
+    }
+    .shop_table .product-name {
+        text-align: right;
+    }
+    .shop_table .name {
+        text-align: right;
+        width: 60%;
+    }
+}

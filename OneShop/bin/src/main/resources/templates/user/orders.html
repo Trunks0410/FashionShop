@@ -1,0 +1,738 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+	xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+	layout:decorate="~{layouts/guest}">
+
+<head>
+<title>Đơn hàng của tôi</title>
+<link
+	href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+	rel="stylesheet">
+<link th:href="@{/assets/css/home.css}" rel="stylesheet" />
+<link rel="stylesheet" th:href="@{/assets/css/common.css}">
+<style>
+/* ... (Toàn bộ CSS của bạn giữ nguyên) ... */
+.product__rating {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	margin-bottom: 8px;
+}
+
+.rating-stars {
+	display: flex;
+	gap: 2px;
+}
+
+.rating-stars i {
+	font-size: 16px;
+	color: #ffa500;
+}
+
+.rating-stars i.empty {
+	color: #ddd;
+}
+
+.rating-count, .product__sold {
+	font-size: 16px;
+	color: #666;
+}
+
+.product__sold {
+	margin-bottom: 10px;
+	display: flex;
+	align-items: center;
+	gap: 4px;
+}
+
+.tabs {
+	display: flex;
+	position: relative;
+	margin-bottom: 20px;
+	border-bottom: 3px solid #f1f1f1;
+}
+
+.tab-item {
+	padding: 15px 30px;
+	cursor: pointer;
+	font-size: 18px;
+	font-weight: bold;
+}
+
+.tab-item.active {
+	color: #007bff;
+}
+
+.line {
+	position: absolute;
+	bottom: -3px;
+	height: 3px;
+	background: #007bff;
+	transition: all 0.3s ease;
+}
+
+.tab-pane {
+	display: none;
+}
+
+.tab-pane.active {
+	display: block;
+}
+
+table {
+	font-size: 16px;
+}
+
+th, td {
+	padding: 15px;
+	vertical-align: middle;
+}
+
+.btn {
+	font-size: 14px;
+	padding: 8px 15px;
+}
+
+.action-cell a, .action-cell button, .action-cell span {
+	/* Thêm SPAN vào đây */
+	margin-right: 5px;
+	visibility: visible !important;
+	opacity: 1 !important;
+}
+
+.action-cell a:last-child, .action-cell button:last-child, .action-cell span:last-child
+	{
+	margin-right: 0;
+}
+
+.order-product-image {
+	width: 50px; /* Giảm kích thước */
+	height: 50px; /* Giảm kích thước */
+	object-fit: cover;
+	border-radius: 4px;
+	border: 1px solid #eee;
+}
+
+/* ================================================= */
+/* === CSS NÂNG CẤP CHO TRANG ĐƠN HÀNG (orders.html) === */
+/* ================================================= */
+
+/* --- 1. Bố cục Card chính --- */
+.container.my-4 {
+	background-color: var(--white-cl-1, #fff);
+	/* Dùng biến từ common.css */
+	border-radius: var(--base-radius, 6px);
+	box-shadow: var(--shadow-medium, 0 4px 15px rgba(0, 0, 0, 0.15));
+	padding: 30px;
+}
+
+h1.mb-4 {
+	color: var(--black-cl-2, #222);
+	font-weight: 600; /* Đậm hơn */
+	border-bottom: 1px solid #eee;
+	padding-bottom: 15px;
+	font-size: 2.4rem; /* Căn lại size */
+}
+
+/* --- 2. Tinh chỉnh Tabs (Đổi màu theme) --- */
+.tabs {
+	border-bottom: 2px solid #eee; /* Làm mỏng viền dưới */
+	margin-bottom: 30px;
+}
+
+.tab-item {
+	padding: 12px 20px;
+	font-size: 1.6rem;
+	font-weight: 600;
+	color: var(--black-cl-1, #444);
+	transition: color 0.3s ease; /* Thêm hiệu ứng */
+}
+
+.tab-item:hover {
+	color: var(--default-cl, #9e5bab); /* Hover màu tím */
+}
+
+.tab-item.active {
+	color: var(--default-cl, #9e5bab) !important; /* Active màu tím */
+}
+
+.line {
+	height: 2px; /* Mỏng 2px */
+	bottom: -2px; /* Nằm đè lên border */
+	background: var(--default-cl, #9e5bab) !important; /* Line màu tím */
+}
+
+/* --- 3. Bảng (Table) & Hiệu ứng --- */
+.tab-pane .table {
+	border: 1px solid #eee;
+	border-radius: var(--base-radius, 6px);
+	overflow: hidden; /* Giữ bo góc cho thead */
+}
+/* Tiêu đề bảng */
+.tab-pane .table thead {
+	background-color: var(--white-cl-3, #f8f7fd);
+	color: var(--black-cl-2, #222);
+	font-weight: 600;
+	text-transform: uppercase;
+	font-size: 1.4rem;
+}
+/* Hàng trong bảng */
+.tab-pane tbody tr {
+	transition: background-color 0.2s ease;
+}
+
+.tab-pane tbody tr:hover {
+	background-color: #fcf8fd; /* Màu tím siêu nhạt khi hover */
+}
+/* Ảnh sản phẩm */
+.order-product-image {
+	transition: transform 0.3s ease;
+}
+
+.order-product-image:hover {
+	transform: scale(1.2); /* Zoom nhẹ khi hover */
+}
+/* Thông báo rỗng */
+.tab-pane tbody tr td[colspan="6"] {
+	padding: 40px 0;
+	font-size: 1.6rem;
+	color: #888;
+}
+
+/* --- 4. Nút bấm (Buttons) --- */
+.action-cell .btn {
+	transition: all 0.2s ease;
+	font-size: 1.4rem;
+	padding: 6px 12px; /* Căn lại padding */
+}
+
+.action-cell .btn:hover {
+	transform: scale(1.05); /* Phóng to nhẹ khi hover */
+}
+
+/* Đổi màu nút 'Chi tiết' / 'Theo dõi' (btn-info) */
+.btn.btn-info {
+	background-color: var(--default-cl, #9e5bab);
+	border-color: var(--default-cl, #9e5bab);
+	color: var(--white-cl-1, #fff);
+}
+
+.btn.btn-info:hover {
+	background-color: var(--default-cl-darker, #8a4e9a);
+	border-color: var(--default-cl-darker, #8a4e9a);
+	color: var(--white-cl-1, #fff);
+}
+
+/* Đổi màu nút 'Đánh giá' (btn-primary) */
+.btn.btn-primary {
+	background-color: var(--default-cl, #9e5bab);
+	border-color: var(--default-cl, #9e5bab);
+}
+
+.btn.btn-primary:hover {
+	background-color: var(--default-cl-darker, #8a4e9a);
+	border-color: var(--default-cl-darker, #8a4e9a);
+}
+
+/* Đổi màu nút 'Hủy đơn' (btn-danger) sang màu cam */
+.btn.btn-danger {
+	background-color: var(--orange-cl, #d26e4b);
+	border-color: var(--orange-cl, #d26e4b);
+}
+
+.btn.btn-danger:hover {
+	background-color: #c15e3a; /* Cam đậm hơn */
+	border-color: #c15e3a;
+}
+
+/* --- 5. Modal (Cửa sổ chi tiết) --- */
+.modal-header {
+	background-color: var(--default-cl, #9e5bab);
+	color: var(--white-cl-1, #fff);
+}
+
+.modal-header .modal-title {
+	font-size: 1.8rem;
+	font-weight: 600;
+}
+/* Đổi màu nút 'x' (close) sang màu trắng */
+.modal-header .btn-close {
+	filter: brightness(0) invert(1);
+}
+</style>
+</head>
+
+<body>
+	<div layout:fragment="content">
+		<div class="container my-4">
+			<h1 class="mb-4">Đơn hàng của tôi</h1>
+
+			<div class="tabs">
+				<div class="tab-item active">PENDING</div>
+				<div class="tab-item">CONFIRMED</div>
+				<div class="tab-item">DELIVERING</div>
+				<div class="tab-item">DELIVERED</div>
+				<div class="tab-item">CANCELLED</div>
+				<div class="tab-item">RETURNED</div>
+				<div class="line"></div>
+			</div>
+
+			<div class="tab-content">
+
+				<div class="tab-pane active">
+					<table class="table table-bordered align-middle text-center">
+						<thead class="table-light">
+							<tr>
+								<th>ID</th>
+								<th>Sản phẩm</th>
+								<th>Tổng tiền</th>
+								<th>Trạng thái</th>
+								<th>Ngày tạo</th>
+								<th>Hành động</th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr th:each="order : ${orders}"
+								th:if="${order.orderStatus.name() == 'PENDING'}">
+								<td th:text="${order.id}"></td>
+								<td><img
+									th:if="${order.orderDetails != null and !order.orderDetails.isEmpty() and order.orderDetails[0].productVariant != null and order.orderDetails[0].productVariant.product != null}"
+									th:src="@{${order.orderDetails[0].productVariant.product.primaryImageUrl ?: '/assets/img/product/no-image.jpg'}}"
+									alt="Ảnh sản phẩm" class="order-product-image"> <span
+									th:unless="${order.orderDetails != null and !order.orderDetails.isEmpty() and order.orderDetails[0].productVariant != null and order.orderDetails[0].productVariant.product != null}">N/A</span>
+								</td>
+								<td
+									th:text="${#numbers.formatDecimal(order.total, 0, 'POINT', 0, 'COMMA')} + ' VNĐ'"></td>
+								<td th:text="${order.orderStatus}"></td>
+								<td
+									th:text="${#temporals.format(order.createdAt, 'dd-MM-yyyy HH:mm')}"></td>
+								<td class="action-cell">
+									<button type="button" class="btn btn-danger btn-sm"
+										th:onclick="'confirmCancellation(\'' + ${order.id} + '\', this)'">
+										Hủy đơn</button>
+
+									<button type="button" class="btn btn-info btn-sm"
+										data-bs-toggle="modal" data-bs-target="#orderDetailsModal"
+										th:data-order-id="${order.id}">Chi tiết</button>
+								</td>
+							</tr>
+							<tr
+								th:if="${#lists.isEmpty(orders.?[orderStatus.name() == 'PENDING'])}">
+								<td colspan="6">Không có đơn hàng nào đang chờ xử lý.</td>
+							</tr>
+						</tbody>
+					</table>
+				</div>
+
+				<div class="tab-pane">
+					<table class="table table-bordered align-middle text-center">
+						<thead class="table-light">
+							<tr>
+								<th>ID</th>
+								<th>Sản phẩm</th>
+								<th>Tổng tiền</th>
+								<th>Trạng thái</th>
+								<th>Ngày tạo</th>
+								<th>Hành động</th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr th:each="order : ${orders}"
+								th:if="${order.orderStatus.name() == 'CONFIRMED'}">
+								<td th:text="${order.id}"></td>
+								<td><img
+									th:if="${order.orderDetails != null and !order.orderDetails.isEmpty() and order.orderDetails[0].productVariant != null and order.orderDetails[0].productVariant.product != null}"
+									th:src="@{${order.orderDetails[0].productVariant.product.primaryImageUrl ?: '/assets/img/product/no-image.jpg'}}"
+									alt="Ảnh sản phẩm" class="order-product-image"> <span
+									th:unless="${order.orderDetails != null and !order.orderDetails.isEmpty() and order.orderDetails[0].productVariant != null and order.orderDetails[0].productVariant.product != null}">N/A</span>
+								</td>
+								<td
+									th:text="${#numbers.formatDecimal(order.total, 0, 'POINT', 0, 'COMMA')} + ' VNĐ'"></td>
+								<td th:text="${order.orderStatus}"></td>
+								<td
+									th:text="${#temporals.format(order.createdAt, 'dd-MM-yyyy HH:mm')}"></td>
+								<td class="action-cell">
+									<button type="button" class="btn btn-danger btn-sm"
+										th:onclick="'confirmCancellation(\'' + ${order.id} + '\')'">
+										Hủy đơn</button>
+									<form th:id="'cancelForm_' + ${order.id}"
+										th:action="@{/user/orders/{id}/cancel(id=${order.id})}"
+										method="post" style="display: none;"></form>
+
+									<button type="button" class="btn btn-info btn-sm"
+										data-bs-toggle="modal" data-bs-target="#orderDetailsModal"
+										th:data-order-id="${order.id}">Chi tiết</button>
+								</td>
+							</tr>
+							<tr
+								th:if="${#lists.isEmpty(orders.?[orderStatus.name() == 'CONFIRMED'])}">
+								<td colspan="6">Không có đơn hàng nào đã được xác nhận.</td>
+							</tr>
+						</tbody>
+					</table>
+				</div>
+
+				<div class="tab-pane">
+					<table class="table table-bordered align-middle text-center">
+						<thead class="table-light">
+							<tr>
+								<th>ID</th>
+								<th>Sản phẩm</th>
+								<th>Tổng tiền</th>
+								<th>Trạng thái</th>
+								<th>Ngày tạo</th>
+								<th>Hành động</th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr th:each="order : ${orders}"
+								th:if="${order.orderStatus.name() == 'DELIVERING'}">
+								<td th:text="${order.id}"></td>
+								<td><img
+									th:if="${order.orderDetails != null and !order.orderDetails.isEmpty() and order.orderDetails[0].productVariant != null and order.orderDetails[0].productVariant.product != null}"
+									th:src="@{${order.orderDetails[0].productVariant.product.primaryImageUrl ?: '/assets/img/product/no-image.jpg'}}"
+									alt="Ảnh sản phẩm" class="order-product-image"> <span
+									th:unless="${order.orderDetails != null and !order.orderDetails.isEmpty() and order.orderDetails[0].productVariant != null and order.orderDetails[0].productVariant.product != null}">N/A</span>
+								</td>
+								<td
+									th:text="${#numbers.formatDecimal(order.total, 0, 'POINT', 0, 'COMMA')} + ' VNĐ'"></td>
+								<td th:text="${order.orderStatus}"></td>
+								<td
+									th:text="${#temporals.format(order.createdAt, 'dd-MM-yyyy HH:mm')}"></td>
+								<td class="action-cell">
+									<button type="button" class="btn btn-info btn-sm"
+										data-bs-toggle="modal" data-bs-target="#orderDetailsModal"
+										th:data-order-id="${order.id}">Theo dõi</button>
+								</td>
+							</tr>
+							<tr
+								th:if="${#lists.isEmpty(orders.?[orderStatus.name() == 'DELIVERING'])}">
+								<td colspan="6">Không có đơn hàng nào đang vận chuyển.</td>
+							</tr>
+						</tbody>
+					</table>
+				</div>
+
+				<div class="tab-pane">
+					<table class="table table-bordered align-middle text-center">
+						<thead class="table-light">
+							<tr>
+								<th>ID</th>
+								<th>Sản phẩm</th>
+								<th>Tổng tiền</th>
+								<th>Trạng thái</th>
+								<th>Ngày tạo</th>
+								<th>Hành động</th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr th:each="order : ${orders}"
+								th:if="${order.orderStatus.name() == 'DELIVERED'}">
+								<td th:text="${order.id}"></td>
+								<td><img
+									th:if="${order.orderDetails != null and !order.orderDetails.isEmpty() and order.orderDetails[0].productVariant != null and order.orderDetails[0].productVariant.product != null}"
+									th:src="@{${order.orderDetails[0].productVariant.product.primaryImageUrl ?: '/assets/img/product/no-image.jpg'}}"
+									alt="Ảnh sản phẩm" class="order-product-image"> <span
+									th:unless="${order.orderDetails != null and !order.orderDetails.isEmpty() and order.orderDetails[0].productVariant != null and order.orderDetails[0].productVariant.product != null}">N/A</span>
+								</td>
+								<td
+									th:text="${#numbers.formatDecimal(order.total, 0, 'POINT', 0, 'COMMA')} + ' VNĐ'"></td>
+								<td th:text="${order.orderStatus}"></td>
+								<td
+									th:text="${#temporals.format(order.createdAt, 'dd-MM-yyyy HH:mm')}"></td>
+
+								<td class="action-cell"><span
+									class="review-status-container"
+									th:if="${order.orderDetails != null and !order.orderDetails.isEmpty() and order.orderDetails[0].productVariant != null and order.orderDetails[0].productVariant.product != null}"
+									th:data-order-id="${order.id}"
+									th:data-product-id="${order.orderDetails[0].productVariant.product.productId}">
+
+										<a th:href="@{/user/orders/{id}/review(id=${order.id})}"
+										class="btn btn-primary btn-sm">Đánh giá</a>
+								</span> <span
+									th:unless="${order.orderDetails != null and !order.orderDetails.isEmpty() and order.orderDetails[0].productVariant != null and order.orderDetails[0].productVariant.product != null}"
+									class="text-muted" style="font-size: 1.4rem;"> Không thể
+										ĐG </span>
+
+									<button type="button" class="btn btn-info btn-sm"
+										data-bs-toggle="modal" data-bs-target="#orderDetailsModal"
+										th:data-order-id="${order.id}">Chi tiết</button></td>
+							</tr>
+							<tr
+								th:if="${#lists.isEmpty(orders.?[orderStatus.name() == 'DELIVERED'])}">
+								<td colspan="6">Không có đơn hàng nào đã giao.</td>
+							</tr>
+						</tbody>
+					</table>
+				</div>
+
+				<div class="tab-pane">
+					<table class="table table-bordered align-middle text-center">
+						<thead class="table-light">
+							<tr>
+								<th>ID</th>
+								<th>Sản phẩm</th>
+								<th>Tổng tiền</th>
+								<th>Trạng thái</th>
+								<th>Ngày tạo</th>
+								<th>Hành động</th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr th:each="order : ${orders}"
+								th:if="${order.orderStatus.name() == 'CANCELLED'}">
+								<td th:text="${order.id}"></td>
+								<td><img
+									th:if="${order.orderDetails != null and !order.orderDetails.isEmpty() and order.orderDetails[0].productVariant != null and order.orderDetails[0].productVariant.product != null}"
+									th:src="@{${order.orderDetails[0].productVariant.product.primaryImageUrl ?: '/assets/img/product/no-image.jpg'}}"
+									alt="Ảnh sản phẩm" class="order-product-image"> <span
+									th:unless="${order.orderDetails != null and !order.orderDetails.isEmpty() and order.orderDetails[0].productVariant != null and order.orderDetails[0].productVariant.product != null}">N/A</span>
+								</td>
+								<td
+									th:text="${#numbers.formatDecimal(order.total, 0, 'POINT', 0, 'COMMA')} + ' VNĐ'"></td>
+								<td th:text="${order.orderStatus}"></td>
+								<td
+									th:text="${#temporals.format(order.createdAt, 'dd-MM-yyyy HH:mm')}"></td>
+								<td class="action-cell">
+									<button type="button" class="btn btn-info btn-sm"
+										data-bs-toggle="modal" data-bs-target="#orderDetailsModal"
+										th:data-order-id="${order.id}">Chi tiết</button>
+								</td>
+							</tr>
+							<tr
+								th:if="${#lists.isEmpty(orders.?[orderStatus.name() == 'CANCELLED'])}">
+								<td colspan="6">Không có đơn hàng nào đã bị hủy.</td>
+							</tr>
+						</tbody>
+					</table>
+				</div>
+
+				<div class="tab-pane">
+					<table class="table table-bordered align-middle text-center">
+						<thead class="table-light">
+							<tr>
+								<th>ID</th>
+								<th>Sản phẩm</th>
+								<th>Tổng tiền</th>
+								<th>Trạng thái</th>
+								<th>Ngày tạo</th>
+								<th>Hành động</th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr th:each="order : ${orders}"
+								th:if="${order.orderStatus.name() == 'RETURNED'}">
+								<td th:text="${order.id}"></td>
+								<td><img
+									th:if="${order.orderDetails != null and !order.orderDetails.isEmpty() and order.orderDetails[0].productVariant != null and order.orderDetails[0].productVariant.product != null}"
+									th:src="@{${order.orderDetails[0].productVariant.product.primaryImageUrl ?: '/assets/img/product/no-image.jpg'}}"
+									alt="Ảnh sản phẩm" class="order-product-image"> <span
+									th:unless="${order.orderDetails != null and !order.orderDetails.isEmpty() and order.orderDetails[0].productVariant != null and order.orderDetails[0].productVariant.product != null}">N/A</span>
+								</td>
+								<td
+									th:text="${#numbers.formatDecimal(order.total, 0, 'POINT', 0, 'COMMA')} + ' VNĐ'"></td>
+								<td th:text="${order.orderStatus}"></td>
+								<td
+									th:text="${#temporals.format(order.createdAt, 'dd-MM-yyyy HH:mm')}"></td>
+								<td class="action-cell">
+									<button type="button" class="btn btn-info btn-sm"
+										data-bs-toggle="modal" data-bs-target="#orderDetailsModal"
+										th:data-order-id="${order.id}">Chi tiết</button>
+								</td>
+							</tr>
+							<tr
+								th:if="${#lists.isEmpty(orders.?[orderStatus.name() == 'RETURNED'])}">
+								<td colspan="6">Không có đơn hàng nào đã được trả lại.</td>
+							</tr>
+						</tbody>
+					</table>
+				</div>
+
+			</div>
+		</div>
+
+		<div class="modal fade" id="orderDetailsModal" tabindex="-1"
+			aria-labelledby="orderDetailsModalLabel" aria-hidden="true">
+			<div class="modal-dialog modal-lg">
+				<div class="modal-content">
+					<div class="modal-header">
+						<h5 class="modal-title" id="orderDetailsModalLabel">
+							Chi tiết Đơn hàng: <span id="modalOrderId"></span>
+						</h5>
+						<button type="button" class="btn-close" data-bs-dismiss="modal"
+							aria-label="Close"></button>
+					</div>
+					<div class="modal-body" id="modalOrderDetailsContent">
+						<p>Đang tải chi tiết đơn hàng...</p>
+						<div class="spinner-border text-primary" role="status">
+							<span class="visually-hidden">Loading...</span>
+						</div>
+					</div>
+					<div class="modal-footer">
+						<button type="button" class="btn btn-secondary"
+							data-bs-dismiss="modal">Đóng</button>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<script
+			src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+		<script th:src="@{/assets/js/jquery-3.6.0.min.js}"></script>
+		<script
+			src="https://cdnjs.cloudflare.com/ajax/libs/OwlCarousel2/2.3.4/owl.carousel.min.js"></script>
+
+		<script>
+        // Hàm xử lý việc xác nhận và gửi form hủy đơn hàng
+       function confirmCancellation(orderId, buttonElement) {
+    if (confirm('Bạn có chắc muốn hủy đơn hàng ' + orderId + ' này không?')) {
+        
+        // Vô hiệu hóa nút để tránh nhấn đúp
+        $(buttonElement).prop('disabled', true).text('Đang xử lý...');
+
+        $.ajax({
+            url: '/user/orders/' + orderId + '/cancel',
+            method: 'POST',
+            success: function(response) {
+              
+                
+                // Lấy thẻ <tr> cha gần nhất và làm mờ rồi xóa
+                const $row = $(buttonElement).closest('tr');
+                $row.fadeOut(500, function() {
+                    $row.remove();
+                    // (Tùy chọn: bạn có thể thêm logic để tăng bộ đếm trên tab CANCELLED)
+                });
+            },
+            error: function(jqXHR) {
+                // Lỗi: 1. Kích hoạt lại nút, 2. Thông báo lỗi
+                const errorMsg = jqXHR.responseJSON ? jqXHR.responseJSON.error : 'Không thể hủy đơn hàng. Vui lòng thử lại.';
+                alert('Lỗi: ' + errorMsg);
+                
+                // Kích hoạt lại nút
+                $(buttonElement).prop('disabled', false).text('Hủy đơn');
+            }
+        });
+    }
+}
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            const tabs = document.querySelectorAll('.tab-item');
+            const panes = document.querySelectorAll('.tab-pane');
+            const line = document.querySelector('.tabs .line');
+            const orderModal = document.getElementById('orderDetailsModal');
+
+            if (!tabs.length || !panes.length || !line || !orderModal) return;
+
+            // Xử lý Tabs
+            const updateLinePosition = (activeTab) => {
+                line.style.left = activeTab.offsetLeft + 'px';
+                line.style.width = activeTab.offsetWidth + 'px';
+            };
+
+            const activeTab = document.querySelector('.tab-item.active');
+            if(activeTab) {
+                updateLinePosition(activeTab);
+            }
+
+            tabs.forEach((tab, index) => {
+                const pane = panes[index];
+                if (!pane) return;
+                
+                tab.onclick = function() {
+                    const currentActiveTab = document.querySelector('.tab-item.active');
+                    const currentActivePane = document.querySelector('.tab-pane.active');
+
+                    if (currentActiveTab) currentActiveTab.classList.remove('active');
+                    if (currentActivePane) currentActivePane.classList.remove('active');
+
+                    updateLinePosition(tab);
+
+                    tab.classList.add('active');
+                    pane.classList.add('active');
+                };
+            });
+            
+            window.addEventListener('resize', () => {
+                const currentActiveTab = document.querySelector('.tab-item.active');
+                if(currentActiveTab) {
+                    updateLinePosition(currentActiveTab);
+                }
+            });
+
+            // --- ===== LOGIC MỚI ĐƯỢC THÊM VÀO ===== ---
+            // 1. Tìm tất cả các <span> chứa nút đánh giá
+            document.querySelectorAll('.review-status-container').forEach(container => {
+                const orderId = container.getAttribute('data-order-id');
+                const productId = container.getAttribute('data-product-id');
+
+                // 2. (Đã được xử lý bằng th:if)
+                // if (!orderId || !productId) return; 
+
+                // 3. Gọi API (Sử dụng backticks ``)
+                fetch(`/user/orders/${orderId}/reviewed/${productId}`)
+                    .then(response => {
+                        if (!response.ok) {
+                            // Nếu API lỗi (500, 404), ném lỗi để nhảy vào .catch
+                            throw new Error('Network response was not ok');
+                        }
+                        return response.json(); // Chuyển đổi response sang JSON
+                    })
+                    .then(data => {
+                        // 4. Nếu API trả về { "reviewed": true }
+                        if (data.reviewed) {
+                            // Thay thế nút "Đánh giá" bằng text
+                            container.innerHTML = `
+                                <span class"text-success" style="font-weight: 600; font-size: 1.4rem;">
+                                    Đã đánh giá
+                                </span>
+                            `;
+                        }
+                        // 5. Nếu (data.reviewed == false), không làm gì cả,
+                        //    nút "Đánh giá" gốc vẫn được giữ nguyên.
+                    })
+                    .catch(err => {
+                        // 6. Xử lý lỗi (API sập, 500, v.v.)
+                        console.error('Lỗi kiểm tra đánh giá:', err);
+                        // Hiển thị lỗi nhỏ thay vì nút "Đánh giá"
+                        container.innerHTML = `<span class="text-danger" style="font-size: 1.4rem;">Lỗi</span>`;
+                    });
+            });
+            // --- ===== KẾT THÚC LOGIC MỚI ===== ---
+            
+            // Xử lý Modal Chi tiết Đơn hàng (AJAX Load)
+            orderModal.addEventListener('show.bs.modal', function (event) {
+                // Nút đã kích hoạt modal
+                const button = event.relatedTarget;
+                // Lấy ID đơn hàng từ data attribute
+                const orderId = button.getAttribute('data-order-id');
+                
+                const modalTitleSpan = orderModal.querySelector('#modalOrderId');
+                const modalBody = orderModal.querySelector('#modalOrderDetailsContent');
+
+                modalTitleSpan.textContent = orderId;
+                
+                // Hiển thị trạng thái tải ban đầu
+                modalBody.innerHTML = '<div class="text-center"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div><p>Đang tải chi tiết đơn hàng...</p></div>';
+                
+                // GỌI AJAX ĐỂ TẢI NỘI DUNG CHI TIẾT ĐƠN HÀNG
+                // Yêu cầu jQuery đã được load và Controller có endpoint @GetMapping("/{id}/details")
+                $.ajax({
+                    url: '/user/orders/' + orderId + '/details', // Đảm bảo URL chính xác
+                    method: 'GET',
+                    success: function(response) {
+                        modalBody.innerHTML = response;
+                    },
+                    error: function(jqXHR, textStatus, errorThrown) {
+                        let errorMessage = 'Không thể tải chi tiết đơn hàng.';
+                        if (jqXHR.status === 404 || jqXHR.status === 403) {
+                             errorMessage = 'Đơn hàng không tồn tại hoặc bạn không có quyền truy cập.';
+                        }
+                        modalBody.innerHTML = '<p class="text-danger">' + errorMessage + '</p>';
+                    }
+                });
+            });
+        });
+    </script>
+	</div>
+</body>
+</html>

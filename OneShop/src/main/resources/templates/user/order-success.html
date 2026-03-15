@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/guest}">
+<head>
+    <title>Đặt hàng thành công</title>
+    <th:block layout:fragment="css">
+        <link rel="stylesheet" th:href="@{/assets/css/common.css}">
+        <style>
+            /* --- CSS GỐC --- */
+            .success-container {
+                max-width: 600px;
+                margin: 50px auto;
+                padding: 40px;
+                background-color: #fff;
+                border-radius: 8px;
+                text-align: center;
+                box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            }
+            .success-icon {
+                font-size: 5rem;
+                color: #28a745; /* Màu xanh lá thành công */
+                margin-bottom: 20px;
+            }
+            .success-container h1 {
+                font-size: 1.8rem;
+                font-weight: 600;
+                margin-bottom: 15px;
+                color: #333;
+            }
+            .success-container p {
+                font-size: 1.1rem;
+                color: #555;
+                line-height: 1.6;
+                margin-bottom: 30px;
+            }
+            .btn-success-actions a {
+                margin: 0 10px;
+                font-size: 1rem;
+                padding: 10px 20px;
+            }
+
+            /* ======================================================= */
+            /* === CSS NÂNG CẤP CHO TRANG ĐẶT HÀNG THÀNH CÔNG === */
+            /* ======================================================= */
+
+            /* --- Biến màu (nhắc lại từ common.css) --- */
+            :root {
+                --default-cl: #9e5bab;
+                --default-cl-darker: #8a4e9a;
+                --white-cl-1: #fff;
+                --shadow-light: 0 2px 8px rgba(0, 0, 0, 0.08);
+                --shadow-medium: 0 4px 15px rgba(0, 0, 0, 0.15);
+                --base-transition: all 0.3s ease;
+                --base-radius: 6px;
+            }
+
+            /* --- Container Card --- */
+            .success-container {
+                max-width: 600px;
+                margin: 50px auto;
+                padding: 40px;
+                background-color: var(--white-cl-1, #fff);
+                border-radius: var(--base-radius, 8px); /* Dùng biến */
+                text-align: center;
+                box-shadow: var(--shadow-medium, 0 4px 15px rgba(0,0,0,0.15)); /* Dùng biến */
+                border-top: 5px solid var(--default-cl, #9e5bab); /* Thêm viền tím trên */
+            }
+
+            /* --- Icon thành công (Màu tím & Animation) --- */
+            .success-icon {
+                font-size: 5rem;
+                color: var(--default-cl, #9e5bab); /* Đổi sang màu tím */
+                margin-bottom: 25px; /* Tăng khoảng cách */
+                /* Animation */
+                animation: scaleUp 0.5s ease-out forwards;
+                transform: scale(0.8); /* Bắt đầu nhỏ hơn */
+                opacity: 0;
+            }
+
+            @keyframes scaleUp {
+                from {
+                    transform: scale(0.8);
+                    opacity: 0;
+                }
+                to {
+                    transform: scale(1);
+                    opacity: 1;
+                }
+            }
+
+            /* --- Tiêu đề & Text --- */
+            .success-container h1 {
+                font-size: 2.2rem; /* To hơn */
+                font-weight: 600;
+                margin-bottom: 15px;
+                color: var(--black-cl-2, #333);
+            }
+
+            .success-container p {
+                font-size: 1.6rem; /* To hơn */
+                color: #555;
+                line-height: 1.7; /* Giãn dòng */
+                margin-bottom: 35px; /* Tăng khoảng cách */
+            }
+
+            /* --- Nút bấm (Style & Hover) --- */
+            .btn-success-actions a.btn {
+                /* Kế thừa style .btn từ common.css */
+                font-size: 1.4rem; /* Căn lại size */
+                padding: 12px 24px; /* Căn lại padding */
+                margin: 0 10px;
+                text-transform: uppercase;
+                font-weight: 600;
+                /* Thêm transition từ common.css nếu chưa có */
+                transition: var(--base-transition, all 0.3s ease);
+            }
+             /* Thêm hiệu ứng hover chung cho nút */
+            .btn-success-actions a.btn:hover {
+                 transform: translateY(-2px) scale(1.02);
+                 box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            }
+
+            /* Nút 'Xem đơn hàng' (Màu tím) */
+            .btn.btn-primary {
+                background-color: var(--default-cl, #9e5bab);
+                border-color: var(--default-cl, #9e5bab);
+                color: var(--white-cl-1, #fff);
+            }
+            .btn.btn-primary:hover {
+                background-color: var(--default-cl-darker, #8a4e9a);
+                border-color: var(--default-cl-darker, #8a4e9a);
+                color: var(--white-cl-1, #fff);
+            }
+
+            /* Nút 'Tiếp tục mua sắm' (Outline tím) */
+            .btn.btn-outline-secondary {
+                color: var(--default-cl, #9e5bab);
+                border-color: var(--default-cl, #9e5bab);
+                background-color: transparent;
+            }
+            .btn.btn-outline-secondary:hover {
+                background-color: var(--default-cl, #9e5bab);
+                border-color: var(--default-cl, #9e5bab);
+                color: var(--white-cl-1, #fff);
+            }
+        </style>
+    </th:block>
+</head>
+<body>
+<div layout:fragment="content">
+    <div class="success-container">
+        <div class="success-icon">
+            <i class="fas fa-check-circle"></i>
+        </div>
+        <h1>Đặt hàng thành công!</h1>
+        <p>
+            Cảm ơn bạn đã mua hàng tại OneShop. Đơn hàng của bạn đã được tiếp nhận và sẽ sớm được xử lý.
+            Bạn có thể theo dõi trạng thái đơn hàng trong mục "Đơn hàng của tôi".
+        </p>
+        <div class="btn-success-actions">
+            <a th:href="@{/user/orders}" class="btn btn-primary">Xem đơn hàng</a>
+            <a th:href="@{/products}" class="btn btn-outline-secondary">Tiếp tục mua sắm</a>
+        </div>
+    </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{vendor/layout/app}">
+<head>
+    <title>Danh mục Sản phẩm</title> <style>
+        .list-group-item span {
+            color: var(--text-dark);
+            font-weight: 500;
+        }
+        /* Style để danh sách chiếm toàn bộ chiều rộng */
+        .category-list-container {
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+<div layout:fragment="content">
+    <h1 class="h3 mt-4 mb-3">Danh mục Sản phẩm</h1> <p class="lead mb-4">Xem danh sách các danh mục sản phẩm hiện có trên hệ thống.</p> <div class="row">
+        <div class="col-12 category-list-container">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold">Danh sách Danh mục hiện có</h6>
+                </div>
+                <div class="card-body">
+                    <div th:if="${#lists.isEmpty(categories)}" class="text-center text-muted">
+                        Chưa có danh mục nào.
+                    </div>
+                    <ul th:unless="${#lists.isEmpty(categories)}" class="list-group list-group-flush">
+                        <li th:each="category : ${categories}" class="list-group-item d-flex align-items-center">
+                            <span th:text="${category.name}">Tên danh mục</span>
+                            </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        </div>
+</div>
+</body>
+</html>
