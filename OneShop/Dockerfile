@@ -1,16 +1,16 @@
-FROM maven:3-openjdk-17 AS build
+# Build stage
+FROM maven:3-openjdk-22 AS build
 WORKDIR /app
 
 COPY . .
 RUN mvn clean package -DskipTests
 
-
 # Run stage
-
-FROM openjdk:17-jdk-slim
+FROM openjdk:22-jdk-slim
 WORKDIR /app
 
-COPY --from=build /app/target/DrComputer-0.0.1-SNAPSHOT.war drcomputer.war
+# Sử dụng *.war để lấy file build ra từ thư mục target và đổi tên thành oneshop.war
+COPY --from=build /app/target/*.war oneshop.war
 EXPOSE 8080 
 
-ENTRYPOINT ["java","-jar","drcomputer.war"]
+ENTRYPOINT ["java", "-jar", "oneshop.war"]
