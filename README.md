@@ -1,2 +1,2 @@
 # FashionShop
-Đồ án cuối kỳ thiết kế hướng đối tượng
+Đồ án cuối kỳ thiết kế hướng đối tượng và quản lý phần mềm
